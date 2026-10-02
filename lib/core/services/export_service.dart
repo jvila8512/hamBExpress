@@ -2194,7 +2194,7 @@ class ExportService {
       cell.cellStyle.fontSize = 9;
       cell.cellStyle.fontColor = '#757575';
     }
-    sheet.getRangeByIndex(row, 1).setText('Reporte disenado por ExpressPos');
+    sheet.getRangeByIndex(row, 1).setText('Reporte disenado por HambExpress');
     row++;
     sheet.getRangeByIndex(row, 1).setText('Contacto: +5352046805');
 
@@ -2360,7 +2360,7 @@ class ExportService {
     row++;
     final cell = sheet.getRangeByIndex(row, 1);
     cell.cellStyle.fontColor = '#757575';
-    cell.setText('Reporte disenado por ExpressPos');
+    cell.setText('Reporte disenado por HambExpress');
     row++;
     sheet.getRangeByIndex(row, 1).setText('Contacto: +5352046805');
 

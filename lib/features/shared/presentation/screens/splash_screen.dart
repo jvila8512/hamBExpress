@@ -251,7 +251,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             ),
             const SizedBox(height: 24),
             const Text(
-              'ExpressPos',
+              'HambExpress',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
