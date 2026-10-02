@@ -252,6 +252,35 @@ void main() {
       expect(productsSrc.contains('Future<void> addProduct('), isTrue);
       expect(productsSrc.contains('Future<void> loadProducts()'), isTrue);
     });
+
+    test('no plan-limit copy survives anywhere in lib (R7)', () {
+      // Regression: a help card documenting FREE/NEGOCIO/PRO/MAX/MAXPRO
+      // vendor caps survived the strip because it never mentions "licen".
+      const planMarkers = <String>[
+        'Plan FREE',
+        'Plan NEGOCIO',
+        'Plan MAXPRO',
+        'Plan MAX',
+        'Plan PRO',
+        'por plan',
+        'maxVendedores',
+      ];
+      final offenders = <String>[];
+      for (final file in Directory('lib')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart'))) {
+        final src = file.readAsStringSync();
+        for (final marker in planMarkers) {
+          if (src.contains(marker)) {
+            offenders.add('${file.path} -> $marker');
+          }
+        }
+      }
+      expect(offenders, isEmpty,
+          reason: 'R7: plan-derived limits must be neither coded nor '
+              'documented; found: $offenders');
+    });
   });
 
   group('T6 — dead license and analysis files removed (R8)', () {

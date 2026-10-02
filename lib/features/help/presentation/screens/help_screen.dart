@@ -966,19 +966,6 @@ Cada archivo tiene un menú (⋮) con estas opciones:
           ),
           const SizedBox(height: 12),
           _buildCard(
-            title: 'Límite de vendedoras por plan',
-            content: '''
-• El número de vendedoras que podés crear depende de tu plan:
-  - Plan FREE: 1 vendedora
-  - Plan NEGOCIO: 1 vendedora
-  - Plan PRO: 2 vendedoras
-  - Plan MAX: 3 vendedoras
-  - Plan MAXPRO: 5 vendedoras
-• Si alcanzás el límite, no podés crear más hasta mejorar el plan''',
-            icon: Icons.info_outline,
-          ),
-          const SizedBox(height: 12),
-          _buildCard(
             title: 'Desactivar vendedora',
             content: '''
 • Si una vendedora deja de trabajar, desactivala en vez de eliminarla
