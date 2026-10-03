@@ -23,20 +23,6 @@ productos_cuba copy.md
 license_manager_prd.md
 build_log.txt
 build_output.log
-C?*
-!lib/config/
-!lib/core/
-!lib/features/clients/
-!lib/features/contacts/
-!lib/features/categories/
-!lib/features/products/presentation/screens/categories_screen.dart
-!lib/features/products/presentation/screens/category_form_screen.dart
-!lib/features/products/presentation/providers/categories_provider.dart
-!lib/features/shared/widgets/custom_filled_button.dart
-!lib/features/shared/widgets/custom_text_form_field.dart
-!lib/features/license/presentation/screens/cliente_detail_screen.dart
-!lib/features/license/presentation/screens/clientes_screen.dart
-!test/core/
 
 # Google Fonts cache
 google_fonts/
