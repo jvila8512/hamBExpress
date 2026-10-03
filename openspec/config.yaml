@@ -1,0 +1,32 @@
+# SDD Config — PosExpress / etecsa
+context: |
+  Flutter POS app for small businesses in Cuba (ExpresPOS, engram name: PosExpress).
+  Package: etecsa | Stack: Flutter 3.44.8, Dart 3.12.2, Drift (SQLite), Riverpod, go_router.
+  Architecture: features-based (auth, pos, products, inventory, reports, sync, workers, settings, expenses, license, home).
+  Database: Drift (app_database.dart, FIFO inventory model); codegen via build_runner.
+  Testing: flutter_test, test/ exists (20 *_test.dart); 7 pre-existing schema_v14 drift failures.
+  Baseline: %TEMP%\opencode\baseline_flutter_test.txt (189 pass / 7 known fail).
+strict_tdd: true
+testing:
+  runner: flutter test
+  framework: flutter_test
+  unit: true
+  widget: true
+  integration: false
+  e2e: false
+  coverage: true
+  coverage_command: flutter test --coverage
+  known_baseline_failures: 7 pre-existing schema_v14 drift failures (do not count as new)
+  linter: flutter analyze (flutter_lints)
+  type_checker: dart analyze
+  formatter: dart format
+  codegen: dart run build_runner build
+
+phases:
+  proposal: {}
+  spec: {}
+  design: {}
+  tasks: {}
+  apply: {}
+  verify: {}
+  archive: {}
