@@ -7,8 +7,11 @@ import 'package:flutter_test/flutter_test.dart';
 /// The license domain is stripped work-unit by work-unit. Each group pins
 /// one work unit's end state (spec R1–R3, R6–R8) so a later refactor cannot
 /// resurrect license gates in the boot, auth, login or splash paths, and so
-/// the preserved scaffolding (SMS receiver, theme seeding, fail-open fence)
-/// is not deleted along with the license code.
+/// the preserved scaffolding (theme seeding, fail-open fence) is not deleted
+/// along with the license code.
+///
+/// `simplificar-hamburguesa` Phase 4 additionally pins the removal of the
+/// SMS receiver bootstrap and of the help screen.
 void main() {
   String source(String path) => File(path).readAsStringSync();
   int count(String haystack, String needle) =>
@@ -35,9 +38,14 @@ void main() {
       expect(mainSrc.contains("license_key"), isFalse);
     });
 
-    test('main.dart keeps SMS receiver and orientation setup', () {
-      expect(mainSrc.contains('_initSmsReceiver'), isTrue,
-          reason: 'SMS receiver init must survive the license strip');
+    test('main.dart keeps orientation and theme seeding, drops the SMS '
+        'receiver', () {
+      expect(mainSrc.contains('_initSmsReceiver'), isFalse,
+          reason: 'Phase 4 removes the SMS receiver bootstrap from boot');
+      expect(mainSrc.contains('features/sms/'), isFalse,
+          reason: 'no sms feature import may survive Phase 4');
+      expect(mainSrc.contains('telephony_sdt'), isFalse,
+          reason: 'telephony_sdt is dropped from pubspec in Phase 4');
       expect(mainSrc.contains('SystemChrome.setPreferredOrientations'), isTrue);
       expect(mainSrc.contains('ThemePreferenceStore.read'), isTrue,
           reason: 'theme seed must survive the license strip');
@@ -169,7 +177,6 @@ void main() {
     late String menuSrc;
     late String homeSrc;
     late String settingsSrc;
-    late String helpSrc;
     late String productsSrc;
 
     setUpAll(() {
@@ -178,7 +185,6 @@ void main() {
       settingsSrc = source(
         'lib/features/settings/presentation/screens/settings_screen.dart',
       );
-      helpSrc = source('lib/features/help/presentation/screens/help_screen.dart');
       productsSrc = source(
         'lib/features/products/presentation/providers/products_provider.dart',
       );
@@ -233,15 +239,23 @@ void main() {
       expect(settingsSrc.contains('clearAllDataAdmin'), isTrue);
     });
 
-    test('help keeps export sections and drops license sections (R9)', () {
-      expect(helpSrc.toLowerCase().contains('licen'), isFalse,
-          reason: 'R7: license sections and tips must be gone');
-      expect(helpSrc.contains('Exportaciones'), isTrue,
-          reason: 'R9: export help must stay');
-      expect(helpSrc.contains('📂 Exportaciones'), isTrue,
-          reason: 'R9: the export section itself must survive intact');
-      expect(helpSrc.contains('Contacto Soporte'), isTrue,
-          reason: 'non-license sections stay in place');
+    test('help screen is gone with the help feature (Phase 4)', () {
+      expect(
+        FileSystemEntity.typeSync(
+          'lib/features/help',
+          followLinks: false,
+        ),
+        FileSystemEntityType.notFound,
+        reason: 'simplificar-hamburguesa Phase 4 deletes the help feature',
+      );
+      expect(
+        FileSystemEntity.typeSync(
+          'lib/features/exports',
+          followLinks: false,
+        ),
+        FileSystemEntityType.notFound,
+        reason: 'simplificar-hamburguesa Phase 4 deletes the exports feature',
+      );
     });
 
     test('products provider has no plan-based product limits (R7)', () {
