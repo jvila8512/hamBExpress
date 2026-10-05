@@ -6,9 +6,11 @@ import 'package:intl/intl.dart';
 import 'package:etecsa/config/theme/app_colors.dart';
 import 'package:etecsa/config/theme/widgets/status_badge.dart';
 import 'package:etecsa/config/theme/widgets/ticket_card.dart';
+import 'package:etecsa/features/clients/presentation/providers/client_provider.dart';
 import 'package:etecsa/features/orders/domain/entities/restaurant_order.dart';
 import 'package:etecsa/features/orders/domain/entities/order_state.dart';
 import 'package:etecsa/features/orders/presentation/providers/order_provider.dart';
+import 'package:etecsa/features/orders/presentation/widgets/order_row_actions.dart';
 import 'package:etecsa/features/shared/widgets/side_menu.dart';
 
 // ---------------------------------------------------------------------------
@@ -37,6 +39,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _searchController = TextEditingController();
   List<RestaurantOrder> _allOrders = [];
+
+  /// `clienteId` → teléfono (`RestaurantClients.telefono`), resuelto en cada
+  /// carga para las acciones SMS/llamada de la fila.
+  Map<String, String> _cellByClientId = const {};
   bool _isLoading = true;
   String? _error;
 
@@ -65,9 +71,11 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     try {
       final repo = ref.read(orderRepositoryProvider);
       final orders = await repo.getAllOrders();
+      final cells = await _loadClientCells();
       if (mounted) {
         setState(() {
           _allOrders = orders;
+          _cellByClientId = cells;
           _isLoading = false;
         });
       }
@@ -77,6 +85,36 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
           _error = e.toString();
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  /// `clienteId` → teléfono para las acciones de fila. Best-effort: si la
+  /// lectura falla las acciones quedan deshabilitadas (celda vacía) sin
+  /// romper la carga del historial.
+  Future<Map<String, String>> _loadClientCells() async {
+    try {
+      final clients =
+          await ref.read(clientRepositoryProvider).getAllClients();
+      return {for (final client in clients) client.id: client.telefono};
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  /// Avanza el estado del pedido (`pedido` → `confirmado` → `recogido`) y
+  /// recarga el historial. Una transición rechazada no toca lo almacenado.
+  Future<void> _advanceState(
+      RestaurantOrder order, OrderState next) async {
+    try {
+      final repo = ref.read(orderRepositoryProvider);
+      await repo.updateOrderState(order.id, next);
+      if (mounted) await _loadOrders();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo actualizar: $e')),
+        );
       }
     }
   }
@@ -560,6 +598,16 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: colors.textSecondary)),
             ),
+
+          // Row actions: SMS / llamada / botón de estado (spec: Order Row
+          // Actions). `recogido` es terminal: tocarlo no cambia el estado.
+          const Divider(height: 1),
+          const SizedBox(height: 6),
+          OrderRowActions(
+            order: order,
+            clientCell: _cellByClientId[order.clienteId] ?? '',
+            onAdvance: (next) => _advanceState(order, next),
+          ),
         ],
       ),
     );
