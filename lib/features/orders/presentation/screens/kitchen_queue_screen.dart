@@ -81,9 +81,9 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
     final repo = ref.read(orderRepositoryProvider);
     try {
       final results = await Future.wait([
-        repo.getOrdersByState(OrderState.registrado),
-        repo.getOrdersByState(OrderState.enCocina),
-        repo.getOrdersByState(OrderState.hecho),
+        repo.getOrdersByState(OrderState.pedido),
+        repo.getOrdersByState(OrderState.confirmado),
+        repo.getOrdersByState(OrderState.recogido),
       ]);
       if (!mounted) return;
       setState(() {
@@ -104,13 +104,13 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
 
   // ── Actions ────────────────────────────────────────────────────────
 
-  /// "Recibido": confirma pedido, pasa a [OrderState.enCocina].
+  /// "Recibido": confirma pedido, pasa a [OrderState.confirmado].
   Future<void> _onRecibido(String orderId) async {
     setState(() => _acknowledging.add(orderId));
     try {
       await ref.read(orderProvider.notifier).updateState(
             orderId,
-            OrderState.enCocina,
+            OrderState.confirmado,
           );
       await _loadOrders();
     } catch (e) {
@@ -124,13 +124,13 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
     }
   }
 
-  /// "Marcar hecho": pasa a [OrderState.hecho] (envía HEC SMS automático).
+  /// "Marcar hecho": pasa a [OrderState.recogido] (envía ENT SMS automático).
   Future<void> _onMarcarHecho(String orderId) async {
     setState(() => _markingDone.add(orderId));
     try {
       await ref.read(orderProvider.notifier).updateState(
             orderId,
-            OrderState.hecho,
+            OrderState.recogido,
           );
       await _loadOrders();
     } catch (e) {
@@ -502,20 +502,6 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        if (order.mesaId != null) ...[
-          const SizedBox(width: 12),
-          Icon(Icons.table_restaurant,
-              size: 14, color: AppColors.darkTextSecondary),
-          const SizedBox(width: 4),
-          Text(
-            'Mesa ${order.mesaId}',
-            style: GoogleFonts.dmSans(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppColors.darkTextSecondary,
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -704,9 +690,7 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
                   color: AppColors.forBrightness(Brightness.dark).success),
               const SizedBox(width: 6),
               Text(
-                order.tipoPedido == 'DOMICILIO'
-                    ? 'Esperando Domicilio'
-                    : 'Esperando Mesero',
+                'Esperando Domicilio',
                 style: GoogleFonts.dmSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,

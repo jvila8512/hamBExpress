@@ -7,7 +7,6 @@ import 'package:etecsa/core/database/app_database.dart' hide RestaurantOrder;
 import 'package:etecsa/core/database/database_provider.dart';
 import 'package:etecsa/features/daily_close/domain/daily_close_totals.dart';
 import 'package:etecsa/features/orders/domain/entities/restaurant_order.dart';
-import 'package:etecsa/features/orders/domain/entities/order_state.dart';
 import 'package:etecsa/features/orders/presentation/providers/order_provider.dart';
 
 // ---------------------------------------------------------------------------
@@ -319,19 +318,10 @@ class DailyCloseNotifier extends Notifier<DailyCloseState> {
       double productionCost = 0;
       final productQty = <String, int>{};
       final productAmount = <String, double>{};
+      // El modelo de tres estados no tiene cancelados: el indicador queda
+      // en 0 / vacío hasta su eliminación en fase 4.
       int cancelledOrders = 0;
       final cancellationReasons = <String, int>{};
-
-      for (final order in todayOrders) {
-        // Cancelled orders (indicador aparte, lista completa)
-        if (order.estado == OrderState.cancelado) {
-          cancelledOrders++;
-          final reason =
-              order.motivoCancelacion ?? 'Sin motivo';
-          cancellationReasons[reason] =
-              (cancellationReasons[reason] ?? 0) + 1;
-        }
-      }
 
       final salesOrders = todayOrders.where(
         (o) => validSaleStates.contains(o.estado),

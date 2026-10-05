@@ -19,8 +19,8 @@ Work units → PRs: U1 schema→PR1; U2 orders core+row actions→PR2; U3 deleti
 
 ## Phase 2: Orders Core
 
-- [ ] 2.1 RED: `order_state_test.dart` — valid `pedido→confirmado→recogido`, invalid/terminal rejected, unknown→pedido (order·Three-State).
-- [ ] 2.2 GREEN: `order_state.dart` enum + `canTransitionTo`; `restaurant_order.dart` +`fechaPedido`, drop tipoPedido/mesaId/metodoPago/motivoCancelacion/sms*/canalOrigen/horaSolicitada (order·Day Field).
+- [x] 2.1 RED: `order_state_test.dart` — valid `pedido→confirmado→recogido`, invalid/terminal rejected, unknown→pedido (order·Three-State).
+- [x] 2.2 GREEN: `order_state.dart` enum + `canTransitionTo`; `restaurant_order.dart` +`fechaPedido`, drop tipoPedido/mesaId/metodoPago/motivoCancelacion/sms*/canalOrigen/horaSolicitada (order·Day Field).
 - [ ] 2.3 RED→GREEN: new `order_id_test.dart` then `order_id.dart` `buildOrderId` A/V, originSeq=1, dailySeq (order·ID Format).
 - [ ] 2.4 RED: `order_datasource_test.dart` — fechaPedido write, rejected transition unchanged, unknown→pedido (order·Three-State/Day Field).
 - [ ] 2.5 GREEN: `order_datasource.dart` + `order_repository(_impl).dart` — validated `updateOrderState`, day queries/write, drop `markSms*`.

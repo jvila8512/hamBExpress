@@ -104,10 +104,9 @@ class _DeliveryListScreenState extends ConsumerState<DeliveryListScreen> {
     final isLoading = notifier.isLoading;
     final error = notifier.error;
 
-    // Filtrar pedidos DOMICILIO en estado enCamino, ordenar por más antiguo
+    // Filtrar pedidos confirmados (listos para entrega), ordenar por más antiguo
     final deliveryOrders = allOrders
-        .where((o) =>
-            o.tipoPedido == 'DOMICILIO' && o.estado == OrderState.enCamino)
+        .where((o) => o.estado == OrderState.confirmado)
         .toList()
       ..sort((a, b) {
         final aTime = a.fechaCreacion ?? DateTime.now();
@@ -465,8 +464,9 @@ class _DeliveryListScreenState extends ConsumerState<DeliveryListScreen> {
   // ─── DELIVER DIALOG ───────────────────────────────────────────
 
   /// Muestra un diálogo para seleccionar el método de cobro y confirmar
-  /// la entrega. Al confirmar actualiza el `metodoPago` de la orden y
-  /// cambia el estado a `entregado` (lo que dispara el SMS ENT).
+  /// la entrega. Al confirmar cambia el estado a `recogido` (lo que
+  /// dispara el SMS ENT). El método de cobro es solo informativo en esta
+  /// fase (la entidad ya no lo persiste; se elimina en fase 4).
   Future<void> _showDeliverDialog(
       RestaurantOrder order, RestaurantClient? client) async {
     final result = await showDialog<String>(
@@ -549,15 +549,10 @@ class _DeliveryListScreenState extends ConsumerState<DeliveryListScreen> {
 
     if (result != null && mounted) {
       try {
-        // 1. Actualizar método de pago en BD
-        await ref
-            .read(orderRepositoryProvider)
-            .updateOrder(order.copyWith(metodoPago: result));
-
-        // 2. Cambiar estado a entregado (dispara SMS ENT)
+        // Cambiar estado a recogido (dispara SMS ENT)
         await ref
             .read(orderProvider.notifier)
-            .updateState(order.id, OrderState.entregado);
+            .updateState(order.id, OrderState.recogido);
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

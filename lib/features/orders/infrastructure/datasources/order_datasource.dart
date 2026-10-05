@@ -22,18 +22,13 @@ class OrderDatasource {
     await _db.into(_db.restaurantOrders).insert(
       RestaurantOrdersCompanion.insert(
         id: order.id,
-        tipoPedido: order.tipoPedido,
+        // Legacy NOT NULL column; the domain no longer models order types.
+        tipoPedido: '',
         clienteId: order.clienteId,
-        mesaId: Value<String?>(order.mesaId),
         estado: order.estado.name,
-        canalOrigen: Value<String?>(order.canalOrigen),
-        horaSolicitada: Value<String?>(order.horaSolicitada),
-        metodoPago: Value<String?>(order.metodoPago),
         montoTotal: Value(order.montoTotal),
         creadoPorUsuarioId: order.creadoPorUsuarioId,
-        smsEnviado: Value(order.smsEnviado),
-        smsConfirmado: Value(order.smsConfirmado),
-        intentosReenvio: Value(order.intentosReenvio),
+        fechaPedido: Value(order.fechaPedido),
       ),
     );
 
@@ -150,15 +145,10 @@ class OrderDatasource {
     await (_db.update(_db.restaurantOrders)
           ..where((o) => o.id.equals(order.id)))
         .write(RestaurantOrdersCompanion(
-          tipoPedido: Value(order.tipoPedido),
           clienteId: Value(order.clienteId),
-          mesaId: Value<String?>(order.mesaId),
           estado: Value(order.estado.name),
-          canalOrigen: Value<String?>(order.canalOrigen),
-          horaSolicitada: Value<String?>(order.horaSolicitada),
-          metodoPago: Value<String?>(order.metodoPago),
           montoTotal: Value(order.montoTotal),
-          motivoCancelacion: Value<String?>(order.motivoCancelacion),
+          fechaPedido: Value(order.fechaPedido),
         ));
   }
 
@@ -203,32 +193,24 @@ class OrderDatasource {
   ) {
     return domain.RestaurantOrder(
       id: row.id,
-      tipoPedido: row.tipoPedido,
       clienteId: row.clienteId,
-      mesaId: row.mesaId,
       estado: _parseState(row.estado),
-      canalOrigen: row.canalOrigen,
-      horaSolicitada: row.horaSolicitada,
-      metodoPago: row.metodoPago,
       montoTotal: row.montoTotal,
       creadoPorUsuarioId: row.creadoPorUsuarioId,
+      fechaPedido: row.fechaPedido,
       fechaCreacion: row.fechaCreacion,
       items: items.map((i) => domain.OrderItem(
         code: i.productoCodigo,
         qty: i.cantidad.toInt(),
         price: i.precioUnitario,
       )).toList(),
-      motivoCancelacion: row.motivoCancelacion,
-      smsEnviado: row.smsEnviado,
-      smsConfirmado: row.smsConfirmado,
-      intentosReenvio: row.intentosReenvio,
     );
   }
 
   OrderState _parseState(String state) {
     return OrderState.values.firstWhere(
       (s) => s.name == state,
-      orElse: () => OrderState.registrado,
+      orElse: () => OrderState.pedido,
     );
   }
 }

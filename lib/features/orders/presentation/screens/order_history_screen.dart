@@ -468,7 +468,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
             ],
           ),
 
-          // Date + type
+          // Date
           if (order.fechaCreacion != null) ...[
             const SizedBox(height: 2),
             Row(
@@ -479,15 +479,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                 Text(
                   DateFormat('dd/MM/yy HH:mm')
                       .format(order.fechaCreacion!),
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: colors.textSecondary),
-                ),
-                const SizedBox(width: 12),
-                Icon(Icons.delivery_dining,
-                    size: 14, color: colors.textSecondary),
-                const SizedBox(width: 4),
-                Text(
-                  order.tipoPedido,
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: colors.textSecondary),
                 ),

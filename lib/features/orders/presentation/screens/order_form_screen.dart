@@ -275,12 +275,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
     final order = RestaurantOrder(
       id: orderId,
-      tipoPedido: 'DOMICILIO',
       clienteId: _selectedClient!.id,
-      estado: OrderState.registrado,
-      canalOrigen: 'REDES',
-      horaSolicitada:
-          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+      estado: OrderState.pedido,
       montoTotal: _total,
       creadoPorUsuarioId: ref.read(authProvider).user?.id ?? '',
       fechaCreacion: now,

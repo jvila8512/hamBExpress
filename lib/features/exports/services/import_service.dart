@@ -145,12 +145,9 @@ class ImportService {
 
         final order = order_domain.RestaurantOrder(
           id: orderId,
-          tipoPedido: orderMap['tipoPedido']?.toString() ?? 'DOMICILIO',
           clienteId: orderMap['clienteId']?.toString() ?? '',
           estado: _parseState(orderMap['estado']?.toString()),
-          canalOrigen: orderMap['canalOrigen']?.toString(),
-          horaSolicitada: orderMap['horaSolicitada']?.toString(),
-          metodoPago: orderMap['metodoPago']?.toString(),
+          fechaPedido: orderMap['fechaPedido']?.toString(),
           montoTotal: (orderMap['montoTotal'] as num?)?.toDouble() ?? 0.0,
           creadoPorUsuarioId:
               orderMap['creadoPorUsuarioId']?.toString() ?? 'import',
@@ -158,7 +155,6 @@ class ImportService {
               ? DateTime.tryParse(orderMap['fechaCreacion'].toString())
               : null,
           items: items,
-          motivoCancelacion: orderMap['motivoCancelacion']?.toString(),
         );
 
         await _orderDatasource.createOrder(order);
@@ -211,10 +207,10 @@ class ImportService {
   }
 
   OrderState _parseState(String? state) {
-    if (state == null) return OrderState.registrado;
+    if (state == null) return OrderState.pedido;
     return OrderState.values.firstWhere(
       (s) => s.name == state,
-      orElse: () => OrderState.registrado,
+      orElse: () => OrderState.pedido,
     );
   }
 }

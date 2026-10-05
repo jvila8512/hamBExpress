@@ -72,11 +72,10 @@ class _FakeSmsService extends SmsService {
 // Helpers
 // ---------------------------------------------------------------------------
 
-RestaurantOrder _sampleOrder() => const RestaurantOrder(
+RestaurantOrder _sampleOrder() => RestaurantOrder(
       id: 'R1-0101-001',
-      tipoPedido: 'DOMICILIO',
       clienteId: 'CLI-1',
-      estado: OrderState.registrado,
+      estado: OrderState.pedido,
       creadoPorUsuarioId: 'u1',
       items: [OrderItem(code: 'H1', qty: 2, price: 100)],
     );

@@ -16,15 +16,12 @@ import 'package:etecsa/features/sms/infrastructure/services/sms_service.dart';
 
 /// Estados en los que un pedido de hoy sin SMS enviado sigue pendiente.
 ///
-/// PED se envía al crear (registrado); mientras el pedido siga en flujo
-/// de cocina/reparto sin `smsEnviado`, se ofrece reenvío. Terminales
-/// (entregado, pagado, cerrado, cancelado) y mesa ya entregada nunca
-/// son pendientes.
+/// PED se envía al crear; mientras el pedido siga en flujo de cocina/
+/// reparto sin envío confirmado, se ofrece reenvío. El terminal
+/// (recogido) nunca es pendiente.
 const Set<OrderState> smsPendingStates = {
-  OrderState.registrado,
-  OrderState.enCocina,
-  OrderState.hecho,
-  OrderState.enCamino,
+  OrderState.pedido,
+  OrderState.confirmado,
 };
 
 /// Returns `true` when orders in [state] still await their PED SMS.
@@ -67,7 +64,7 @@ class OrderNotifier extends Notifier<OrderState> {
 
   @override
   OrderState build() {
-    return OrderState.registrado;
+    return OrderState.pedido;
   }
 
   List<RestaurantOrder> get orders => _orders;
@@ -76,16 +73,13 @@ class OrderNotifier extends Notifier<OrderState> {
 
   /// Whether the PED SMS for [orderId] is still pending.
   ///
-  /// La entidad (estado persistido en BD) manda cuando el pedido está en
-  /// la lista local; el set en memoria queda como caché para ids aún no
-  /// cargados. Solo pedidos de hoy en estados no-terminales sin
-  /// `smsEnviado` cuentan como pendientes.
+  /// El set en memoria (`_smsPendingIds`, repoblado en create/resend/load)
+  /// es la autoridad; el estado agrega la poda de terminales.
   bool isSmsPending(String orderId) {
+    if (!_smsPendingIds.contains(orderId)) return false;
     final order = _orders.where((o) => o.id == orderId).firstOrNull;
-    if (order != null) {
-      return !order.smsEnviado && isSmsPendingState(order.estado);
-    }
-    return _smsPendingIds.contains(orderId);
+    if (order == null) return true;
+    return isSmsPendingState(order.estado);
   }
 
   /// Create a new order and send PED SMS.
@@ -122,8 +116,6 @@ class OrderNotifier extends Notifier<OrderState> {
       phone: '',
       address: '',
       items: order.items.map((i) => Item(code: i.code, qty: i.qty)).toList(),
-      time: order.horaSolicitada,
-      payment: order.metodoPago,
       amount: order.montoTotal,
     );
 
@@ -149,10 +141,7 @@ class OrderNotifier extends Notifier<OrderState> {
       _smsPendingIds.add(order.id);
     }
 
-    _orders = [
-      order.copyWith(smsEnviado: smsSent ? true : order.smsEnviado),
-      ..._orders
-    ];
+    _orders = [order, ..._orders];
     return smsSent;
   }
 
@@ -183,8 +172,6 @@ class OrderNotifier extends Notifier<OrderState> {
       phone: '',
       address: '',
       items: order.items.map((i) => Item(code: i.code, qty: i.qty)).toList(),
-      time: order.horaSolicitada,
-      payment: order.metodoPago,
       amount: order.montoTotal,
     );
 
@@ -207,15 +194,6 @@ class OrderNotifier extends Notifier<OrderState> {
         _error = 'Cocina did not confirm order #${order.id}';
       });
     }
-    _orders = _orders.map((o) {
-      if (o.id == orderId) {
-        return o.copyWith(
-          smsEnviado: smsSent ? true : o.smsEnviado,
-          intentosReenvio: o.intentosReenvio + 1,
-        );
-      }
-      return o;
-    }).toList();
     return smsSent;
   }
 
@@ -236,14 +214,11 @@ class OrderNotifier extends Notifier<OrderState> {
       // Send state-appropriate SMS
       String smsType;
       switch (newState) {
-        case OrderState.hecho:
+        case OrderState.confirmado:
           smsType = 'HEC';
           break;
-        case OrderState.entregado:
+        case OrderState.recogido:
           smsType = 'ENT';
-          break;
-        case OrderState.cancelado:
-          smsType = 'CAN';
           break;
         default:
           smsType = '';
@@ -269,9 +244,7 @@ class OrderNotifier extends Notifier<OrderState> {
   /// Load today's orders from the repository.
   ///
   /// Rehidrata el caché de SMS pendientes desde el estado persistido:
-  /// solo pedidos de hoy con `smsEnviado == false` y estado no-terminal
-  /// quedan marcados (los históricos viejos nunca se marcan porque esta
-  /// lista solo trae el día actual).
+  /// solo pedidos de hoy en estados no-terminales quedan marcados.
   Future<void> loadTodayOrders() async {
     _isLoading = true;
     _error = null;
@@ -281,7 +254,7 @@ class OrderNotifier extends Notifier<OrderState> {
       _smsPendingIds
         ..clear()
         ..addAll(_orders
-            .where((o) => !o.smsEnviado && isSmsPendingState(o.estado))
+            .where((o) => isSmsPendingState(o.estado))
             .map((o) => o.id));
     } catch (e) {
       _error = 'Error loading orders: $e';

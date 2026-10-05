@@ -29,61 +29,46 @@ class OrderItem {
   double get subtotal => qty * price;
 }
 
-/// Represents a restaurant order in the SMS ordering system.
+/// Represents a restaurant order in the day-based ordering model.
 ///
-/// Supports two flows:
-/// - **DOMICILIO**: registrado → enCocina → hecho → enCamino → entregado
-/// - **MESA**: enCocina → hecho → entregadoEnMesa → pagado → cerrado
+/// Single flow: **pedido → confirmado → recogido** (three-state machine).
+/// The business day [fechaPedido] (ISO calendar date) is separate from the
+/// creation timestamp [fechaCreacion] (spec: Order Day Field).
 class RestaurantOrder {
   final String id;
-  final String tipoPedido; // DOMICILIO | MESA
   final String clienteId;
-  final String? mesaId;
   final OrderState estado;
-  final String? canalOrigen;
-  final String? horaSolicitada;
-  final String? metodoPago;
   final double montoTotal;
   final String creadoPorUsuarioId;
+
+  /// Business day (`yyyy-MM-dd`), defaults to today.
+  final String fechaPedido;
   final DateTime? fechaCreacion;
   final List<OrderItem> items;
-  final String? motivoCancelacion;
-  final bool smsEnviado;
-  final bool smsConfirmado;
-  final int intentosReenvio;
 
-  const RestaurantOrder({
+  RestaurantOrder({
     required this.id,
-    required this.tipoPedido,
     required this.clienteId,
-    this.mesaId,
-    this.estado = OrderState.registrado,
-    this.canalOrigen,
-    this.horaSolicitada,
-    this.metodoPago,
+    this.estado = OrderState.pedido,
     this.montoTotal = 0.0,
     required this.creadoPorUsuarioId,
+    String? fechaPedido,
     this.fechaCreacion,
     this.items = const [],
-    this.motivoCancelacion,
-    this.smsEnviado = false,
-    this.smsConfirmado = false,
-    this.intentosReenvio = 0,
-  });
+  }) : fechaPedido = fechaPedido ?? _todayIso();
 
   /// Create from a JSON map (deserialized from API or storage).
+  ///
+  /// An unknown or legacy `estado` (e.g. `EN_COCINA`) maps to
+  /// [OrderState.pedido] (spec: Unknown or legacy state maps to pedido).
   factory RestaurantOrder.fromJson(Map<String, dynamic> json) {
     return RestaurantOrder(
       id: json['id']?.toString() ?? '',
-      tipoPedido: json['tipo_pedido']?.toString() ?? '',
       clienteId: json['cliente_id']?.toString() ?? '',
-      mesaId: json['mesa_id']?.toString(),
       estado: _parseState(json['estado']?.toString()),
-      canalOrigen: json['canal_origen']?.toString(),
-      horaSolicitada: json['hora_solicitada']?.toString(),
-      metodoPago: json['metodo_pago']?.toString(),
       montoTotal: (json['monto_total'] as num?)?.toDouble() ?? 0.0,
       creadoPorUsuarioId: json['creado_por_usuario_id']?.toString() ?? '',
+      fechaPedido: json['fecha_pedido']?.toString(),
       fechaCreacion: json['fecha_creacion'] != null
           ? DateTime.tryParse(json['fecha_creacion'].toString())
           : null,
@@ -91,81 +76,57 @@ class RestaurantOrder {
               ?.map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      motivoCancelacion: json['motivo_cancelacion']?.toString(),
-      smsEnviado: (json['sms_enviado'] ?? json['smsEnviado']) as bool? ?? false,
-      smsConfirmado:
-          (json['sms_confirmado'] ?? json['smsConfirmado']) as bool? ?? false,
-      intentosReenvio:
-          ((json['intentos_reenvio'] ?? json['intentosReenvio']) as num?)
-              ?.toInt() ??
-          0,
     );
   }
 
   /// Serialize to a JSON map.
   Map<String, dynamic> toJson() => {
     'id': id,
-    'tipo_pedido': tipoPedido,
     'cliente_id': clienteId,
-    if (mesaId != null) 'mesa_id': mesaId,
     'estado': estado.name,
-    if (canalOrigen != null) 'canal_origen': canalOrigen,
-    if (horaSolicitada != null) 'hora_solicitada': horaSolicitada,
-    if (metodoPago != null) 'metodo_pago': metodoPago,
     'monto_total': montoTotal,
     'creado_por_usuario_id': creadoPorUsuarioId,
-    if (fechaCreacion != null) 'fecha_creacion': fechaCreacion!.toIso8601String(),
+    'fecha_pedido': fechaPedido,
+    if (fechaCreacion != null)
+      'fecha_creacion': fechaCreacion!.toIso8601String(),
     'items': items.map((e) => e.toJson()).toList(),
-    if (motivoCancelacion != null) 'motivo_cancelacion': motivoCancelacion,
-    'sms_enviado': smsEnviado,
-    'sms_confirmado': smsConfirmado,
-    'intentos_reenvio': intentosReenvio,
   };
 
   /// Create a copy with updated fields.
   RestaurantOrder copyWith({
     String? id,
-    String? tipoPedido,
     String? clienteId,
-    String? mesaId,
     OrderState? estado,
-    String? canalOrigen,
-    String? horaSolicitada,
-    String? metodoPago,
     double? montoTotal,
     String? creadoPorUsuarioId,
+    String? fechaPedido,
     DateTime? fechaCreacion,
     List<OrderItem>? items,
-    String? motivoCancelacion,
-    bool? smsEnviado,
-    bool? smsConfirmado,
-    int? intentosReenvio,
   }) {
     return RestaurantOrder(
       id: id ?? this.id,
-      tipoPedido: tipoPedido ?? this.tipoPedido,
       clienteId: clienteId ?? this.clienteId,
-      mesaId: mesaId ?? this.mesaId,
       estado: estado ?? this.estado,
-      canalOrigen: canalOrigen ?? this.canalOrigen,
-      horaSolicitada: horaSolicitada ?? this.horaSolicitada,
-      metodoPago: metodoPago ?? this.metodoPago,
       montoTotal: montoTotal ?? this.montoTotal,
       creadoPorUsuarioId: creadoPorUsuarioId ?? this.creadoPorUsuarioId,
+      fechaPedido: fechaPedido ?? this.fechaPedido,
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,
       items: items ?? this.items,
-      motivoCancelacion: motivoCancelacion ?? this.motivoCancelacion,
-      smsEnviado: smsEnviado ?? this.smsEnviado,
-      smsConfirmado: smsConfirmado ?? this.smsConfirmado,
-      intentosReenvio: intentosReenvio ?? this.intentosReenvio,
     );
   }
 
+  static String _todayIso() {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+    return '${now.year}-$month-$day';
+  }
+
   static OrderState _parseState(String? state) {
-    if (state == null) return OrderState.registrado;
+    if (state == null) return OrderState.pedido;
     return OrderState.values.firstWhere(
       (s) => s.name == state,
-      orElse: () => OrderState.registrado,
+      orElse: () => OrderState.pedido,
     );
   }
 }

@@ -111,11 +111,10 @@ class _FakeContactRepository implements ContactRepository {
 // Helpers
 // ---------------------------------------------------------------------------
 
-RestaurantOrder _sampleOrder() => const RestaurantOrder(
+RestaurantOrder _sampleOrder() => RestaurantOrder(
       id: 'R1-0101-001',
-      tipoPedido: 'DOMICILIO',
       clienteId: 'CLI-1',
-      estado: OrderState.registrado,
+      estado: OrderState.pedido,
       creadoPorUsuarioId: 'u1',
       items: [OrderItem(code: 'H1', qty: 2, price: 100)],
     );
@@ -138,19 +137,13 @@ ProviderContainer _makeContainer(
 
 void main() {
   group('isSmsPendingState (función pura)', () {
-    test('registrado/enCocina/hecho/enCamino son pendientes', () {
-      expect(isSmsPendingState(OrderState.registrado), isTrue);
-      expect(isSmsPendingState(OrderState.enCocina), isTrue);
-      expect(isSmsPendingState(OrderState.hecho), isTrue);
-      expect(isSmsPendingState(OrderState.enCamino), isTrue);
+    test('pedido y confirmado son pendientes', () {
+      expect(isSmsPendingState(OrderState.pedido), isTrue);
+      expect(isSmsPendingState(OrderState.confirmado), isTrue);
     });
 
-    test('terminales y mesa-entregada NO son pendientes', () {
-      expect(isSmsPendingState(OrderState.entregado), isFalse);
-      expect(isSmsPendingState(OrderState.entregadoEnMesa), isFalse);
-      expect(isSmsPendingState(OrderState.pagado), isFalse);
-      expect(isSmsPendingState(OrderState.cerrado), isFalse);
-      expect(isSmsPendingState(OrderState.cancelado), isFalse);
+    test('recogido (terminal) NO es pendiente', () {
+      expect(isSmsPendingState(OrderState.recogido), isFalse);
     });
   });
 
@@ -244,8 +237,6 @@ void main() {
       expect(repo.smsStatusCalls.single.orderId, 'R1-0101-001');
       expect(repo.smsStatusCalls.single.enviado, isTrue);
       expect(notifier.isSmsPending('R1-0101-001'), isFalse);
-      expect(notifier.orders.single.intentosReenvio, 1);
-      expect(notifier.orders.single.smsEnviado, isTrue);
     });
 
     test('fallo → markSmsStatus(enviado:false) y mantiene pendiente',
@@ -265,12 +256,11 @@ void main() {
       expect(repo.smsStatusCalls, hasLength(1));
       expect(repo.smsStatusCalls.single.enviado, isFalse);
       expect(notifier.isSmsPending('R1-0101-001'), isTrue);
-      expect(notifier.orders.single.intentosReenvio, 1);
     });
   });
 
   group('OrderNotifier.loadTodayOrders rehidrata pendientes', () {
-    test('pedido de hoy no enviado y no-terminal → pendiente', () async {
+    test('pedido de hoy no-terminal → pendiente', () async {
       final repo = _FakeOrderRepository()
         ..todayOrders = [_sampleOrder()];
       final sms = _FakeSmsService();
@@ -283,24 +273,10 @@ void main() {
       expect(notifier.isSmsPending('R1-0101-001'), isTrue);
     });
 
-    test('pedido ya enviado → NO pendiente tras recargar', () async {
-      final repo = _FakeOrderRepository()
-        ..todayOrders = [_sampleOrder().copyWith(smsEnviado: true)];
-      final sms = _FakeSmsService();
-      final contacts = _FakeContactRepository();
-      final container = _makeContainer(repo, sms, contacts);
-      final notifier = container.read(orderProvider.notifier);
-
-      await notifier.loadTodayOrders();
-
-      expect(notifier.isSmsPending('R1-0101-001'), isFalse);
-    });
-
-    test('pedido no-terminal=false (entregado) sin SMS → NO pendiente',
-        () async {
+    test('recogido (terminal) → NO pendiente tras recargar', () async {
       final repo = _FakeOrderRepository()
         ..todayOrders = [
-          _sampleOrder().copyWith(estado: OrderState.entregado),
+          _sampleOrder().copyWith(estado: OrderState.recogido),
         ];
       final sms = _FakeSmsService();
       final contacts = _FakeContactRepository();

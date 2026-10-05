@@ -9,16 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-bool _isCash(String? method) {
-  final m = method?.toLowerCase();
-  return m == 'efectivo' || m == 'cash';
-}
-
-bool _isTransfer(String? method) {
-  final m = method?.toLowerCase();
-  return m == 'transferencia' || m == 'transfer';
-}
-
 /// Datos del home calculados desde el modelo nuevo (`restaurant_orders`).
 final homeDataProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final repo = ref.watch(orderRepositoryProvider);
@@ -28,38 +18,30 @@ final homeDataProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final todayOrders = await repo.getTodayOrders();
   final monthOrders = await repo.getOrdersSince(monthStart);
 
-  double salesToday = 0, cashToday = 0, transferToday = 0;
+  // El modelo de tres estados no modela método de pago: el desglose
+  // EF/TR queda en 0 (se elimina junto con la pantalla en fase 4).
+  double salesToday = 0;
   for (final o in todayOrders) {
     salesToday += o.montoTotal;
-    if (_isCash(o.metodoPago)) {
-      cashToday += o.montoTotal;
-    } else if (_isTransfer(o.metodoPago)) {
-      transferToday += o.montoTotal;
-    }
   }
 
-  double salesMonth = 0, cashMonth = 0, transferMonth = 0;
+  double salesMonth = 0;
   for (final o in monthOrders) {
     salesMonth += o.montoTotal;
-    if (_isCash(o.metodoPago)) {
-      cashMonth += o.montoTotal;
-    } else if (_isTransfer(o.metodoPago)) {
-      transferMonth += o.montoTotal;
-    }
   }
 
   return {
     'todayOrders': todayOrders,
     'todayCount': todayOrders.length,
     'pendingCount': todayOrders
-        .where((o) => o.estado == OrderState.registrado)
+        .where((o) => o.estado == OrderState.pedido)
         .length,
     'salesToday': salesToday,
-    'cashToday': cashToday,
-    'transferToday': transferToday,
+    'cashToday': 0.0,
+    'transferToday': 0.0,
     'salesMonth': salesMonth,
-    'cashMonth': cashMonth,
-    'transferMonth': transferMonth,
+    'cashMonth': 0.0,
+    'transferMonth': 0.0,
     'monthCount': monthOrders.length,
   };
 });
