@@ -33,6 +33,10 @@ class _FakeOrderRepository implements OrderRepository {
       created.where((o) => o.estado == state).toList();
 
   @override
+  Future<List<RestaurantOrder>> getOrdersByDay(String fechaIso) async =>
+      created.where((o) => o.fechaPedido == fechaIso).toList();
+
+  @override
   Future<List<RestaurantOrder>> getOrdersSince(DateTime from) async =>
       List.of(created);
 
@@ -47,13 +51,6 @@ class _FakeOrderRepository implements OrderRepository {
 
   @override
   Future<void> updateOrderState(String orderId, OrderState newState) async {}
-
-  @override
-  Future<void> markSmsStatus(String orderId,
-      {required bool enviado, int? intentos}) async {}
-
-  @override
-  Future<void> markSmsConfirmado(String orderId, bool confirmado) async {}
 }
 
 class _FakeSmsService extends SmsService {

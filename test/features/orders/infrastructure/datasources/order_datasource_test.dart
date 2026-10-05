@@ -117,8 +117,11 @@ void main() {
           );
 
       expect((await ds.getOrderById('L-1'))!.estado, OrderState.pedido);
-      final pending = await ds.getOrdersByState(OrderState.pedido);
-      expect(pending.map((o) => o.id), contains('L-1'));
+      final all = await ds.getAllOrders();
+      expect(
+        all.firstWhere((o) => o.id == 'L-1').estado,
+        OrderState.pedido,
+      );
     });
   });
 

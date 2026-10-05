@@ -6,7 +6,6 @@ import 'package:etecsa/features/contacts/presentation/providers/contact_provider
 import 'package:etecsa/features/orders/domain/entities/order_state.dart';
 import 'package:etecsa/features/orders/domain/entities/restaurant_order.dart';
 import 'package:etecsa/features/orders/domain/repositories/order_repository.dart';
-import 'package:etecsa/features/orders/infrastructure/datasources/order_datasource.dart';
 import 'package:etecsa/features/orders/presentation/providers/order_provider.dart';
 import 'package:etecsa/features/sms/infrastructure/services/sms_service.dart';
 
@@ -14,19 +13,9 @@ import 'package:etecsa/features/sms/infrastructure/services/sms_service.dart';
 // Fakes (hand-rolled, sin mocks externos)
 // ---------------------------------------------------------------------------
 
-class _SmsStatusCall {
-  final String orderId;
-  final bool enviado;
-  final int? intentos;
-  const _SmsStatusCall(this.orderId, this.enviado, this.intentos);
-}
-
 class _FakeOrderRepository implements OrderRepository {
   List<RestaurantOrder> todayOrders = [];
   final List<RestaurantOrder> created = [];
-  final List<_SmsStatusCall> smsStatusCalls = [];
-  final List<Map<String, Object>> confirmCalls = [];
-  bool throwOnMarkSmsStatus = false;
 
   @override
   Future<void> createOrder(RestaurantOrder order) async {
@@ -45,6 +34,10 @@ class _FakeOrderRepository implements OrderRepository {
       created.where((o) => o.estado == state).toList();
 
   @override
+  Future<List<RestaurantOrder>> getOrdersByDay(String fechaIso) async =>
+      created.where((o) => o.fechaPedido == fechaIso).toList();
+
+  @override
   Future<List<RestaurantOrder>> getOrdersSince(DateTime from) async =>
       List.of(created);
 
@@ -60,18 +53,6 @@ class _FakeOrderRepository implements OrderRepository {
 
   @override
   Future<void> updateOrderState(String orderId, OrderState newState) async {}
-
-  @override
-  Future<void> markSmsStatus(String orderId,
-      {required bool enviado, int? intentos}) async {
-    if (throwOnMarkSmsStatus) throw Exception('BD caída');
-    smsStatusCalls.add(_SmsStatusCall(orderId, enviado, intentos));
-  }
-
-  @override
-  Future<void> markSmsConfirmado(String orderId, bool confirmado) async {
-    confirmCalls.add({'orderId': orderId, 'confirmado': confirmado});
-  }
 }
 
 class _FakeSmsService extends SmsService {
@@ -144,118 +125,6 @@ void main() {
 
     test('recogido (terminal) NO es pendiente', () {
       expect(isSmsPendingState(OrderState.recogido), isFalse);
-    });
-  });
-
-  group('resolveNextRetryCount (función pura)', () {
-    test('sin override → incrementa en 1', () {
-      expect(resolveNextRetryCount(current: 0), 1);
-      expect(resolveNextRetryCount(current: 2), 3);
-    });
-
-    test('con override → lo setea tal cual', () {
-      expect(resolveNextRetryCount(current: 5, override: 0), 0);
-      expect(resolveNextRetryCount(current: 1, override: 7), 7);
-    });
-  });
-
-  group('OrderNotifier.createOrder persiste estado SMS', () {
-    test('sms-ok → markSmsStatus(enviado:true) y no queda pendiente',
-        () async {
-      final repo = _FakeOrderRepository();
-      final sms = _FakeSmsService()..result = true;
-      final contacts = _FakeContactRepository();
-      final container = _makeContainer(repo, sms, contacts);
-      final notifier = container.read(orderProvider.notifier);
-
-      final ok = await notifier.createOrder(
-        _sampleOrder(),
-        destinationPhone: '555-1234',
-      );
-
-      expect(ok, isTrue);
-      expect(repo.smsStatusCalls, hasLength(1));
-      expect(repo.smsStatusCalls.single.orderId, 'R1-0101-001');
-      expect(repo.smsStatusCalls.single.enviado, isTrue);
-      expect(notifier.isSmsPending('R1-0101-001'), isFalse);
-    });
-
-    test('sms-false → markSmsStatus(enviado:false) y queda pendiente',
-        () async {
-      final repo = _FakeOrderRepository();
-      final sms = _FakeSmsService()..result = false;
-      final contacts = _FakeContactRepository();
-      final container = _makeContainer(repo, sms, contacts);
-      final notifier = container.read(orderProvider.notifier);
-
-      final ok = await notifier.createOrder(
-        _sampleOrder(),
-        destinationPhone: '555-1234',
-      );
-
-      expect(ok, isFalse);
-      expect(repo.smsStatusCalls, hasLength(1));
-      expect(repo.smsStatusCalls.single.enviado, isFalse);
-      expect(notifier.isSmsPending('R1-0101-001'), isTrue);
-    });
-
-    test('si persistir falla, igual devuelve el resultado del SMS', () async {
-      final repo = _FakeOrderRepository()..throwOnMarkSmsStatus = true;
-      final sms = _FakeSmsService()..result = true;
-      final contacts = _FakeContactRepository();
-      final container = _makeContainer(repo, sms, contacts);
-      final notifier = container.read(orderProvider.notifier);
-
-      final ok = await notifier.createOrder(
-        _sampleOrder(),
-        destinationPhone: '555-1234',
-      );
-
-      expect(ok, isTrue);
-      expect(notifier.orders.map((o) => o.id), contains('R1-0101-001'));
-      expect(notifier.error, isNotNull);
-    });
-  });
-
-  group('OrderNotifier.resendSms persiste estado SMS', () {
-    test('ok → markSmsStatus(enviado:true) y limpia pendiente', () async {
-      final repo = _FakeOrderRepository();
-      final sms = _FakeSmsService()..result = false;
-      final contacts = _FakeContactRepository();
-      final container = _makeContainer(repo, sms, contacts);
-      final notifier = container.read(orderProvider.notifier);
-
-      await notifier.createOrder(_sampleOrder(), destinationPhone: '555-0');
-      expect(notifier.isSmsPending('R1-0101-001'), isTrue);
-      repo.smsStatusCalls.clear();
-
-      sms.result = true;
-      final ok = await notifier.resendSms('R1-0101-001');
-
-      expect(ok, isTrue);
-      expect(repo.smsStatusCalls, hasLength(1));
-      expect(repo.smsStatusCalls.single.orderId, 'R1-0101-001');
-      expect(repo.smsStatusCalls.single.enviado, isTrue);
-      expect(notifier.isSmsPending('R1-0101-001'), isFalse);
-    });
-
-    test('fallo → markSmsStatus(enviado:false) y mantiene pendiente',
-        () async {
-      final repo = _FakeOrderRepository();
-      final sms = _FakeSmsService()..result = false;
-      final contacts = _FakeContactRepository();
-      final container = _makeContainer(repo, sms, contacts);
-      final notifier = container.read(orderProvider.notifier);
-
-      await notifier.createOrder(_sampleOrder(), destinationPhone: '555-0');
-      repo.smsStatusCalls.clear();
-
-      final ok = await notifier.resendSms('R1-0101-001');
-
-      expect(ok, isFalse);
-      expect(repo.smsStatusCalls, hasLength(1));
-      expect(repo.smsStatusCalls.single.enviado, isFalse);
-      expect(notifier.isSmsPending('R1-0101-001'), isTrue);
     });
   });
 
