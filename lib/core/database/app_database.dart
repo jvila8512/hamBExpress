@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
@@ -432,6 +433,8 @@ class RestaurantOrders extends Table {
   TextColumn get metodoPago => text().nullable()();
   RealColumn get montoTotal => real().withDefault(const Constant(0.0))();
   TextColumn get creadoPorUsuarioId => text().references(Users, #id)();
+  // Business day (SQL fecha_pedido): NOT NULL DEFAULT '', Dart writes today.
+  TextColumn get fechaPedido => text().withDefault(const Constant(''))();
   DateTimeColumn get fechaCreacion => dateTime().withDefault(currentDateAndTime)();
   BoolColumn get smsEnviado => boolean().withDefault(const Constant(false))();
   BoolColumn get smsConfirmado => boolean().withDefault(const Constant(false))();
@@ -450,59 +453,6 @@ class RestaurantOrderItems extends Table {
   RealColumn get cantidad => real()();
   RealColumn get precioUnitario => real()();
   RealColumn get subtotal => real()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-/// --- TRUSTED CONTACTS (SMS origin whitelist) ---
-class TrustedContacts extends Table {
-  TextColumn get id => text()();
-  TextColumn get rol => text()();
-  TextColumn get usuarioId => text().references(Users, #id)();
-  TextColumn get numeroTelefono => text()();
-  BoolColumn get activo => boolean().withDefault(const Constant(true))();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-/// --- SMS MESSAGES (audit log) ---
-class SmsMessages extends Table {
-  TextColumn get id => text()();
-  TextColumn get orderId => text().references(RestaurantOrders, #id)();
-  TextColumn get tipo => text()(); // PED, ACK, HEC, ENT, CAN
-  TextColumn get payload => text()();
-  TextColumn get origen => text()();
-  TextColumn get destino => text()();
-  TextColumn get estado => text()(); // sent, delivered, failed
-  DateTimeColumn get timestamp => dateTime().withDefault(currentDateAndTime)();
-  IntColumn get intentos => integer().withDefault(const Constant(0))();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-/// --- RESTAURANT TABLES (mesas del local) ---
-class RestaurantTables extends Table {
-  TextColumn get id => text()();
-  IntColumn get numero => integer().unique()();
-  IntColumn get capacidad => integer()();
-  TextColumn get estado => text()(); // libre / ocupada
-  TextColumn get ubicacion => text().nullable()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-/// --- ORDER STATE HISTORY (auditoría de cambios de estado) ---
-class OrderStateHistory extends Table {
-  TextColumn get id => text()();
-  TextColumn get orderId => text().references(RestaurantOrders, #id)();
-  TextColumn get estado => text()();
-  DateTimeColumn get timestamp => dateTime()();
-  TextColumn get usuarioId => text().references(Users, #id).nullable()();
-  BoolColumn get viaSms => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -534,53 +484,11 @@ class DailySummaries extends Table {
   RealColumn get distribucionYurdenis => real().withDefault(const Constant(0.0))();
   RealColumn get distribucionMildrey => real().withDefault(const Constant(0.0))();
   RealColumn get distribucionNegocio => real().withDefault(const Constant(0.0))();
+  // Top clients of the day, cached as JSON by the day-close upsert.
+  TextColumn get topClientesJson => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {fecha};
-}
-
-/// --- DAILY EXPENSES (gastos del día) ---
-/// Corresponde a la tabla `gastos` del PRD.
-class DailyExpenses extends Table {
-  TextColumn get id => text()();
-  TextColumn get concepto => text()(); // concepto/gasto
-  RealColumn get monto => real()();
-  DateTimeColumn get fecha => dateTime()();
-  TextColumn get registradoPorUsuarioId => text().references(Users, #id).nullable()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-/// --- DAILY PURCHASES (compras/insumos del día) ---
-/// Corresponde a la tabla `compras` del PRD.
-class DailyPurchases extends Table {
-  TextColumn get id => text()();
-  TextColumn get insumo => text()(); // nombre del insumo
-  TextColumn get proveedor => text().nullable()();
-  RealColumn get cantidad => real()();
-  RealColumn get costo => real()();
-  DateTimeColumn get fecha => dateTime()();
-  TextColumn get registradoPorUsuarioId => text().references(Users, #id).nullable()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-/// --- DAILY PAYROLL (nómina del día) ---
-/// Corresponde a la tabla `nomina` del PRD.
-class DailyPayroll extends Table {
-  TextColumn get id => text()();
-  TextColumn get usuarioId => text().references(Users, #id)();
-  DateTimeColumn get fecha => dateTime()();
-  BoolColumn get trabajo => boolean()(); // si trabajó o no
-  TextColumn get jornada => text().nullable()(); // ej. "completa", "medio dia"
-  RealColumn get salarioBase => real()();
-  RealColumn get estimulo => real().withDefault(const Constant(0.0))();
-  RealColumn get total => real()(); // salarioBase + estimulo
-
-  @override
-  Set<Column> get primaryKey => {id};
 }
 
 /// ================================================================
@@ -615,15 +523,8 @@ class DailyPayroll extends Table {
     RestaurantClients,
     RestaurantOrders,
     RestaurantOrderItems,
-    TrustedContacts,
-    SmsMessages,
-    RestaurantTables,
-    OrderStateHistory,
     PriceHistory,
     DailySummaries,
-    DailyExpenses,
-    DailyPurchases,
-    DailyPayroll,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -644,7 +545,7 @@ class AppDatabase extends _$AppDatabase {
 
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -660,6 +561,8 @@ class AppDatabase extends _$AppDatabase {
       }
       // Seed food categories for new installs
       await _seedFoodCategories();
+      // Seed a default admin only when the Users table is empty
+      await _seedAdminIfEmpty();
     },
     onUpgrade: (Migrator m, int from, int to) async {
       if (from < 2) {
@@ -783,7 +686,10 @@ class AppDatabase extends _$AppDatabase {
             await customStatement('DROP TABLE IF EXISTS $table');
           } catch (_) {}
         }
-        // 2. Create 12 new restaurant tables
+        // 2. Create the restaurant tables that survive into v16. The seven
+        //    tables of deleted features (mesas, SMS log, auditoría, gastos,
+        //    compras, nómina, contactos) are intentionally not created: v16
+        //    drops them, and nothing references them anymore.
         try {
           await m.createTable(restaurantClients);
         } catch (_) {}
@@ -794,31 +700,10 @@ class AppDatabase extends _$AppDatabase {
           await m.createTable(restaurantOrderItems);
         } catch (_) {}
         try {
-          await m.createTable(restaurantTables);
-        } catch (_) {}
-        try {
-          await m.createTable(orderStateHistory);
-        } catch (_) {}
-        try {
           await m.createTable(priceHistory);
         } catch (_) {}
         try {
-          await m.createTable(trustedContacts);
-        } catch (_) {}
-        try {
-          await m.createTable(smsMessages);
-        } catch (_) {}
-        try {
           await m.createTable(dailySummaries);
-        } catch (_) {}
-        try {
-          await m.createTable(dailyExpenses);
-        } catch (_) {}
-        try {
-          await m.createTable(dailyPurchases);
-        } catch (_) {}
-        try {
-          await m.createTable(dailyPayroll);
         } catch (_) {}
         // 3. Add codigoCorto column to products
         try {
@@ -837,6 +722,36 @@ class AppDatabase extends _$AppDatabase {
             await customStatement('DROP TABLE IF EXISTS $table');
           } catch (_) {}
         }
+      }
+      if (from < 16) {
+        // v16: two-role, day-based order model.
+        // 1. Add the business-day columns (NOT NULL DEFAULT ''; Dart writes
+        //    today on insert — SQLite rejects a NOT NULL add without default).
+        try {
+          await m.addColumn(restaurantOrders, restaurantOrders.fechaPedido);
+        } catch (_) {}
+        try {
+          await m.addColumn(dailySummaries, dailySummaries.topClientesJson);
+        } catch (_) {}
+        // 2. Truncate legacy order data: the 9-state model has no valid
+        //    mapping onto pedido -> confirmado -> recogido.
+        await customStatement('DELETE FROM restaurant_orders');
+        await customStatement('DELETE FROM restaurant_order_items');
+        // 3. Drop the tables backing deleted features, plus the unused POS
+        //    order tables (row counts must be zero after the upgrade).
+        await customStatement('DROP TABLE IF EXISTS trusted_contacts');
+        await customStatement('DROP TABLE IF EXISTS sms_messages');
+        await customStatement('DROP TABLE IF EXISTS order_state_history');
+        await customStatement('DROP TABLE IF EXISTS restaurant_tables');
+        await customStatement('DROP TABLE IF EXISTS daily_expenses');
+        await customStatement('DROP TABLE IF EXISTS daily_purchases');
+        await customStatement('DROP TABLE IF EXISTS daily_payroll');
+        await customStatement('DROP TABLE IF EXISTS orders');
+        await customStatement('DROP TABLE IF EXISTS order_items');
+        // 4. Remap every legacy role to {admin, vendedor} (logged, idempotent).
+        await _remapRolesToTwoRoles();
+        // 5. Seed a default admin only when the Users table is empty.
+        await _seedAdminIfEmpty();
       }
     },
   );
@@ -906,6 +821,44 @@ class AppDatabase extends _$AppDatabase {
     );
     await customStatement(
       "UPDATE users SET role = 'cocina' WHERE role = 'almacenero'",
+    );
+  }
+
+  /// v16: map every legacy role onto {admin, vendedor} in one idempotent,
+  /// logged statement. The mapping is total over the 8 legacy values and the
+  /// ELSE branch guarantees no stored role outside {admin, vendedor} remains.
+  Future<void> _remapRolesToTwoRoles() async {
+    await customStatement(
+      "UPDATE users SET role = CASE role "
+      "WHEN 'super_admin' THEN 'admin' "
+      "WHEN 'admin' THEN 'admin' "
+      "WHEN 'redes' THEN 'vendedor' "
+      "WHEN 'cocina' THEN 'vendedor' "
+      "WHEN 'mesero' THEN 'vendedor' "
+      "WHEN 'domicilio' THEN 'vendedor' "
+      "WHEN 'almacenero' THEN 'vendedor' "
+      "WHEN 'vendedor' THEN 'vendedor' "
+      "ELSE 'vendedor' END",
+    );
+    debugPrint('v16 role remap: 8 legacy roles -> {admin, vendedor}');
+  }
+
+  /// v16: seed one default admin when — and only when — Users is empty.
+  /// Never runs against an existing install, so it cannot overwrite or reset
+  /// any user's credentials.
+  Future<void> _seedAdminIfEmpty() async {
+    final existing = await (select(users)..where((u) => u.id.isNotNull())).get();
+    if (existing.isNotEmpty) return;
+    debugPrint('v16 seed admin: Users table is empty, creating default admin');
+    await into(users).insert(
+      UsersCompanion.insert(
+        id: 'admin-default',
+        username: 'admin',
+        fullName: 'Administrador',
+        passwordHash: _hashPassword('Nathy*070721'),
+        role: 'admin',
+        active: const Value(true),
+      ),
     );
   }
 

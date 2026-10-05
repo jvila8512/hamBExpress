@@ -1,81 +1,30 @@
-import 'package:drift/drift.dart';
 import 'package:etecsa/core/database/app_database.dart';
 import 'package:etecsa/features/contacts/domain/entities/trusted_contact.dart' as domain;
 
 /// Drift datasource for trusted contacts.
+///
+/// Schema v16 dropped the `trusted_contacts` table: the whitelist existed
+/// only as the origin filter for incoming SMS, and SMS reception is gone.
+/// With no backing table every operation resolves to an empty result or a
+/// no-op until the contacts feature is deleted with the rest of the removed
+/// capabilities (the trusted-contacts spec removes it in its entirety).
 class ContactDatasource {
-  final AppDatabase _db;
+  /// The database parameter is kept so the existing wiring keeps compiling
+  /// until the feature is removed; the datasource no longer reads from it.
+  ContactDatasource(AppDatabase db);
 
-  ContactDatasource(this._db);
+  Future<void> createContact(domain.TrustedContact contact) async {}
 
-  Future<void> createContact(domain.TrustedContact contact) async {
-    await _db.into(_db.trustedContacts).insert(
-      TrustedContactsCompanion.insert(
-        id: contact.id,
-        rol: contact.rol,
-        usuarioId: contact.usuarioId,
-        numeroTelefono: contact.numeroTelefono,
-        activo: Value(contact.activo),
-      ),
-    );
-  }
+  Future<domain.TrustedContact?> getContactById(String id) async => null;
 
-  Future<domain.TrustedContact?> getContactById(String id) async {
-    final row = await (_db.select(_db.trustedContacts)
-          ..where((c) => c.id.equals(id)))
-        .getSingleOrNull();
-    if (row == null) return null;
-    return _mapRow(row);
-  }
+  Future<List<domain.TrustedContact>> getContacts({String? rol}) async =>
+      const [];
 
-  Future<List<domain.TrustedContact>> getContacts({String? rol}) async {
-    final query = _db.select(_db.trustedContacts);
-    if (rol != null) {
-      query.where((c) => c.rol.equals(rol));
-    }
-    final rows = await query.get();
-    return rows.map(_mapRow).toList();
-  }
+  Future<List<String>> getActivePhonesForRole(String rol) async => const [];
 
-  Future<List<String>> getActivePhonesForRole(String rol) async {
-    final rows = await (_db.select(_db.trustedContacts)
-          ..where((c) => c.rol.equals(rol) & c.activo.equals(true)))
-        .get();
-    return rows.map((r) => r.numeroTelefono).toList();
-  }
+  Future<void> updateContact(domain.TrustedContact contact) async {}
 
-  Future<void> updateContact(domain.TrustedContact contact) async {
-    await (_db.update(_db.trustedContacts)
-          ..where((c) => c.id.equals(contact.id)))
-        .write(TrustedContactsCompanion(
-          rol: Value(contact.rol),
-          usuarioId: Value(contact.usuarioId),
-          numeroTelefono: Value(contact.numeroTelefono),
-          activo: Value(contact.activo),
-        ));
-  }
+  Future<void> toggleContactActive(String id, bool active) async {}
 
-  Future<void> toggleContactActive(String id, bool active) async {
-    await (_db.update(_db.trustedContacts)
-          ..where((c) => c.id.equals(id)))
-        .write(TrustedContactsCompanion(
-          activo: Value(active),
-        ));
-  }
-
-  Future<void> deleteContact(String id) async {
-    await (_db.delete(_db.trustedContacts)
-          ..where((c) => c.id.equals(id)))
-        .go();
-  }
-
-  domain.TrustedContact _mapRow(TrustedContact row) {
-    return domain.TrustedContact(
-      id: row.id,
-      rol: row.rol,
-      usuarioId: row.usuarioId,
-      numeroTelefono: row.numeroTelefono,
-      activo: row.activo,
-    );
-  }
+  Future<void> deleteContact(String id) async {}
 }

@@ -336,8 +336,8 @@ void main() {
           reason: 'R6: absent from the @DriftDatabase table list');
       expect(dbSrc.contains('class Clientes extends Table'), isTrue,
           reason: 'the clients table is not part of the licensing domain');
-      expect(dbSrc.contains('int get schemaVersion => 15'), isTrue,
-          reason: 'R6: schema version bumped to 15');
+      expect(dbSrc.contains('int get schemaVersion => 16'), isTrue,
+          reason: 'R6: schema version bumped to 16');
 
       // The v15 migration iterates _licenseDropTables, so assert the guard
       // clause, the list it feeds, and the DROP statement.

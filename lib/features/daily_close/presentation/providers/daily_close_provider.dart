@@ -1,8 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:drift/drift.dart';
 
 import 'package:etecsa/core/database/app_database.dart' hide RestaurantOrder;
@@ -26,6 +24,70 @@ class ProductSalesEntry {
     required this.productCode,
     required this.quantity,
     required this.amount,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// v16 bridge models
+// ---------------------------------------------------------------------------
+//
+// Schema v16 dropped `daily_expenses`, `daily_purchases`, `daily_payroll` and
+// `order_state_history`: the manual blocks they backed are REMOVED by the
+// daily-close spec, and the migration deletes their rows and tables. These
+// local read-only shapes keep the current tabs compiling against empty data
+// until the blocks are reworked out of the screen.
+
+class DailyExpense {
+  final String id;
+  final String concepto;
+  final double monto;
+
+  const DailyExpense({
+    required this.id,
+    required this.concepto,
+    required this.monto,
+  });
+}
+
+class DailyPurchase {
+  final String id;
+  final String insumo;
+  final String? proveedor;
+  final double cantidad;
+  final double costo;
+
+  const DailyPurchase({
+    required this.id,
+    required this.insumo,
+    required this.proveedor,
+    required this.cantidad,
+    required this.costo,
+  });
+}
+
+class DailyPayrollData {
+  final String usuarioId;
+  final bool trabajo;
+  final String? jornada;
+  final double total;
+
+  const DailyPayrollData({
+    required this.usuarioId,
+    required this.trabajo,
+    required this.jornada,
+    required this.total,
+  });
+}
+
+class OrderStateHistoryData {
+  final String orderId;
+  final String estado;
+  final DateTime timestamp;
+
+  const OrderStateHistoryData({
+    required this.orderId,
+    required this.estado,
+    required this.timestamp,
   });
 }
 
@@ -201,7 +263,6 @@ final dailyCloseProvider =
 
 class DailyCloseNotifier extends Notifier<DailyCloseState> {
   AppDatabase get _db => AppDatabase.instance;
-  final _uuid = const Uuid();
 
   @override
   DailyCloseState build() {
@@ -444,89 +505,54 @@ class DailyCloseNotifier extends Notifier<DailyCloseState> {
   // ─── Expense CRUD ──────────────────────────────────────────────────
 
   /// Add a daily expense.
+  ///
+  /// Schema v16 dropped `daily_expenses` (the Gastos block is removed by the
+  /// daily-close spec), so the write is a reload-only no-op until the tab is
+  /// reworked out of the screen.
   Future<void> addExpense({
     required String concepto,
     required double monto,
   }) async {
-    try {
-      final storage = const FlutterSecureStorage();
-      final userId = await storage.read(key: 'user_id');
-
-      await _db.into(_db.dailyExpenses).insert(
-        DailyExpensesCompanion.insert(
-          id: _uuid.v4(),
-          concepto: concepto,
-          monto: monto,
-          fecha: DateTime.now(),
-          registradoPorUsuarioId: Value(userId),
-        ),
-      );
-      await loadAll();
-    } catch (e) {
-      state = state.copyWith(error: 'Error al agregar gasto: $e');
-    }
+    await loadAll();
   }
 
   /// Delete a daily expense.
+  ///
+  /// See [addExpense]: the backing table no longer exists in schema v16.
   Future<void> deleteExpense(String id) async {
-    try {
-      await (_db.delete(_db.dailyExpenses)
-            ..where((e) => e.id.equals(id)))
-          .go();
-      await loadAll();
-    } catch (e) {
-      state = state.copyWith(error: 'Error al eliminar gasto: $e');
-    }
+    await loadAll();
   }
 
   // ─── Purchase CRUD ─────────────────────────────────────────────────
 
   /// Add a daily purchase (insumo).
+  ///
+  /// Schema v16 dropped `daily_purchases` (the Compras block is removed by
+  /// the daily-close spec), so the write is a reload-only no-op until the
+  /// tab is reworked out of the screen.
   Future<void> addPurchase({
     required String insumo,
     String? proveedor,
     required double cantidad,
     required double costo,
   }) async {
-    try {
-      final storage = const FlutterSecureStorage();
-      final userId = await storage.read(key: 'user_id');
-
-      await _db.into(_db.dailyPurchases).insert(
-        DailyPurchasesCompanion.insert(
-          id: _uuid.v4(),
-          insumo: insumo,
-          proveedor: Value(proveedor),
-          cantidad: cantidad,
-          costo: costo,
-          fecha: DateTime.now(),
-          registradoPorUsuarioId: Value(userId),
-        ),
-      );
-      await loadAll();
-    } catch (e) {
-      state = state.copyWith(error: 'Error al agregar compra: $e');
-    }
+    await loadAll();
   }
 
   /// Delete a daily purchase.
+  ///
+  /// See [addPurchase]: the backing table no longer exists in schema v16.
   Future<void> deletePurchase(String id) async {
-    try {
-      await (_db.delete(_db.dailyPurchases)
-            ..where((p) => p.id.equals(id)))
-          .go();
-      await loadAll();
-    } catch (e) {
-      state = state.copyWith(error: 'Error al eliminar compra: $e');
-    }
+    await loadAll();
   }
 
   // ─── Payroll CRUD ─────────────────────────────────────────────────
 
   /// Upsert a payroll entry for a worker on today's date.
   ///
-  /// If an entry already exists for [usuarioId] today, it is updated.
-  /// Otherwise a new entry is created.
+  /// Schema v16 dropped `daily_payroll` (the Nómina block is removed by the
+  /// daily-close spec), so the write is a reload-only no-op until the tab is
+  /// reworked out of the screen.
   Future<void> upsertPayroll({
     required String usuarioId,
     required bool trabajo,
@@ -534,48 +560,9 @@ class DailyCloseNotifier extends Notifier<DailyCloseState> {
     required double salarioBase,
     double estimulo = 0,
   }) async {
-    try {
-      final today = DateTime.now();
-      final startOfDay = DateTime(today.year, today.month, today.day);
-
-      final existing = await (_db.select(_db.dailyPayroll)
-            ..where((p) =>
-                p.usuarioId.equals(usuarioId) &
-                p.fecha.equals(startOfDay)))
-          .getSingleOrNull();
-
-      final total = trabajo ? salarioBase + estimulo : 0.0;
-
-      if (existing != null) {
-        await (_db.update(_db.dailyPayroll)
-              ..where((p) => p.id.equals(existing.id)))
-            .write(DailyPayrollCompanion(
-              trabajo: Value(trabajo),
-              jornada: Value(jornada),
-              salarioBase: Value(salarioBase),
-              estimulo: Value(estimulo),
-              total: Value(total),
-            ));
-      } else {
-        await _db.into(_db.dailyPayroll).insert(
-          DailyPayrollCompanion.insert(
-            id: _uuid.v4(),
-            usuarioId: usuarioId,
-            fecha: startOfDay,
-            trabajo: trabajo,
-            jornada: Value(jornada),
-            salarioBase: salarioBase,
-            estimulo: Value(estimulo),
-            total: total,
-          ),
-        );
-      }
-
-      await loadAll();
-    } catch (e) {
-      state = state.copyWith(error: 'Error al guardar nómina: $e');
-    }
+    await loadAll();
   }
+
 
   // ─── Helpers ──────────────────────────────────────────────────────
 
@@ -623,43 +610,17 @@ class DailyCloseNotifier extends Notifier<DailyCloseState> {
     return _allProducts;
   }
 
-  Future<List<DailyExpense>> _getTodayDailyExpenses() async {
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
+  /// Schema v16 dropped `daily_expenses`; no rows can exist, so the tab
+  /// resolves to its empty state until the block is reworked out.
+  Future<List<DailyExpense>> _getTodayDailyExpenses() async => const [];
 
-    return (_db.select(_db.dailyExpenses)
-          ..where((e) =>
-              e.fecha.isBiggerOrEqualValue(startOfDay) &
-              e.fecha.isSmallerThanValue(endOfDay))
-          ..orderBy([(e) => OrderingTerm.desc(e.fecha)]))
-        .get();
-  }
+  /// Schema v16 dropped `daily_purchases`; no rows can exist, so the tab
+  /// resolves to its empty state until the block is reworked out.
+  Future<List<DailyPurchase>> _getTodayDailyPurchases() async => const [];
 
-  Future<List<DailyPurchase>> _getTodayDailyPurchases() async {
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-
-    return (_db.select(_db.dailyPurchases)
-          ..where((p) =>
-              p.fecha.isBiggerOrEqualValue(startOfDay) &
-              p.fecha.isSmallerThanValue(endOfDay))
-          ..orderBy([(p) => OrderingTerm.desc(p.fecha)]))
-        .get();
-  }
-
-  Future<List<DailyPayrollData>> _getTodayPayroll() async {
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-
-    return (_db.select(_db.dailyPayroll)
-          ..where((p) =>
-              p.fecha.isBiggerOrEqualValue(startOfDay) &
-              p.fecha.isSmallerThanValue(endOfDay)))
-        .get();
-  }
+  /// Schema v16 dropped `daily_payroll`; no rows can exist, so the tab
+  /// resolves to its empty state until the block is reworked out.
+  Future<List<DailyPayrollData>> _getTodayPayroll() async => const [];
 
   Future<List<User>> _getWorkers() async {
     return (_db.select(_db.users)
@@ -668,12 +629,10 @@ class DailyCloseNotifier extends Notifier<DailyCloseState> {
         .get();
   }
 
+  /// Schema v16 dropped `order_state_history`; with no audit rows the
+  /// kitchen/delivery indicators resolve to zero.
   Future<List<OrderStateHistoryData>> _getTodayStateHistory(
     List<String> orderIds,
-  ) async {
-    if (orderIds.isEmpty) return [];
-    return (_db.select(_db.orderStateHistory)
-          ..where((h) => h.orderId.isIn(orderIds)))
-        .get();
-  }
+  ) async =>
+      const [];
 }

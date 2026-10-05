@@ -14069,6 +14069,18 @@ class $RestaurantOrdersTable extends RestaurantOrders
           'REFERENCES users (id)',
         ),
       );
+  static const VerificationMeta _fechaPedidoMeta = const VerificationMeta(
+    'fechaPedido',
+  );
+  @override
+  late final GeneratedColumn<String> fechaPedido = GeneratedColumn<String>(
+    'fecha_pedido',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _fechaCreacionMeta = const VerificationMeta(
     'fechaCreacion',
   );
@@ -14148,6 +14160,7 @@ class $RestaurantOrdersTable extends RestaurantOrders
     metodoPago,
     montoTotal,
     creadoPorUsuarioId,
+    fechaPedido,
     fechaCreacion,
     smsEnviado,
     smsConfirmado,
@@ -14242,6 +14255,15 @@ class $RestaurantOrdersTable extends RestaurantOrders
     } else if (isInserting) {
       context.missing(_creadoPorUsuarioIdMeta);
     }
+    if (data.containsKey('fecha_pedido')) {
+      context.handle(
+        _fechaPedidoMeta,
+        fechaPedido.isAcceptableOrUnknown(
+          data['fecha_pedido']!,
+          _fechaPedidoMeta,
+        ),
+      );
+    }
     if (data.containsKey('fecha_creacion')) {
       context.handle(
         _fechaCreacionMeta,
@@ -14333,6 +14355,10 @@ class $RestaurantOrdersTable extends RestaurantOrders
         DriftSqlType.string,
         data['${effectivePrefix}creado_por_usuario_id'],
       )!,
+      fechaPedido: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fecha_pedido'],
+      )!,
       fechaCreacion: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}fecha_creacion'],
@@ -14373,6 +14399,7 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
   final String? metodoPago;
   final double montoTotal;
   final String creadoPorUsuarioId;
+  final String fechaPedido;
   final DateTime fechaCreacion;
   final bool smsEnviado;
   final bool smsConfirmado;
@@ -14389,6 +14416,7 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
     this.metodoPago,
     required this.montoTotal,
     required this.creadoPorUsuarioId,
+    required this.fechaPedido,
     required this.fechaCreacion,
     required this.smsEnviado,
     required this.smsConfirmado,
@@ -14416,6 +14444,7 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
     }
     map['monto_total'] = Variable<double>(montoTotal);
     map['creado_por_usuario_id'] = Variable<String>(creadoPorUsuarioId);
+    map['fecha_pedido'] = Variable<String>(fechaPedido);
     map['fecha_creacion'] = Variable<DateTime>(fechaCreacion);
     map['sms_enviado'] = Variable<bool>(smsEnviado);
     map['sms_confirmado'] = Variable<bool>(smsConfirmado);
@@ -14446,6 +14475,7 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
           : Value(metodoPago),
       montoTotal: Value(montoTotal),
       creadoPorUsuarioId: Value(creadoPorUsuarioId),
+      fechaPedido: Value(fechaPedido),
       fechaCreacion: Value(fechaCreacion),
       smsEnviado: Value(smsEnviado),
       smsConfirmado: Value(smsConfirmado),
@@ -14474,6 +14504,7 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
       creadoPorUsuarioId: serializer.fromJson<String>(
         json['creadoPorUsuarioId'],
       ),
+      fechaPedido: serializer.fromJson<String>(json['fechaPedido']),
       fechaCreacion: serializer.fromJson<DateTime>(json['fechaCreacion']),
       smsEnviado: serializer.fromJson<bool>(json['smsEnviado']),
       smsConfirmado: serializer.fromJson<bool>(json['smsConfirmado']),
@@ -14497,6 +14528,7 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
       'metodoPago': serializer.toJson<String?>(metodoPago),
       'montoTotal': serializer.toJson<double>(montoTotal),
       'creadoPorUsuarioId': serializer.toJson<String>(creadoPorUsuarioId),
+      'fechaPedido': serializer.toJson<String>(fechaPedido),
       'fechaCreacion': serializer.toJson<DateTime>(fechaCreacion),
       'smsEnviado': serializer.toJson<bool>(smsEnviado),
       'smsConfirmado': serializer.toJson<bool>(smsConfirmado),
@@ -14516,6 +14548,7 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
     Value<String?> metodoPago = const Value.absent(),
     double? montoTotal,
     String? creadoPorUsuarioId,
+    String? fechaPedido,
     DateTime? fechaCreacion,
     bool? smsEnviado,
     bool? smsConfirmado,
@@ -14534,6 +14567,7 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
     metodoPago: metodoPago.present ? metodoPago.value : this.metodoPago,
     montoTotal: montoTotal ?? this.montoTotal,
     creadoPorUsuarioId: creadoPorUsuarioId ?? this.creadoPorUsuarioId,
+    fechaPedido: fechaPedido ?? this.fechaPedido,
     fechaCreacion: fechaCreacion ?? this.fechaCreacion,
     smsEnviado: smsEnviado ?? this.smsEnviado,
     smsConfirmado: smsConfirmado ?? this.smsConfirmado,
@@ -14566,6 +14600,9 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
       creadoPorUsuarioId: data.creadoPorUsuarioId.present
           ? data.creadoPorUsuarioId.value
           : this.creadoPorUsuarioId,
+      fechaPedido: data.fechaPedido.present
+          ? data.fechaPedido.value
+          : this.fechaPedido,
       fechaCreacion: data.fechaCreacion.present
           ? data.fechaCreacion.value
           : this.fechaCreacion,
@@ -14597,6 +14634,7 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
           ..write('metodoPago: $metodoPago, ')
           ..write('montoTotal: $montoTotal, ')
           ..write('creadoPorUsuarioId: $creadoPorUsuarioId, ')
+          ..write('fechaPedido: $fechaPedido, ')
           ..write('fechaCreacion: $fechaCreacion, ')
           ..write('smsEnviado: $smsEnviado, ')
           ..write('smsConfirmado: $smsConfirmado, ')
@@ -14618,6 +14656,7 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
     metodoPago,
     montoTotal,
     creadoPorUsuarioId,
+    fechaPedido,
     fechaCreacion,
     smsEnviado,
     smsConfirmado,
@@ -14638,6 +14677,7 @@ class RestaurantOrder extends DataClass implements Insertable<RestaurantOrder> {
           other.metodoPago == this.metodoPago &&
           other.montoTotal == this.montoTotal &&
           other.creadoPorUsuarioId == this.creadoPorUsuarioId &&
+          other.fechaPedido == this.fechaPedido &&
           other.fechaCreacion == this.fechaCreacion &&
           other.smsEnviado == this.smsEnviado &&
           other.smsConfirmado == this.smsConfirmado &&
@@ -14656,6 +14696,7 @@ class RestaurantOrdersCompanion extends UpdateCompanion<RestaurantOrder> {
   final Value<String?> metodoPago;
   final Value<double> montoTotal;
   final Value<String> creadoPorUsuarioId;
+  final Value<String> fechaPedido;
   final Value<DateTime> fechaCreacion;
   final Value<bool> smsEnviado;
   final Value<bool> smsConfirmado;
@@ -14673,6 +14714,7 @@ class RestaurantOrdersCompanion extends UpdateCompanion<RestaurantOrder> {
     this.metodoPago = const Value.absent(),
     this.montoTotal = const Value.absent(),
     this.creadoPorUsuarioId = const Value.absent(),
+    this.fechaPedido = const Value.absent(),
     this.fechaCreacion = const Value.absent(),
     this.smsEnviado = const Value.absent(),
     this.smsConfirmado = const Value.absent(),
@@ -14691,6 +14733,7 @@ class RestaurantOrdersCompanion extends UpdateCompanion<RestaurantOrder> {
     this.metodoPago = const Value.absent(),
     this.montoTotal = const Value.absent(),
     required String creadoPorUsuarioId,
+    this.fechaPedido = const Value.absent(),
     this.fechaCreacion = const Value.absent(),
     this.smsEnviado = const Value.absent(),
     this.smsConfirmado = const Value.absent(),
@@ -14713,6 +14756,7 @@ class RestaurantOrdersCompanion extends UpdateCompanion<RestaurantOrder> {
     Expression<String>? metodoPago,
     Expression<double>? montoTotal,
     Expression<String>? creadoPorUsuarioId,
+    Expression<String>? fechaPedido,
     Expression<DateTime>? fechaCreacion,
     Expression<bool>? smsEnviado,
     Expression<bool>? smsConfirmado,
@@ -14732,6 +14776,7 @@ class RestaurantOrdersCompanion extends UpdateCompanion<RestaurantOrder> {
       if (montoTotal != null) 'monto_total': montoTotal,
       if (creadoPorUsuarioId != null)
         'creado_por_usuario_id': creadoPorUsuarioId,
+      if (fechaPedido != null) 'fecha_pedido': fechaPedido,
       if (fechaCreacion != null) 'fecha_creacion': fechaCreacion,
       if (smsEnviado != null) 'sms_enviado': smsEnviado,
       if (smsConfirmado != null) 'sms_confirmado': smsConfirmado,
@@ -14752,6 +14797,7 @@ class RestaurantOrdersCompanion extends UpdateCompanion<RestaurantOrder> {
     Value<String?>? metodoPago,
     Value<double>? montoTotal,
     Value<String>? creadoPorUsuarioId,
+    Value<String>? fechaPedido,
     Value<DateTime>? fechaCreacion,
     Value<bool>? smsEnviado,
     Value<bool>? smsConfirmado,
@@ -14770,6 +14816,7 @@ class RestaurantOrdersCompanion extends UpdateCompanion<RestaurantOrder> {
       metodoPago: metodoPago ?? this.metodoPago,
       montoTotal: montoTotal ?? this.montoTotal,
       creadoPorUsuarioId: creadoPorUsuarioId ?? this.creadoPorUsuarioId,
+      fechaPedido: fechaPedido ?? this.fechaPedido,
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,
       smsEnviado: smsEnviado ?? this.smsEnviado,
       smsConfirmado: smsConfirmado ?? this.smsConfirmado,
@@ -14812,6 +14859,9 @@ class RestaurantOrdersCompanion extends UpdateCompanion<RestaurantOrder> {
     if (creadoPorUsuarioId.present) {
       map['creado_por_usuario_id'] = Variable<String>(creadoPorUsuarioId.value);
     }
+    if (fechaPedido.present) {
+      map['fecha_pedido'] = Variable<String>(fechaPedido.value);
+    }
     if (fechaCreacion.present) {
       map['fecha_creacion'] = Variable<DateTime>(fechaCreacion.value);
     }
@@ -14846,6 +14896,7 @@ class RestaurantOrdersCompanion extends UpdateCompanion<RestaurantOrder> {
           ..write('metodoPago: $metodoPago, ')
           ..write('montoTotal: $montoTotal, ')
           ..write('creadoPorUsuarioId: $creadoPorUsuarioId, ')
+          ..write('fechaPedido: $fechaPedido, ')
           ..write('fechaCreacion: $fechaCreacion, ')
           ..write('smsEnviado: $smsEnviado, ')
           ..write('smsConfirmado: $smsConfirmado, ')
@@ -15282,1702 +15333,6 @@ class RestaurantOrderItemsCompanion
           ..write('cantidad: $cantidad, ')
           ..write('precioUnitario: $precioUnitario, ')
           ..write('subtotal: $subtotal, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $TrustedContactsTable extends TrustedContacts
-    with TableInfo<$TrustedContactsTable, TrustedContact> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $TrustedContactsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _rolMeta = const VerificationMeta('rol');
-  @override
-  late final GeneratedColumn<String> rol = GeneratedColumn<String>(
-    'rol',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _usuarioIdMeta = const VerificationMeta(
-    'usuarioId',
-  );
-  @override
-  late final GeneratedColumn<String> usuarioId = GeneratedColumn<String>(
-    'usuario_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES users (id)',
-    ),
-  );
-  static const VerificationMeta _numeroTelefonoMeta = const VerificationMeta(
-    'numeroTelefono',
-  );
-  @override
-  late final GeneratedColumn<String> numeroTelefono = GeneratedColumn<String>(
-    'numero_telefono',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _activoMeta = const VerificationMeta('activo');
-  @override
-  late final GeneratedColumn<bool> activo = GeneratedColumn<bool>(
-    'activo',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("activo" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    rol,
-    usuarioId,
-    numeroTelefono,
-    activo,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'trusted_contacts';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<TrustedContact> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('rol')) {
-      context.handle(
-        _rolMeta,
-        rol.isAcceptableOrUnknown(data['rol']!, _rolMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_rolMeta);
-    }
-    if (data.containsKey('usuario_id')) {
-      context.handle(
-        _usuarioIdMeta,
-        usuarioId.isAcceptableOrUnknown(data['usuario_id']!, _usuarioIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_usuarioIdMeta);
-    }
-    if (data.containsKey('numero_telefono')) {
-      context.handle(
-        _numeroTelefonoMeta,
-        numeroTelefono.isAcceptableOrUnknown(
-          data['numero_telefono']!,
-          _numeroTelefonoMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_numeroTelefonoMeta);
-    }
-    if (data.containsKey('activo')) {
-      context.handle(
-        _activoMeta,
-        activo.isAcceptableOrUnknown(data['activo']!, _activoMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  TrustedContact map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return TrustedContact(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      rol: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}rol'],
-      )!,
-      usuarioId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}usuario_id'],
-      )!,
-      numeroTelefono: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}numero_telefono'],
-      )!,
-      activo: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}activo'],
-      )!,
-    );
-  }
-
-  @override
-  $TrustedContactsTable createAlias(String alias) {
-    return $TrustedContactsTable(attachedDatabase, alias);
-  }
-}
-
-class TrustedContact extends DataClass implements Insertable<TrustedContact> {
-  final String id;
-  final String rol;
-  final String usuarioId;
-  final String numeroTelefono;
-  final bool activo;
-  const TrustedContact({
-    required this.id,
-    required this.rol,
-    required this.usuarioId,
-    required this.numeroTelefono,
-    required this.activo,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['rol'] = Variable<String>(rol);
-    map['usuario_id'] = Variable<String>(usuarioId);
-    map['numero_telefono'] = Variable<String>(numeroTelefono);
-    map['activo'] = Variable<bool>(activo);
-    return map;
-  }
-
-  TrustedContactsCompanion toCompanion(bool nullToAbsent) {
-    return TrustedContactsCompanion(
-      id: Value(id),
-      rol: Value(rol),
-      usuarioId: Value(usuarioId),
-      numeroTelefono: Value(numeroTelefono),
-      activo: Value(activo),
-    );
-  }
-
-  factory TrustedContact.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return TrustedContact(
-      id: serializer.fromJson<String>(json['id']),
-      rol: serializer.fromJson<String>(json['rol']),
-      usuarioId: serializer.fromJson<String>(json['usuarioId']),
-      numeroTelefono: serializer.fromJson<String>(json['numeroTelefono']),
-      activo: serializer.fromJson<bool>(json['activo']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'rol': serializer.toJson<String>(rol),
-      'usuarioId': serializer.toJson<String>(usuarioId),
-      'numeroTelefono': serializer.toJson<String>(numeroTelefono),
-      'activo': serializer.toJson<bool>(activo),
-    };
-  }
-
-  TrustedContact copyWith({
-    String? id,
-    String? rol,
-    String? usuarioId,
-    String? numeroTelefono,
-    bool? activo,
-  }) => TrustedContact(
-    id: id ?? this.id,
-    rol: rol ?? this.rol,
-    usuarioId: usuarioId ?? this.usuarioId,
-    numeroTelefono: numeroTelefono ?? this.numeroTelefono,
-    activo: activo ?? this.activo,
-  );
-  TrustedContact copyWithCompanion(TrustedContactsCompanion data) {
-    return TrustedContact(
-      id: data.id.present ? data.id.value : this.id,
-      rol: data.rol.present ? data.rol.value : this.rol,
-      usuarioId: data.usuarioId.present ? data.usuarioId.value : this.usuarioId,
-      numeroTelefono: data.numeroTelefono.present
-          ? data.numeroTelefono.value
-          : this.numeroTelefono,
-      activo: data.activo.present ? data.activo.value : this.activo,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('TrustedContact(')
-          ..write('id: $id, ')
-          ..write('rol: $rol, ')
-          ..write('usuarioId: $usuarioId, ')
-          ..write('numeroTelefono: $numeroTelefono, ')
-          ..write('activo: $activo')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(id, rol, usuarioId, numeroTelefono, activo);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is TrustedContact &&
-          other.id == this.id &&
-          other.rol == this.rol &&
-          other.usuarioId == this.usuarioId &&
-          other.numeroTelefono == this.numeroTelefono &&
-          other.activo == this.activo);
-}
-
-class TrustedContactsCompanion extends UpdateCompanion<TrustedContact> {
-  final Value<String> id;
-  final Value<String> rol;
-  final Value<String> usuarioId;
-  final Value<String> numeroTelefono;
-  final Value<bool> activo;
-  final Value<int> rowid;
-  const TrustedContactsCompanion({
-    this.id = const Value.absent(),
-    this.rol = const Value.absent(),
-    this.usuarioId = const Value.absent(),
-    this.numeroTelefono = const Value.absent(),
-    this.activo = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  TrustedContactsCompanion.insert({
-    required String id,
-    required String rol,
-    required String usuarioId,
-    required String numeroTelefono,
-    this.activo = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       rol = Value(rol),
-       usuarioId = Value(usuarioId),
-       numeroTelefono = Value(numeroTelefono);
-  static Insertable<TrustedContact> custom({
-    Expression<String>? id,
-    Expression<String>? rol,
-    Expression<String>? usuarioId,
-    Expression<String>? numeroTelefono,
-    Expression<bool>? activo,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (rol != null) 'rol': rol,
-      if (usuarioId != null) 'usuario_id': usuarioId,
-      if (numeroTelefono != null) 'numero_telefono': numeroTelefono,
-      if (activo != null) 'activo': activo,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  TrustedContactsCompanion copyWith({
-    Value<String>? id,
-    Value<String>? rol,
-    Value<String>? usuarioId,
-    Value<String>? numeroTelefono,
-    Value<bool>? activo,
-    Value<int>? rowid,
-  }) {
-    return TrustedContactsCompanion(
-      id: id ?? this.id,
-      rol: rol ?? this.rol,
-      usuarioId: usuarioId ?? this.usuarioId,
-      numeroTelefono: numeroTelefono ?? this.numeroTelefono,
-      activo: activo ?? this.activo,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (rol.present) {
-      map['rol'] = Variable<String>(rol.value);
-    }
-    if (usuarioId.present) {
-      map['usuario_id'] = Variable<String>(usuarioId.value);
-    }
-    if (numeroTelefono.present) {
-      map['numero_telefono'] = Variable<String>(numeroTelefono.value);
-    }
-    if (activo.present) {
-      map['activo'] = Variable<bool>(activo.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('TrustedContactsCompanion(')
-          ..write('id: $id, ')
-          ..write('rol: $rol, ')
-          ..write('usuarioId: $usuarioId, ')
-          ..write('numeroTelefono: $numeroTelefono, ')
-          ..write('activo: $activo, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $SmsMessagesTable extends SmsMessages
-    with TableInfo<$SmsMessagesTable, SmsMessage> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $SmsMessagesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _orderIdMeta = const VerificationMeta(
-    'orderId',
-  );
-  @override
-  late final GeneratedColumn<String> orderId = GeneratedColumn<String>(
-    'order_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES restaurant_orders (id)',
-    ),
-  );
-  static const VerificationMeta _tipoMeta = const VerificationMeta('tipo');
-  @override
-  late final GeneratedColumn<String> tipo = GeneratedColumn<String>(
-    'tipo',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _payloadMeta = const VerificationMeta(
-    'payload',
-  );
-  @override
-  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
-    'payload',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _origenMeta = const VerificationMeta('origen');
-  @override
-  late final GeneratedColumn<String> origen = GeneratedColumn<String>(
-    'origen',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _destinoMeta = const VerificationMeta(
-    'destino',
-  );
-  @override
-  late final GeneratedColumn<String> destino = GeneratedColumn<String>(
-    'destino',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _estadoMeta = const VerificationMeta('estado');
-  @override
-  late final GeneratedColumn<String> estado = GeneratedColumn<String>(
-    'estado',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _timestampMeta = const VerificationMeta(
-    'timestamp',
-  );
-  @override
-  late final GeneratedColumn<DateTime> timestamp = GeneratedColumn<DateTime>(
-    'timestamp',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    defaultValue: currentDateAndTime,
-  );
-  static const VerificationMeta _intentosMeta = const VerificationMeta(
-    'intentos',
-  );
-  @override
-  late final GeneratedColumn<int> intentos = GeneratedColumn<int>(
-    'intentos',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    orderId,
-    tipo,
-    payload,
-    origen,
-    destino,
-    estado,
-    timestamp,
-    intentos,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'sms_messages';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<SmsMessage> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('order_id')) {
-      context.handle(
-        _orderIdMeta,
-        orderId.isAcceptableOrUnknown(data['order_id']!, _orderIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_orderIdMeta);
-    }
-    if (data.containsKey('tipo')) {
-      context.handle(
-        _tipoMeta,
-        tipo.isAcceptableOrUnknown(data['tipo']!, _tipoMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_tipoMeta);
-    }
-    if (data.containsKey('payload')) {
-      context.handle(
-        _payloadMeta,
-        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_payloadMeta);
-    }
-    if (data.containsKey('origen')) {
-      context.handle(
-        _origenMeta,
-        origen.isAcceptableOrUnknown(data['origen']!, _origenMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_origenMeta);
-    }
-    if (data.containsKey('destino')) {
-      context.handle(
-        _destinoMeta,
-        destino.isAcceptableOrUnknown(data['destino']!, _destinoMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_destinoMeta);
-    }
-    if (data.containsKey('estado')) {
-      context.handle(
-        _estadoMeta,
-        estado.isAcceptableOrUnknown(data['estado']!, _estadoMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_estadoMeta);
-    }
-    if (data.containsKey('timestamp')) {
-      context.handle(
-        _timestampMeta,
-        timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta),
-      );
-    }
-    if (data.containsKey('intentos')) {
-      context.handle(
-        _intentosMeta,
-        intentos.isAcceptableOrUnknown(data['intentos']!, _intentosMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  SmsMessage map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return SmsMessage(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      orderId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}order_id'],
-      )!,
-      tipo: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}tipo'],
-      )!,
-      payload: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}payload'],
-      )!,
-      origen: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}origen'],
-      )!,
-      destino: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}destino'],
-      )!,
-      estado: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}estado'],
-      )!,
-      timestamp: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}timestamp'],
-      )!,
-      intentos: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}intentos'],
-      )!,
-    );
-  }
-
-  @override
-  $SmsMessagesTable createAlias(String alias) {
-    return $SmsMessagesTable(attachedDatabase, alias);
-  }
-}
-
-class SmsMessage extends DataClass implements Insertable<SmsMessage> {
-  final String id;
-  final String orderId;
-  final String tipo;
-  final String payload;
-  final String origen;
-  final String destino;
-  final String estado;
-  final DateTime timestamp;
-  final int intentos;
-  const SmsMessage({
-    required this.id,
-    required this.orderId,
-    required this.tipo,
-    required this.payload,
-    required this.origen,
-    required this.destino,
-    required this.estado,
-    required this.timestamp,
-    required this.intentos,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['order_id'] = Variable<String>(orderId);
-    map['tipo'] = Variable<String>(tipo);
-    map['payload'] = Variable<String>(payload);
-    map['origen'] = Variable<String>(origen);
-    map['destino'] = Variable<String>(destino);
-    map['estado'] = Variable<String>(estado);
-    map['timestamp'] = Variable<DateTime>(timestamp);
-    map['intentos'] = Variable<int>(intentos);
-    return map;
-  }
-
-  SmsMessagesCompanion toCompanion(bool nullToAbsent) {
-    return SmsMessagesCompanion(
-      id: Value(id),
-      orderId: Value(orderId),
-      tipo: Value(tipo),
-      payload: Value(payload),
-      origen: Value(origen),
-      destino: Value(destino),
-      estado: Value(estado),
-      timestamp: Value(timestamp),
-      intentos: Value(intentos),
-    );
-  }
-
-  factory SmsMessage.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return SmsMessage(
-      id: serializer.fromJson<String>(json['id']),
-      orderId: serializer.fromJson<String>(json['orderId']),
-      tipo: serializer.fromJson<String>(json['tipo']),
-      payload: serializer.fromJson<String>(json['payload']),
-      origen: serializer.fromJson<String>(json['origen']),
-      destino: serializer.fromJson<String>(json['destino']),
-      estado: serializer.fromJson<String>(json['estado']),
-      timestamp: serializer.fromJson<DateTime>(json['timestamp']),
-      intentos: serializer.fromJson<int>(json['intentos']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'orderId': serializer.toJson<String>(orderId),
-      'tipo': serializer.toJson<String>(tipo),
-      'payload': serializer.toJson<String>(payload),
-      'origen': serializer.toJson<String>(origen),
-      'destino': serializer.toJson<String>(destino),
-      'estado': serializer.toJson<String>(estado),
-      'timestamp': serializer.toJson<DateTime>(timestamp),
-      'intentos': serializer.toJson<int>(intentos),
-    };
-  }
-
-  SmsMessage copyWith({
-    String? id,
-    String? orderId,
-    String? tipo,
-    String? payload,
-    String? origen,
-    String? destino,
-    String? estado,
-    DateTime? timestamp,
-    int? intentos,
-  }) => SmsMessage(
-    id: id ?? this.id,
-    orderId: orderId ?? this.orderId,
-    tipo: tipo ?? this.tipo,
-    payload: payload ?? this.payload,
-    origen: origen ?? this.origen,
-    destino: destino ?? this.destino,
-    estado: estado ?? this.estado,
-    timestamp: timestamp ?? this.timestamp,
-    intentos: intentos ?? this.intentos,
-  );
-  SmsMessage copyWithCompanion(SmsMessagesCompanion data) {
-    return SmsMessage(
-      id: data.id.present ? data.id.value : this.id,
-      orderId: data.orderId.present ? data.orderId.value : this.orderId,
-      tipo: data.tipo.present ? data.tipo.value : this.tipo,
-      payload: data.payload.present ? data.payload.value : this.payload,
-      origen: data.origen.present ? data.origen.value : this.origen,
-      destino: data.destino.present ? data.destino.value : this.destino,
-      estado: data.estado.present ? data.estado.value : this.estado,
-      timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
-      intentos: data.intentos.present ? data.intentos.value : this.intentos,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SmsMessage(')
-          ..write('id: $id, ')
-          ..write('orderId: $orderId, ')
-          ..write('tipo: $tipo, ')
-          ..write('payload: $payload, ')
-          ..write('origen: $origen, ')
-          ..write('destino: $destino, ')
-          ..write('estado: $estado, ')
-          ..write('timestamp: $timestamp, ')
-          ..write('intentos: $intentos')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    orderId,
-    tipo,
-    payload,
-    origen,
-    destino,
-    estado,
-    timestamp,
-    intentos,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is SmsMessage &&
-          other.id == this.id &&
-          other.orderId == this.orderId &&
-          other.tipo == this.tipo &&
-          other.payload == this.payload &&
-          other.origen == this.origen &&
-          other.destino == this.destino &&
-          other.estado == this.estado &&
-          other.timestamp == this.timestamp &&
-          other.intentos == this.intentos);
-}
-
-class SmsMessagesCompanion extends UpdateCompanion<SmsMessage> {
-  final Value<String> id;
-  final Value<String> orderId;
-  final Value<String> tipo;
-  final Value<String> payload;
-  final Value<String> origen;
-  final Value<String> destino;
-  final Value<String> estado;
-  final Value<DateTime> timestamp;
-  final Value<int> intentos;
-  final Value<int> rowid;
-  const SmsMessagesCompanion({
-    this.id = const Value.absent(),
-    this.orderId = const Value.absent(),
-    this.tipo = const Value.absent(),
-    this.payload = const Value.absent(),
-    this.origen = const Value.absent(),
-    this.destino = const Value.absent(),
-    this.estado = const Value.absent(),
-    this.timestamp = const Value.absent(),
-    this.intentos = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  SmsMessagesCompanion.insert({
-    required String id,
-    required String orderId,
-    required String tipo,
-    required String payload,
-    required String origen,
-    required String destino,
-    required String estado,
-    this.timestamp = const Value.absent(),
-    this.intentos = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       orderId = Value(orderId),
-       tipo = Value(tipo),
-       payload = Value(payload),
-       origen = Value(origen),
-       destino = Value(destino),
-       estado = Value(estado);
-  static Insertable<SmsMessage> custom({
-    Expression<String>? id,
-    Expression<String>? orderId,
-    Expression<String>? tipo,
-    Expression<String>? payload,
-    Expression<String>? origen,
-    Expression<String>? destino,
-    Expression<String>? estado,
-    Expression<DateTime>? timestamp,
-    Expression<int>? intentos,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (orderId != null) 'order_id': orderId,
-      if (tipo != null) 'tipo': tipo,
-      if (payload != null) 'payload': payload,
-      if (origen != null) 'origen': origen,
-      if (destino != null) 'destino': destino,
-      if (estado != null) 'estado': estado,
-      if (timestamp != null) 'timestamp': timestamp,
-      if (intentos != null) 'intentos': intentos,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  SmsMessagesCompanion copyWith({
-    Value<String>? id,
-    Value<String>? orderId,
-    Value<String>? tipo,
-    Value<String>? payload,
-    Value<String>? origen,
-    Value<String>? destino,
-    Value<String>? estado,
-    Value<DateTime>? timestamp,
-    Value<int>? intentos,
-    Value<int>? rowid,
-  }) {
-    return SmsMessagesCompanion(
-      id: id ?? this.id,
-      orderId: orderId ?? this.orderId,
-      tipo: tipo ?? this.tipo,
-      payload: payload ?? this.payload,
-      origen: origen ?? this.origen,
-      destino: destino ?? this.destino,
-      estado: estado ?? this.estado,
-      timestamp: timestamp ?? this.timestamp,
-      intentos: intentos ?? this.intentos,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (orderId.present) {
-      map['order_id'] = Variable<String>(orderId.value);
-    }
-    if (tipo.present) {
-      map['tipo'] = Variable<String>(tipo.value);
-    }
-    if (payload.present) {
-      map['payload'] = Variable<String>(payload.value);
-    }
-    if (origen.present) {
-      map['origen'] = Variable<String>(origen.value);
-    }
-    if (destino.present) {
-      map['destino'] = Variable<String>(destino.value);
-    }
-    if (estado.present) {
-      map['estado'] = Variable<String>(estado.value);
-    }
-    if (timestamp.present) {
-      map['timestamp'] = Variable<DateTime>(timestamp.value);
-    }
-    if (intentos.present) {
-      map['intentos'] = Variable<int>(intentos.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SmsMessagesCompanion(')
-          ..write('id: $id, ')
-          ..write('orderId: $orderId, ')
-          ..write('tipo: $tipo, ')
-          ..write('payload: $payload, ')
-          ..write('origen: $origen, ')
-          ..write('destino: $destino, ')
-          ..write('estado: $estado, ')
-          ..write('timestamp: $timestamp, ')
-          ..write('intentos: $intentos, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $RestaurantTablesTable extends RestaurantTables
-    with TableInfo<$RestaurantTablesTable, RestaurantTable> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $RestaurantTablesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _numeroMeta = const VerificationMeta('numero');
-  @override
-  late final GeneratedColumn<int> numero = GeneratedColumn<int>(
-    'numero',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
-  );
-  static const VerificationMeta _capacidadMeta = const VerificationMeta(
-    'capacidad',
-  );
-  @override
-  late final GeneratedColumn<int> capacidad = GeneratedColumn<int>(
-    'capacidad',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _estadoMeta = const VerificationMeta('estado');
-  @override
-  late final GeneratedColumn<String> estado = GeneratedColumn<String>(
-    'estado',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _ubicacionMeta = const VerificationMeta(
-    'ubicacion',
-  );
-  @override
-  late final GeneratedColumn<String> ubicacion = GeneratedColumn<String>(
-    'ubicacion',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    numero,
-    capacidad,
-    estado,
-    ubicacion,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'restaurant_tables';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<RestaurantTable> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('numero')) {
-      context.handle(
-        _numeroMeta,
-        numero.isAcceptableOrUnknown(data['numero']!, _numeroMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_numeroMeta);
-    }
-    if (data.containsKey('capacidad')) {
-      context.handle(
-        _capacidadMeta,
-        capacidad.isAcceptableOrUnknown(data['capacidad']!, _capacidadMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_capacidadMeta);
-    }
-    if (data.containsKey('estado')) {
-      context.handle(
-        _estadoMeta,
-        estado.isAcceptableOrUnknown(data['estado']!, _estadoMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_estadoMeta);
-    }
-    if (data.containsKey('ubicacion')) {
-      context.handle(
-        _ubicacionMeta,
-        ubicacion.isAcceptableOrUnknown(data['ubicacion']!, _ubicacionMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  RestaurantTable map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return RestaurantTable(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      numero: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}numero'],
-      )!,
-      capacidad: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}capacidad'],
-      )!,
-      estado: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}estado'],
-      )!,
-      ubicacion: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}ubicacion'],
-      ),
-    );
-  }
-
-  @override
-  $RestaurantTablesTable createAlias(String alias) {
-    return $RestaurantTablesTable(attachedDatabase, alias);
-  }
-}
-
-class RestaurantTable extends DataClass implements Insertable<RestaurantTable> {
-  final String id;
-  final int numero;
-  final int capacidad;
-  final String estado;
-  final String? ubicacion;
-  const RestaurantTable({
-    required this.id,
-    required this.numero,
-    required this.capacidad,
-    required this.estado,
-    this.ubicacion,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['numero'] = Variable<int>(numero);
-    map['capacidad'] = Variable<int>(capacidad);
-    map['estado'] = Variable<String>(estado);
-    if (!nullToAbsent || ubicacion != null) {
-      map['ubicacion'] = Variable<String>(ubicacion);
-    }
-    return map;
-  }
-
-  RestaurantTablesCompanion toCompanion(bool nullToAbsent) {
-    return RestaurantTablesCompanion(
-      id: Value(id),
-      numero: Value(numero),
-      capacidad: Value(capacidad),
-      estado: Value(estado),
-      ubicacion: ubicacion == null && nullToAbsent
-          ? const Value.absent()
-          : Value(ubicacion),
-    );
-  }
-
-  factory RestaurantTable.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return RestaurantTable(
-      id: serializer.fromJson<String>(json['id']),
-      numero: serializer.fromJson<int>(json['numero']),
-      capacidad: serializer.fromJson<int>(json['capacidad']),
-      estado: serializer.fromJson<String>(json['estado']),
-      ubicacion: serializer.fromJson<String?>(json['ubicacion']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'numero': serializer.toJson<int>(numero),
-      'capacidad': serializer.toJson<int>(capacidad),
-      'estado': serializer.toJson<String>(estado),
-      'ubicacion': serializer.toJson<String?>(ubicacion),
-    };
-  }
-
-  RestaurantTable copyWith({
-    String? id,
-    int? numero,
-    int? capacidad,
-    String? estado,
-    Value<String?> ubicacion = const Value.absent(),
-  }) => RestaurantTable(
-    id: id ?? this.id,
-    numero: numero ?? this.numero,
-    capacidad: capacidad ?? this.capacidad,
-    estado: estado ?? this.estado,
-    ubicacion: ubicacion.present ? ubicacion.value : this.ubicacion,
-  );
-  RestaurantTable copyWithCompanion(RestaurantTablesCompanion data) {
-    return RestaurantTable(
-      id: data.id.present ? data.id.value : this.id,
-      numero: data.numero.present ? data.numero.value : this.numero,
-      capacidad: data.capacidad.present ? data.capacidad.value : this.capacidad,
-      estado: data.estado.present ? data.estado.value : this.estado,
-      ubicacion: data.ubicacion.present ? data.ubicacion.value : this.ubicacion,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('RestaurantTable(')
-          ..write('id: $id, ')
-          ..write('numero: $numero, ')
-          ..write('capacidad: $capacidad, ')
-          ..write('estado: $estado, ')
-          ..write('ubicacion: $ubicacion')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(id, numero, capacidad, estado, ubicacion);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is RestaurantTable &&
-          other.id == this.id &&
-          other.numero == this.numero &&
-          other.capacidad == this.capacidad &&
-          other.estado == this.estado &&
-          other.ubicacion == this.ubicacion);
-}
-
-class RestaurantTablesCompanion extends UpdateCompanion<RestaurantTable> {
-  final Value<String> id;
-  final Value<int> numero;
-  final Value<int> capacidad;
-  final Value<String> estado;
-  final Value<String?> ubicacion;
-  final Value<int> rowid;
-  const RestaurantTablesCompanion({
-    this.id = const Value.absent(),
-    this.numero = const Value.absent(),
-    this.capacidad = const Value.absent(),
-    this.estado = const Value.absent(),
-    this.ubicacion = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  RestaurantTablesCompanion.insert({
-    required String id,
-    required int numero,
-    required int capacidad,
-    required String estado,
-    this.ubicacion = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       numero = Value(numero),
-       capacidad = Value(capacidad),
-       estado = Value(estado);
-  static Insertable<RestaurantTable> custom({
-    Expression<String>? id,
-    Expression<int>? numero,
-    Expression<int>? capacidad,
-    Expression<String>? estado,
-    Expression<String>? ubicacion,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (numero != null) 'numero': numero,
-      if (capacidad != null) 'capacidad': capacidad,
-      if (estado != null) 'estado': estado,
-      if (ubicacion != null) 'ubicacion': ubicacion,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  RestaurantTablesCompanion copyWith({
-    Value<String>? id,
-    Value<int>? numero,
-    Value<int>? capacidad,
-    Value<String>? estado,
-    Value<String?>? ubicacion,
-    Value<int>? rowid,
-  }) {
-    return RestaurantTablesCompanion(
-      id: id ?? this.id,
-      numero: numero ?? this.numero,
-      capacidad: capacidad ?? this.capacidad,
-      estado: estado ?? this.estado,
-      ubicacion: ubicacion ?? this.ubicacion,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (numero.present) {
-      map['numero'] = Variable<int>(numero.value);
-    }
-    if (capacidad.present) {
-      map['capacidad'] = Variable<int>(capacidad.value);
-    }
-    if (estado.present) {
-      map['estado'] = Variable<String>(estado.value);
-    }
-    if (ubicacion.present) {
-      map['ubicacion'] = Variable<String>(ubicacion.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('RestaurantTablesCompanion(')
-          ..write('id: $id, ')
-          ..write('numero: $numero, ')
-          ..write('capacidad: $capacidad, ')
-          ..write('estado: $estado, ')
-          ..write('ubicacion: $ubicacion, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $OrderStateHistoryTable extends OrderStateHistory
-    with TableInfo<$OrderStateHistoryTable, OrderStateHistoryData> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $OrderStateHistoryTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _orderIdMeta = const VerificationMeta(
-    'orderId',
-  );
-  @override
-  late final GeneratedColumn<String> orderId = GeneratedColumn<String>(
-    'order_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES restaurant_orders (id)',
-    ),
-  );
-  static const VerificationMeta _estadoMeta = const VerificationMeta('estado');
-  @override
-  late final GeneratedColumn<String> estado = GeneratedColumn<String>(
-    'estado',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _timestampMeta = const VerificationMeta(
-    'timestamp',
-  );
-  @override
-  late final GeneratedColumn<DateTime> timestamp = GeneratedColumn<DateTime>(
-    'timestamp',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _usuarioIdMeta = const VerificationMeta(
-    'usuarioId',
-  );
-  @override
-  late final GeneratedColumn<String> usuarioId = GeneratedColumn<String>(
-    'usuario_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES users (id)',
-    ),
-  );
-  static const VerificationMeta _viaSmsMeta = const VerificationMeta('viaSms');
-  @override
-  late final GeneratedColumn<bool> viaSms = GeneratedColumn<bool>(
-    'via_sms',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("via_sms" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    orderId,
-    estado,
-    timestamp,
-    usuarioId,
-    viaSms,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'order_state_history';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<OrderStateHistoryData> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('order_id')) {
-      context.handle(
-        _orderIdMeta,
-        orderId.isAcceptableOrUnknown(data['order_id']!, _orderIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_orderIdMeta);
-    }
-    if (data.containsKey('estado')) {
-      context.handle(
-        _estadoMeta,
-        estado.isAcceptableOrUnknown(data['estado']!, _estadoMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_estadoMeta);
-    }
-    if (data.containsKey('timestamp')) {
-      context.handle(
-        _timestampMeta,
-        timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_timestampMeta);
-    }
-    if (data.containsKey('usuario_id')) {
-      context.handle(
-        _usuarioIdMeta,
-        usuarioId.isAcceptableOrUnknown(data['usuario_id']!, _usuarioIdMeta),
-      );
-    }
-    if (data.containsKey('via_sms')) {
-      context.handle(
-        _viaSmsMeta,
-        viaSms.isAcceptableOrUnknown(data['via_sms']!, _viaSmsMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  OrderStateHistoryData map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return OrderStateHistoryData(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      orderId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}order_id'],
-      )!,
-      estado: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}estado'],
-      )!,
-      timestamp: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}timestamp'],
-      )!,
-      usuarioId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}usuario_id'],
-      ),
-      viaSms: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}via_sms'],
-      )!,
-    );
-  }
-
-  @override
-  $OrderStateHistoryTable createAlias(String alias) {
-    return $OrderStateHistoryTable(attachedDatabase, alias);
-  }
-}
-
-class OrderStateHistoryData extends DataClass
-    implements Insertable<OrderStateHistoryData> {
-  final String id;
-  final String orderId;
-  final String estado;
-  final DateTime timestamp;
-  final String? usuarioId;
-  final bool viaSms;
-  const OrderStateHistoryData({
-    required this.id,
-    required this.orderId,
-    required this.estado,
-    required this.timestamp,
-    this.usuarioId,
-    required this.viaSms,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['order_id'] = Variable<String>(orderId);
-    map['estado'] = Variable<String>(estado);
-    map['timestamp'] = Variable<DateTime>(timestamp);
-    if (!nullToAbsent || usuarioId != null) {
-      map['usuario_id'] = Variable<String>(usuarioId);
-    }
-    map['via_sms'] = Variable<bool>(viaSms);
-    return map;
-  }
-
-  OrderStateHistoryCompanion toCompanion(bool nullToAbsent) {
-    return OrderStateHistoryCompanion(
-      id: Value(id),
-      orderId: Value(orderId),
-      estado: Value(estado),
-      timestamp: Value(timestamp),
-      usuarioId: usuarioId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(usuarioId),
-      viaSms: Value(viaSms),
-    );
-  }
-
-  factory OrderStateHistoryData.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return OrderStateHistoryData(
-      id: serializer.fromJson<String>(json['id']),
-      orderId: serializer.fromJson<String>(json['orderId']),
-      estado: serializer.fromJson<String>(json['estado']),
-      timestamp: serializer.fromJson<DateTime>(json['timestamp']),
-      usuarioId: serializer.fromJson<String?>(json['usuarioId']),
-      viaSms: serializer.fromJson<bool>(json['viaSms']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'orderId': serializer.toJson<String>(orderId),
-      'estado': serializer.toJson<String>(estado),
-      'timestamp': serializer.toJson<DateTime>(timestamp),
-      'usuarioId': serializer.toJson<String?>(usuarioId),
-      'viaSms': serializer.toJson<bool>(viaSms),
-    };
-  }
-
-  OrderStateHistoryData copyWith({
-    String? id,
-    String? orderId,
-    String? estado,
-    DateTime? timestamp,
-    Value<String?> usuarioId = const Value.absent(),
-    bool? viaSms,
-  }) => OrderStateHistoryData(
-    id: id ?? this.id,
-    orderId: orderId ?? this.orderId,
-    estado: estado ?? this.estado,
-    timestamp: timestamp ?? this.timestamp,
-    usuarioId: usuarioId.present ? usuarioId.value : this.usuarioId,
-    viaSms: viaSms ?? this.viaSms,
-  );
-  OrderStateHistoryData copyWithCompanion(OrderStateHistoryCompanion data) {
-    return OrderStateHistoryData(
-      id: data.id.present ? data.id.value : this.id,
-      orderId: data.orderId.present ? data.orderId.value : this.orderId,
-      estado: data.estado.present ? data.estado.value : this.estado,
-      timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
-      usuarioId: data.usuarioId.present ? data.usuarioId.value : this.usuarioId,
-      viaSms: data.viaSms.present ? data.viaSms.value : this.viaSms,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('OrderStateHistoryData(')
-          ..write('id: $id, ')
-          ..write('orderId: $orderId, ')
-          ..write('estado: $estado, ')
-          ..write('timestamp: $timestamp, ')
-          ..write('usuarioId: $usuarioId, ')
-          ..write('viaSms: $viaSms')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(id, orderId, estado, timestamp, usuarioId, viaSms);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is OrderStateHistoryData &&
-          other.id == this.id &&
-          other.orderId == this.orderId &&
-          other.estado == this.estado &&
-          other.timestamp == this.timestamp &&
-          other.usuarioId == this.usuarioId &&
-          other.viaSms == this.viaSms);
-}
-
-class OrderStateHistoryCompanion
-    extends UpdateCompanion<OrderStateHistoryData> {
-  final Value<String> id;
-  final Value<String> orderId;
-  final Value<String> estado;
-  final Value<DateTime> timestamp;
-  final Value<String?> usuarioId;
-  final Value<bool> viaSms;
-  final Value<int> rowid;
-  const OrderStateHistoryCompanion({
-    this.id = const Value.absent(),
-    this.orderId = const Value.absent(),
-    this.estado = const Value.absent(),
-    this.timestamp = const Value.absent(),
-    this.usuarioId = const Value.absent(),
-    this.viaSms = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  OrderStateHistoryCompanion.insert({
-    required String id,
-    required String orderId,
-    required String estado,
-    required DateTime timestamp,
-    this.usuarioId = const Value.absent(),
-    this.viaSms = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       orderId = Value(orderId),
-       estado = Value(estado),
-       timestamp = Value(timestamp);
-  static Insertable<OrderStateHistoryData> custom({
-    Expression<String>? id,
-    Expression<String>? orderId,
-    Expression<String>? estado,
-    Expression<DateTime>? timestamp,
-    Expression<String>? usuarioId,
-    Expression<bool>? viaSms,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (orderId != null) 'order_id': orderId,
-      if (estado != null) 'estado': estado,
-      if (timestamp != null) 'timestamp': timestamp,
-      if (usuarioId != null) 'usuario_id': usuarioId,
-      if (viaSms != null) 'via_sms': viaSms,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  OrderStateHistoryCompanion copyWith({
-    Value<String>? id,
-    Value<String>? orderId,
-    Value<String>? estado,
-    Value<DateTime>? timestamp,
-    Value<String?>? usuarioId,
-    Value<bool>? viaSms,
-    Value<int>? rowid,
-  }) {
-    return OrderStateHistoryCompanion(
-      id: id ?? this.id,
-      orderId: orderId ?? this.orderId,
-      estado: estado ?? this.estado,
-      timestamp: timestamp ?? this.timestamp,
-      usuarioId: usuarioId ?? this.usuarioId,
-      viaSms: viaSms ?? this.viaSms,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (orderId.present) {
-      map['order_id'] = Variable<String>(orderId.value);
-    }
-    if (estado.present) {
-      map['estado'] = Variable<String>(estado.value);
-    }
-    if (timestamp.present) {
-      map['timestamp'] = Variable<DateTime>(timestamp.value);
-    }
-    if (usuarioId.present) {
-      map['usuario_id'] = Variable<String>(usuarioId.value);
-    }
-    if (viaSms.present) {
-      map['via_sms'] = Variable<bool>(viaSms.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('OrderStateHistoryCompanion(')
-          ..write('id: $id, ')
-          ..write('orderId: $orderId, ')
-          ..write('estado: $estado, ')
-          ..write('timestamp: $timestamp, ')
-          ..write('usuarioId: $usuarioId, ')
-          ..write('viaSms: $viaSms, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -17551,6 +15906,17 @@ class $DailySummariesTable extends DailySummaries
         requiredDuringInsert: false,
         defaultValue: const Constant(0.0),
       );
+  static const VerificationMeta _topClientesJsonMeta = const VerificationMeta(
+    'topClientesJson',
+  );
+  @override
+  late final GeneratedColumn<String> topClientesJson = GeneratedColumn<String>(
+    'top_clientes_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     fecha,
@@ -17564,6 +15930,7 @@ class $DailySummariesTable extends DailySummaries
     distribucionYurdenis,
     distribucionMildrey,
     distribucionNegocio,
+    topClientesJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -17675,6 +16042,15 @@ class $DailySummariesTable extends DailySummaries
         ),
       );
     }
+    if (data.containsKey('top_clientes_json')) {
+      context.handle(
+        _topClientesJsonMeta,
+        topClientesJson.isAcceptableOrUnknown(
+          data['top_clientes_json']!,
+          _topClientesJsonMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -17728,6 +16104,10 @@ class $DailySummariesTable extends DailySummaries
         DriftSqlType.double,
         data['${effectivePrefix}distribucion_negocio'],
       )!,
+      topClientesJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}top_clientes_json'],
+      ),
     );
   }
 
@@ -17749,6 +16129,7 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
   final double distribucionYurdenis;
   final double distribucionMildrey;
   final double distribucionNegocio;
+  final String? topClientesJson;
   const DailySummary({
     required this.fecha,
     required this.totalVentas,
@@ -17761,6 +16142,7 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
     required this.distribucionYurdenis,
     required this.distribucionMildrey,
     required this.distribucionNegocio,
+    this.topClientesJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -17776,6 +16158,9 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
     map['distribucion_yurdenis'] = Variable<double>(distribucionYurdenis);
     map['distribucion_mildrey'] = Variable<double>(distribucionMildrey);
     map['distribucion_negocio'] = Variable<double>(distribucionNegocio);
+    if (!nullToAbsent || topClientesJson != null) {
+      map['top_clientes_json'] = Variable<String>(topClientesJson);
+    }
     return map;
   }
 
@@ -17792,6 +16177,9 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
       distribucionYurdenis: Value(distribucionYurdenis),
       distribucionMildrey: Value(distribucionMildrey),
       distribucionNegocio: Value(distribucionNegocio),
+      topClientesJson: topClientesJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(topClientesJson),
     );
   }
 
@@ -17820,6 +16208,7 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
       distribucionNegocio: serializer.fromJson<double>(
         json['distribucionNegocio'],
       ),
+      topClientesJson: serializer.fromJson<String?>(json['topClientesJson']),
     );
   }
   @override
@@ -17837,6 +16226,7 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
       'distribucionYurdenis': serializer.toJson<double>(distribucionYurdenis),
       'distribucionMildrey': serializer.toJson<double>(distribucionMildrey),
       'distribucionNegocio': serializer.toJson<double>(distribucionNegocio),
+      'topClientesJson': serializer.toJson<String?>(topClientesJson),
     };
   }
 
@@ -17852,6 +16242,7 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
     double? distribucionYurdenis,
     double? distribucionMildrey,
     double? distribucionNegocio,
+    Value<String?> topClientesJson = const Value.absent(),
   }) => DailySummary(
     fecha: fecha ?? this.fecha,
     totalVentas: totalVentas ?? this.totalVentas,
@@ -17864,6 +16255,9 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
     distribucionYurdenis: distribucionYurdenis ?? this.distribucionYurdenis,
     distribucionMildrey: distribucionMildrey ?? this.distribucionMildrey,
     distribucionNegocio: distribucionNegocio ?? this.distribucionNegocio,
+    topClientesJson: topClientesJson.present
+        ? topClientesJson.value
+        : this.topClientesJson,
   );
   DailySummary copyWithCompanion(DailySummariesCompanion data) {
     return DailySummary(
@@ -17898,6 +16292,9 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
       distribucionNegocio: data.distribucionNegocio.present
           ? data.distribucionNegocio.value
           : this.distribucionNegocio,
+      topClientesJson: data.topClientesJson.present
+          ? data.topClientesJson.value
+          : this.topClientesJson,
     );
   }
 
@@ -17914,7 +16311,8 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
           ..write('utilidadNeta: $utilidadNeta, ')
           ..write('distribucionYurdenis: $distribucionYurdenis, ')
           ..write('distribucionMildrey: $distribucionMildrey, ')
-          ..write('distribucionNegocio: $distribucionNegocio')
+          ..write('distribucionNegocio: $distribucionNegocio, ')
+          ..write('topClientesJson: $topClientesJson')
           ..write(')'))
         .toString();
   }
@@ -17932,6 +16330,7 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
     distribucionYurdenis,
     distribucionMildrey,
     distribucionNegocio,
+    topClientesJson,
   );
   @override
   bool operator ==(Object other) =>
@@ -17947,7 +16346,8 @@ class DailySummary extends DataClass implements Insertable<DailySummary> {
           other.utilidadNeta == this.utilidadNeta &&
           other.distribucionYurdenis == this.distribucionYurdenis &&
           other.distribucionMildrey == this.distribucionMildrey &&
-          other.distribucionNegocio == this.distribucionNegocio);
+          other.distribucionNegocio == this.distribucionNegocio &&
+          other.topClientesJson == this.topClientesJson);
 }
 
 class DailySummariesCompanion extends UpdateCompanion<DailySummary> {
@@ -17962,6 +16362,7 @@ class DailySummariesCompanion extends UpdateCompanion<DailySummary> {
   final Value<double> distribucionYurdenis;
   final Value<double> distribucionMildrey;
   final Value<double> distribucionNegocio;
+  final Value<String?> topClientesJson;
   final Value<int> rowid;
   const DailySummariesCompanion({
     this.fecha = const Value.absent(),
@@ -17975,6 +16376,7 @@ class DailySummariesCompanion extends UpdateCompanion<DailySummary> {
     this.distribucionYurdenis = const Value.absent(),
     this.distribucionMildrey = const Value.absent(),
     this.distribucionNegocio = const Value.absent(),
+    this.topClientesJson = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DailySummariesCompanion.insert({
@@ -17989,6 +16391,7 @@ class DailySummariesCompanion extends UpdateCompanion<DailySummary> {
     this.distribucionYurdenis = const Value.absent(),
     this.distribucionMildrey = const Value.absent(),
     this.distribucionNegocio = const Value.absent(),
+    this.topClientesJson = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : fecha = Value(fecha);
   static Insertable<DailySummary> custom({
@@ -18003,6 +16406,7 @@ class DailySummariesCompanion extends UpdateCompanion<DailySummary> {
     Expression<double>? distribucionYurdenis,
     Expression<double>? distribucionMildrey,
     Expression<double>? distribucionNegocio,
+    Expression<String>? topClientesJson,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -18021,6 +16425,7 @@ class DailySummariesCompanion extends UpdateCompanion<DailySummary> {
         'distribucion_mildrey': distribucionMildrey,
       if (distribucionNegocio != null)
         'distribucion_negocio': distribucionNegocio,
+      if (topClientesJson != null) 'top_clientes_json': topClientesJson,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -18037,6 +16442,7 @@ class DailySummariesCompanion extends UpdateCompanion<DailySummary> {
     Value<double>? distribucionYurdenis,
     Value<double>? distribucionMildrey,
     Value<double>? distribucionNegocio,
+    Value<String?>? topClientesJson,
     Value<int>? rowid,
   }) {
     return DailySummariesCompanion(
@@ -18051,6 +16457,7 @@ class DailySummariesCompanion extends UpdateCompanion<DailySummary> {
       distribucionYurdenis: distribucionYurdenis ?? this.distribucionYurdenis,
       distribucionMildrey: distribucionMildrey ?? this.distribucionMildrey,
       distribucionNegocio: distribucionNegocio ?? this.distribucionNegocio,
+      topClientesJson: topClientesJson ?? this.topClientesJson,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -18093,6 +16500,9 @@ class DailySummariesCompanion extends UpdateCompanion<DailySummary> {
     if (distribucionNegocio.present) {
       map['distribucion_negocio'] = Variable<double>(distribucionNegocio.value);
     }
+    if (topClientesJson.present) {
+      map['top_clientes_json'] = Variable<String>(topClientesJson.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -18113,1385 +16523,7 @@ class DailySummariesCompanion extends UpdateCompanion<DailySummary> {
           ..write('distribucionYurdenis: $distribucionYurdenis, ')
           ..write('distribucionMildrey: $distribucionMildrey, ')
           ..write('distribucionNegocio: $distribucionNegocio, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $DailyExpensesTable extends DailyExpenses
-    with TableInfo<$DailyExpensesTable, DailyExpense> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $DailyExpensesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _conceptoMeta = const VerificationMeta(
-    'concepto',
-  );
-  @override
-  late final GeneratedColumn<String> concepto = GeneratedColumn<String>(
-    'concepto',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _montoMeta = const VerificationMeta('monto');
-  @override
-  late final GeneratedColumn<double> monto = GeneratedColumn<double>(
-    'monto',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _fechaMeta = const VerificationMeta('fecha');
-  @override
-  late final GeneratedColumn<DateTime> fecha = GeneratedColumn<DateTime>(
-    'fecha',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _registradoPorUsuarioIdMeta =
-      const VerificationMeta('registradoPorUsuarioId');
-  @override
-  late final GeneratedColumn<String> registradoPorUsuarioId =
-      GeneratedColumn<String>(
-        'registrado_por_usuario_id',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-        defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES users (id)',
-        ),
-      );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    concepto,
-    monto,
-    fecha,
-    registradoPorUsuarioId,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'daily_expenses';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<DailyExpense> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('concepto')) {
-      context.handle(
-        _conceptoMeta,
-        concepto.isAcceptableOrUnknown(data['concepto']!, _conceptoMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_conceptoMeta);
-    }
-    if (data.containsKey('monto')) {
-      context.handle(
-        _montoMeta,
-        monto.isAcceptableOrUnknown(data['monto']!, _montoMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_montoMeta);
-    }
-    if (data.containsKey('fecha')) {
-      context.handle(
-        _fechaMeta,
-        fecha.isAcceptableOrUnknown(data['fecha']!, _fechaMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_fechaMeta);
-    }
-    if (data.containsKey('registrado_por_usuario_id')) {
-      context.handle(
-        _registradoPorUsuarioIdMeta,
-        registradoPorUsuarioId.isAcceptableOrUnknown(
-          data['registrado_por_usuario_id']!,
-          _registradoPorUsuarioIdMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  DailyExpense map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return DailyExpense(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      concepto: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}concepto'],
-      )!,
-      monto: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}monto'],
-      )!,
-      fecha: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}fecha'],
-      )!,
-      registradoPorUsuarioId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}registrado_por_usuario_id'],
-      ),
-    );
-  }
-
-  @override
-  $DailyExpensesTable createAlias(String alias) {
-    return $DailyExpensesTable(attachedDatabase, alias);
-  }
-}
-
-class DailyExpense extends DataClass implements Insertable<DailyExpense> {
-  final String id;
-  final String concepto;
-  final double monto;
-  final DateTime fecha;
-  final String? registradoPorUsuarioId;
-  const DailyExpense({
-    required this.id,
-    required this.concepto,
-    required this.monto,
-    required this.fecha,
-    this.registradoPorUsuarioId,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['concepto'] = Variable<String>(concepto);
-    map['monto'] = Variable<double>(monto);
-    map['fecha'] = Variable<DateTime>(fecha);
-    if (!nullToAbsent || registradoPorUsuarioId != null) {
-      map['registrado_por_usuario_id'] = Variable<String>(
-        registradoPorUsuarioId,
-      );
-    }
-    return map;
-  }
-
-  DailyExpensesCompanion toCompanion(bool nullToAbsent) {
-    return DailyExpensesCompanion(
-      id: Value(id),
-      concepto: Value(concepto),
-      monto: Value(monto),
-      fecha: Value(fecha),
-      registradoPorUsuarioId: registradoPorUsuarioId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(registradoPorUsuarioId),
-    );
-  }
-
-  factory DailyExpense.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return DailyExpense(
-      id: serializer.fromJson<String>(json['id']),
-      concepto: serializer.fromJson<String>(json['concepto']),
-      monto: serializer.fromJson<double>(json['monto']),
-      fecha: serializer.fromJson<DateTime>(json['fecha']),
-      registradoPorUsuarioId: serializer.fromJson<String?>(
-        json['registradoPorUsuarioId'],
-      ),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'concepto': serializer.toJson<String>(concepto),
-      'monto': serializer.toJson<double>(monto),
-      'fecha': serializer.toJson<DateTime>(fecha),
-      'registradoPorUsuarioId': serializer.toJson<String?>(
-        registradoPorUsuarioId,
-      ),
-    };
-  }
-
-  DailyExpense copyWith({
-    String? id,
-    String? concepto,
-    double? monto,
-    DateTime? fecha,
-    Value<String?> registradoPorUsuarioId = const Value.absent(),
-  }) => DailyExpense(
-    id: id ?? this.id,
-    concepto: concepto ?? this.concepto,
-    monto: monto ?? this.monto,
-    fecha: fecha ?? this.fecha,
-    registradoPorUsuarioId: registradoPorUsuarioId.present
-        ? registradoPorUsuarioId.value
-        : this.registradoPorUsuarioId,
-  );
-  DailyExpense copyWithCompanion(DailyExpensesCompanion data) {
-    return DailyExpense(
-      id: data.id.present ? data.id.value : this.id,
-      concepto: data.concepto.present ? data.concepto.value : this.concepto,
-      monto: data.monto.present ? data.monto.value : this.monto,
-      fecha: data.fecha.present ? data.fecha.value : this.fecha,
-      registradoPorUsuarioId: data.registradoPorUsuarioId.present
-          ? data.registradoPorUsuarioId.value
-          : this.registradoPorUsuarioId,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('DailyExpense(')
-          ..write('id: $id, ')
-          ..write('concepto: $concepto, ')
-          ..write('monto: $monto, ')
-          ..write('fecha: $fecha, ')
-          ..write('registradoPorUsuarioId: $registradoPorUsuarioId')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(id, concepto, monto, fecha, registradoPorUsuarioId);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is DailyExpense &&
-          other.id == this.id &&
-          other.concepto == this.concepto &&
-          other.monto == this.monto &&
-          other.fecha == this.fecha &&
-          other.registradoPorUsuarioId == this.registradoPorUsuarioId);
-}
-
-class DailyExpensesCompanion extends UpdateCompanion<DailyExpense> {
-  final Value<String> id;
-  final Value<String> concepto;
-  final Value<double> monto;
-  final Value<DateTime> fecha;
-  final Value<String?> registradoPorUsuarioId;
-  final Value<int> rowid;
-  const DailyExpensesCompanion({
-    this.id = const Value.absent(),
-    this.concepto = const Value.absent(),
-    this.monto = const Value.absent(),
-    this.fecha = const Value.absent(),
-    this.registradoPorUsuarioId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  DailyExpensesCompanion.insert({
-    required String id,
-    required String concepto,
-    required double monto,
-    required DateTime fecha,
-    this.registradoPorUsuarioId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       concepto = Value(concepto),
-       monto = Value(monto),
-       fecha = Value(fecha);
-  static Insertable<DailyExpense> custom({
-    Expression<String>? id,
-    Expression<String>? concepto,
-    Expression<double>? monto,
-    Expression<DateTime>? fecha,
-    Expression<String>? registradoPorUsuarioId,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (concepto != null) 'concepto': concepto,
-      if (monto != null) 'monto': monto,
-      if (fecha != null) 'fecha': fecha,
-      if (registradoPorUsuarioId != null)
-        'registrado_por_usuario_id': registradoPorUsuarioId,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  DailyExpensesCompanion copyWith({
-    Value<String>? id,
-    Value<String>? concepto,
-    Value<double>? monto,
-    Value<DateTime>? fecha,
-    Value<String?>? registradoPorUsuarioId,
-    Value<int>? rowid,
-  }) {
-    return DailyExpensesCompanion(
-      id: id ?? this.id,
-      concepto: concepto ?? this.concepto,
-      monto: monto ?? this.monto,
-      fecha: fecha ?? this.fecha,
-      registradoPorUsuarioId:
-          registradoPorUsuarioId ?? this.registradoPorUsuarioId,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (concepto.present) {
-      map['concepto'] = Variable<String>(concepto.value);
-    }
-    if (monto.present) {
-      map['monto'] = Variable<double>(monto.value);
-    }
-    if (fecha.present) {
-      map['fecha'] = Variable<DateTime>(fecha.value);
-    }
-    if (registradoPorUsuarioId.present) {
-      map['registrado_por_usuario_id'] = Variable<String>(
-        registradoPorUsuarioId.value,
-      );
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('DailyExpensesCompanion(')
-          ..write('id: $id, ')
-          ..write('concepto: $concepto, ')
-          ..write('monto: $monto, ')
-          ..write('fecha: $fecha, ')
-          ..write('registradoPorUsuarioId: $registradoPorUsuarioId, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $DailyPurchasesTable extends DailyPurchases
-    with TableInfo<$DailyPurchasesTable, DailyPurchase> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $DailyPurchasesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _insumoMeta = const VerificationMeta('insumo');
-  @override
-  late final GeneratedColumn<String> insumo = GeneratedColumn<String>(
-    'insumo',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _proveedorMeta = const VerificationMeta(
-    'proveedor',
-  );
-  @override
-  late final GeneratedColumn<String> proveedor = GeneratedColumn<String>(
-    'proveedor',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _cantidadMeta = const VerificationMeta(
-    'cantidad',
-  );
-  @override
-  late final GeneratedColumn<double> cantidad = GeneratedColumn<double>(
-    'cantidad',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _costoMeta = const VerificationMeta('costo');
-  @override
-  late final GeneratedColumn<double> costo = GeneratedColumn<double>(
-    'costo',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _fechaMeta = const VerificationMeta('fecha');
-  @override
-  late final GeneratedColumn<DateTime> fecha = GeneratedColumn<DateTime>(
-    'fecha',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _registradoPorUsuarioIdMeta =
-      const VerificationMeta('registradoPorUsuarioId');
-  @override
-  late final GeneratedColumn<String> registradoPorUsuarioId =
-      GeneratedColumn<String>(
-        'registrado_por_usuario_id',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-        defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES users (id)',
-        ),
-      );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    insumo,
-    proveedor,
-    cantidad,
-    costo,
-    fecha,
-    registradoPorUsuarioId,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'daily_purchases';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<DailyPurchase> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('insumo')) {
-      context.handle(
-        _insumoMeta,
-        insumo.isAcceptableOrUnknown(data['insumo']!, _insumoMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_insumoMeta);
-    }
-    if (data.containsKey('proveedor')) {
-      context.handle(
-        _proveedorMeta,
-        proveedor.isAcceptableOrUnknown(data['proveedor']!, _proveedorMeta),
-      );
-    }
-    if (data.containsKey('cantidad')) {
-      context.handle(
-        _cantidadMeta,
-        cantidad.isAcceptableOrUnknown(data['cantidad']!, _cantidadMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_cantidadMeta);
-    }
-    if (data.containsKey('costo')) {
-      context.handle(
-        _costoMeta,
-        costo.isAcceptableOrUnknown(data['costo']!, _costoMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_costoMeta);
-    }
-    if (data.containsKey('fecha')) {
-      context.handle(
-        _fechaMeta,
-        fecha.isAcceptableOrUnknown(data['fecha']!, _fechaMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_fechaMeta);
-    }
-    if (data.containsKey('registrado_por_usuario_id')) {
-      context.handle(
-        _registradoPorUsuarioIdMeta,
-        registradoPorUsuarioId.isAcceptableOrUnknown(
-          data['registrado_por_usuario_id']!,
-          _registradoPorUsuarioIdMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  DailyPurchase map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return DailyPurchase(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      insumo: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}insumo'],
-      )!,
-      proveedor: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}proveedor'],
-      ),
-      cantidad: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}cantidad'],
-      )!,
-      costo: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}costo'],
-      )!,
-      fecha: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}fecha'],
-      )!,
-      registradoPorUsuarioId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}registrado_por_usuario_id'],
-      ),
-    );
-  }
-
-  @override
-  $DailyPurchasesTable createAlias(String alias) {
-    return $DailyPurchasesTable(attachedDatabase, alias);
-  }
-}
-
-class DailyPurchase extends DataClass implements Insertable<DailyPurchase> {
-  final String id;
-  final String insumo;
-  final String? proveedor;
-  final double cantidad;
-  final double costo;
-  final DateTime fecha;
-  final String? registradoPorUsuarioId;
-  const DailyPurchase({
-    required this.id,
-    required this.insumo,
-    this.proveedor,
-    required this.cantidad,
-    required this.costo,
-    required this.fecha,
-    this.registradoPorUsuarioId,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['insumo'] = Variable<String>(insumo);
-    if (!nullToAbsent || proveedor != null) {
-      map['proveedor'] = Variable<String>(proveedor);
-    }
-    map['cantidad'] = Variable<double>(cantidad);
-    map['costo'] = Variable<double>(costo);
-    map['fecha'] = Variable<DateTime>(fecha);
-    if (!nullToAbsent || registradoPorUsuarioId != null) {
-      map['registrado_por_usuario_id'] = Variable<String>(
-        registradoPorUsuarioId,
-      );
-    }
-    return map;
-  }
-
-  DailyPurchasesCompanion toCompanion(bool nullToAbsent) {
-    return DailyPurchasesCompanion(
-      id: Value(id),
-      insumo: Value(insumo),
-      proveedor: proveedor == null && nullToAbsent
-          ? const Value.absent()
-          : Value(proveedor),
-      cantidad: Value(cantidad),
-      costo: Value(costo),
-      fecha: Value(fecha),
-      registradoPorUsuarioId: registradoPorUsuarioId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(registradoPorUsuarioId),
-    );
-  }
-
-  factory DailyPurchase.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return DailyPurchase(
-      id: serializer.fromJson<String>(json['id']),
-      insumo: serializer.fromJson<String>(json['insumo']),
-      proveedor: serializer.fromJson<String?>(json['proveedor']),
-      cantidad: serializer.fromJson<double>(json['cantidad']),
-      costo: serializer.fromJson<double>(json['costo']),
-      fecha: serializer.fromJson<DateTime>(json['fecha']),
-      registradoPorUsuarioId: serializer.fromJson<String?>(
-        json['registradoPorUsuarioId'],
-      ),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'insumo': serializer.toJson<String>(insumo),
-      'proveedor': serializer.toJson<String?>(proveedor),
-      'cantidad': serializer.toJson<double>(cantidad),
-      'costo': serializer.toJson<double>(costo),
-      'fecha': serializer.toJson<DateTime>(fecha),
-      'registradoPorUsuarioId': serializer.toJson<String?>(
-        registradoPorUsuarioId,
-      ),
-    };
-  }
-
-  DailyPurchase copyWith({
-    String? id,
-    String? insumo,
-    Value<String?> proveedor = const Value.absent(),
-    double? cantidad,
-    double? costo,
-    DateTime? fecha,
-    Value<String?> registradoPorUsuarioId = const Value.absent(),
-  }) => DailyPurchase(
-    id: id ?? this.id,
-    insumo: insumo ?? this.insumo,
-    proveedor: proveedor.present ? proveedor.value : this.proveedor,
-    cantidad: cantidad ?? this.cantidad,
-    costo: costo ?? this.costo,
-    fecha: fecha ?? this.fecha,
-    registradoPorUsuarioId: registradoPorUsuarioId.present
-        ? registradoPorUsuarioId.value
-        : this.registradoPorUsuarioId,
-  );
-  DailyPurchase copyWithCompanion(DailyPurchasesCompanion data) {
-    return DailyPurchase(
-      id: data.id.present ? data.id.value : this.id,
-      insumo: data.insumo.present ? data.insumo.value : this.insumo,
-      proveedor: data.proveedor.present ? data.proveedor.value : this.proveedor,
-      cantidad: data.cantidad.present ? data.cantidad.value : this.cantidad,
-      costo: data.costo.present ? data.costo.value : this.costo,
-      fecha: data.fecha.present ? data.fecha.value : this.fecha,
-      registradoPorUsuarioId: data.registradoPorUsuarioId.present
-          ? data.registradoPorUsuarioId.value
-          : this.registradoPorUsuarioId,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('DailyPurchase(')
-          ..write('id: $id, ')
-          ..write('insumo: $insumo, ')
-          ..write('proveedor: $proveedor, ')
-          ..write('cantidad: $cantidad, ')
-          ..write('costo: $costo, ')
-          ..write('fecha: $fecha, ')
-          ..write('registradoPorUsuarioId: $registradoPorUsuarioId')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    insumo,
-    proveedor,
-    cantidad,
-    costo,
-    fecha,
-    registradoPorUsuarioId,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is DailyPurchase &&
-          other.id == this.id &&
-          other.insumo == this.insumo &&
-          other.proveedor == this.proveedor &&
-          other.cantidad == this.cantidad &&
-          other.costo == this.costo &&
-          other.fecha == this.fecha &&
-          other.registradoPorUsuarioId == this.registradoPorUsuarioId);
-}
-
-class DailyPurchasesCompanion extends UpdateCompanion<DailyPurchase> {
-  final Value<String> id;
-  final Value<String> insumo;
-  final Value<String?> proveedor;
-  final Value<double> cantidad;
-  final Value<double> costo;
-  final Value<DateTime> fecha;
-  final Value<String?> registradoPorUsuarioId;
-  final Value<int> rowid;
-  const DailyPurchasesCompanion({
-    this.id = const Value.absent(),
-    this.insumo = const Value.absent(),
-    this.proveedor = const Value.absent(),
-    this.cantidad = const Value.absent(),
-    this.costo = const Value.absent(),
-    this.fecha = const Value.absent(),
-    this.registradoPorUsuarioId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  DailyPurchasesCompanion.insert({
-    required String id,
-    required String insumo,
-    this.proveedor = const Value.absent(),
-    required double cantidad,
-    required double costo,
-    required DateTime fecha,
-    this.registradoPorUsuarioId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       insumo = Value(insumo),
-       cantidad = Value(cantidad),
-       costo = Value(costo),
-       fecha = Value(fecha);
-  static Insertable<DailyPurchase> custom({
-    Expression<String>? id,
-    Expression<String>? insumo,
-    Expression<String>? proveedor,
-    Expression<double>? cantidad,
-    Expression<double>? costo,
-    Expression<DateTime>? fecha,
-    Expression<String>? registradoPorUsuarioId,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (insumo != null) 'insumo': insumo,
-      if (proveedor != null) 'proveedor': proveedor,
-      if (cantidad != null) 'cantidad': cantidad,
-      if (costo != null) 'costo': costo,
-      if (fecha != null) 'fecha': fecha,
-      if (registradoPorUsuarioId != null)
-        'registrado_por_usuario_id': registradoPorUsuarioId,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  DailyPurchasesCompanion copyWith({
-    Value<String>? id,
-    Value<String>? insumo,
-    Value<String?>? proveedor,
-    Value<double>? cantidad,
-    Value<double>? costo,
-    Value<DateTime>? fecha,
-    Value<String?>? registradoPorUsuarioId,
-    Value<int>? rowid,
-  }) {
-    return DailyPurchasesCompanion(
-      id: id ?? this.id,
-      insumo: insumo ?? this.insumo,
-      proveedor: proveedor ?? this.proveedor,
-      cantidad: cantidad ?? this.cantidad,
-      costo: costo ?? this.costo,
-      fecha: fecha ?? this.fecha,
-      registradoPorUsuarioId:
-          registradoPorUsuarioId ?? this.registradoPorUsuarioId,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (insumo.present) {
-      map['insumo'] = Variable<String>(insumo.value);
-    }
-    if (proveedor.present) {
-      map['proveedor'] = Variable<String>(proveedor.value);
-    }
-    if (cantidad.present) {
-      map['cantidad'] = Variable<double>(cantidad.value);
-    }
-    if (costo.present) {
-      map['costo'] = Variable<double>(costo.value);
-    }
-    if (fecha.present) {
-      map['fecha'] = Variable<DateTime>(fecha.value);
-    }
-    if (registradoPorUsuarioId.present) {
-      map['registrado_por_usuario_id'] = Variable<String>(
-        registradoPorUsuarioId.value,
-      );
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('DailyPurchasesCompanion(')
-          ..write('id: $id, ')
-          ..write('insumo: $insumo, ')
-          ..write('proveedor: $proveedor, ')
-          ..write('cantidad: $cantidad, ')
-          ..write('costo: $costo, ')
-          ..write('fecha: $fecha, ')
-          ..write('registradoPorUsuarioId: $registradoPorUsuarioId, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $DailyPayrollTable extends DailyPayroll
-    with TableInfo<$DailyPayrollTable, DailyPayrollData> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $DailyPayrollTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _usuarioIdMeta = const VerificationMeta(
-    'usuarioId',
-  );
-  @override
-  late final GeneratedColumn<String> usuarioId = GeneratedColumn<String>(
-    'usuario_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES users (id)',
-    ),
-  );
-  static const VerificationMeta _fechaMeta = const VerificationMeta('fecha');
-  @override
-  late final GeneratedColumn<DateTime> fecha = GeneratedColumn<DateTime>(
-    'fecha',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _trabajoMeta = const VerificationMeta(
-    'trabajo',
-  );
-  @override
-  late final GeneratedColumn<bool> trabajo = GeneratedColumn<bool>(
-    'trabajo',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("trabajo" IN (0, 1))',
-    ),
-  );
-  static const VerificationMeta _jornadaMeta = const VerificationMeta(
-    'jornada',
-  );
-  @override
-  late final GeneratedColumn<String> jornada = GeneratedColumn<String>(
-    'jornada',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _salarioBaseMeta = const VerificationMeta(
-    'salarioBase',
-  );
-  @override
-  late final GeneratedColumn<double> salarioBase = GeneratedColumn<double>(
-    'salario_base',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _estimuloMeta = const VerificationMeta(
-    'estimulo',
-  );
-  @override
-  late final GeneratedColumn<double> estimulo = GeneratedColumn<double>(
-    'estimulo',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0.0),
-  );
-  static const VerificationMeta _totalMeta = const VerificationMeta('total');
-  @override
-  late final GeneratedColumn<double> total = GeneratedColumn<double>(
-    'total',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    usuarioId,
-    fecha,
-    trabajo,
-    jornada,
-    salarioBase,
-    estimulo,
-    total,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'daily_payroll';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<DailyPayrollData> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('usuario_id')) {
-      context.handle(
-        _usuarioIdMeta,
-        usuarioId.isAcceptableOrUnknown(data['usuario_id']!, _usuarioIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_usuarioIdMeta);
-    }
-    if (data.containsKey('fecha')) {
-      context.handle(
-        _fechaMeta,
-        fecha.isAcceptableOrUnknown(data['fecha']!, _fechaMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_fechaMeta);
-    }
-    if (data.containsKey('trabajo')) {
-      context.handle(
-        _trabajoMeta,
-        trabajo.isAcceptableOrUnknown(data['trabajo']!, _trabajoMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_trabajoMeta);
-    }
-    if (data.containsKey('jornada')) {
-      context.handle(
-        _jornadaMeta,
-        jornada.isAcceptableOrUnknown(data['jornada']!, _jornadaMeta),
-      );
-    }
-    if (data.containsKey('salario_base')) {
-      context.handle(
-        _salarioBaseMeta,
-        salarioBase.isAcceptableOrUnknown(
-          data['salario_base']!,
-          _salarioBaseMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_salarioBaseMeta);
-    }
-    if (data.containsKey('estimulo')) {
-      context.handle(
-        _estimuloMeta,
-        estimulo.isAcceptableOrUnknown(data['estimulo']!, _estimuloMeta),
-      );
-    }
-    if (data.containsKey('total')) {
-      context.handle(
-        _totalMeta,
-        total.isAcceptableOrUnknown(data['total']!, _totalMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_totalMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  DailyPayrollData map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return DailyPayrollData(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      usuarioId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}usuario_id'],
-      )!,
-      fecha: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}fecha'],
-      )!,
-      trabajo: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}trabajo'],
-      )!,
-      jornada: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}jornada'],
-      ),
-      salarioBase: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}salario_base'],
-      )!,
-      estimulo: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}estimulo'],
-      )!,
-      total: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}total'],
-      )!,
-    );
-  }
-
-  @override
-  $DailyPayrollTable createAlias(String alias) {
-    return $DailyPayrollTable(attachedDatabase, alias);
-  }
-}
-
-class DailyPayrollData extends DataClass
-    implements Insertable<DailyPayrollData> {
-  final String id;
-  final String usuarioId;
-  final DateTime fecha;
-  final bool trabajo;
-  final String? jornada;
-  final double salarioBase;
-  final double estimulo;
-  final double total;
-  const DailyPayrollData({
-    required this.id,
-    required this.usuarioId,
-    required this.fecha,
-    required this.trabajo,
-    this.jornada,
-    required this.salarioBase,
-    required this.estimulo,
-    required this.total,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['usuario_id'] = Variable<String>(usuarioId);
-    map['fecha'] = Variable<DateTime>(fecha);
-    map['trabajo'] = Variable<bool>(trabajo);
-    if (!nullToAbsent || jornada != null) {
-      map['jornada'] = Variable<String>(jornada);
-    }
-    map['salario_base'] = Variable<double>(salarioBase);
-    map['estimulo'] = Variable<double>(estimulo);
-    map['total'] = Variable<double>(total);
-    return map;
-  }
-
-  DailyPayrollCompanion toCompanion(bool nullToAbsent) {
-    return DailyPayrollCompanion(
-      id: Value(id),
-      usuarioId: Value(usuarioId),
-      fecha: Value(fecha),
-      trabajo: Value(trabajo),
-      jornada: jornada == null && nullToAbsent
-          ? const Value.absent()
-          : Value(jornada),
-      salarioBase: Value(salarioBase),
-      estimulo: Value(estimulo),
-      total: Value(total),
-    );
-  }
-
-  factory DailyPayrollData.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return DailyPayrollData(
-      id: serializer.fromJson<String>(json['id']),
-      usuarioId: serializer.fromJson<String>(json['usuarioId']),
-      fecha: serializer.fromJson<DateTime>(json['fecha']),
-      trabajo: serializer.fromJson<bool>(json['trabajo']),
-      jornada: serializer.fromJson<String?>(json['jornada']),
-      salarioBase: serializer.fromJson<double>(json['salarioBase']),
-      estimulo: serializer.fromJson<double>(json['estimulo']),
-      total: serializer.fromJson<double>(json['total']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'usuarioId': serializer.toJson<String>(usuarioId),
-      'fecha': serializer.toJson<DateTime>(fecha),
-      'trabajo': serializer.toJson<bool>(trabajo),
-      'jornada': serializer.toJson<String?>(jornada),
-      'salarioBase': serializer.toJson<double>(salarioBase),
-      'estimulo': serializer.toJson<double>(estimulo),
-      'total': serializer.toJson<double>(total),
-    };
-  }
-
-  DailyPayrollData copyWith({
-    String? id,
-    String? usuarioId,
-    DateTime? fecha,
-    bool? trabajo,
-    Value<String?> jornada = const Value.absent(),
-    double? salarioBase,
-    double? estimulo,
-    double? total,
-  }) => DailyPayrollData(
-    id: id ?? this.id,
-    usuarioId: usuarioId ?? this.usuarioId,
-    fecha: fecha ?? this.fecha,
-    trabajo: trabajo ?? this.trabajo,
-    jornada: jornada.present ? jornada.value : this.jornada,
-    salarioBase: salarioBase ?? this.salarioBase,
-    estimulo: estimulo ?? this.estimulo,
-    total: total ?? this.total,
-  );
-  DailyPayrollData copyWithCompanion(DailyPayrollCompanion data) {
-    return DailyPayrollData(
-      id: data.id.present ? data.id.value : this.id,
-      usuarioId: data.usuarioId.present ? data.usuarioId.value : this.usuarioId,
-      fecha: data.fecha.present ? data.fecha.value : this.fecha,
-      trabajo: data.trabajo.present ? data.trabajo.value : this.trabajo,
-      jornada: data.jornada.present ? data.jornada.value : this.jornada,
-      salarioBase: data.salarioBase.present
-          ? data.salarioBase.value
-          : this.salarioBase,
-      estimulo: data.estimulo.present ? data.estimulo.value : this.estimulo,
-      total: data.total.present ? data.total.value : this.total,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('DailyPayrollData(')
-          ..write('id: $id, ')
-          ..write('usuarioId: $usuarioId, ')
-          ..write('fecha: $fecha, ')
-          ..write('trabajo: $trabajo, ')
-          ..write('jornada: $jornada, ')
-          ..write('salarioBase: $salarioBase, ')
-          ..write('estimulo: $estimulo, ')
-          ..write('total: $total')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    usuarioId,
-    fecha,
-    trabajo,
-    jornada,
-    salarioBase,
-    estimulo,
-    total,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is DailyPayrollData &&
-          other.id == this.id &&
-          other.usuarioId == this.usuarioId &&
-          other.fecha == this.fecha &&
-          other.trabajo == this.trabajo &&
-          other.jornada == this.jornada &&
-          other.salarioBase == this.salarioBase &&
-          other.estimulo == this.estimulo &&
-          other.total == this.total);
-}
-
-class DailyPayrollCompanion extends UpdateCompanion<DailyPayrollData> {
-  final Value<String> id;
-  final Value<String> usuarioId;
-  final Value<DateTime> fecha;
-  final Value<bool> trabajo;
-  final Value<String?> jornada;
-  final Value<double> salarioBase;
-  final Value<double> estimulo;
-  final Value<double> total;
-  final Value<int> rowid;
-  const DailyPayrollCompanion({
-    this.id = const Value.absent(),
-    this.usuarioId = const Value.absent(),
-    this.fecha = const Value.absent(),
-    this.trabajo = const Value.absent(),
-    this.jornada = const Value.absent(),
-    this.salarioBase = const Value.absent(),
-    this.estimulo = const Value.absent(),
-    this.total = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  DailyPayrollCompanion.insert({
-    required String id,
-    required String usuarioId,
-    required DateTime fecha,
-    required bool trabajo,
-    this.jornada = const Value.absent(),
-    required double salarioBase,
-    this.estimulo = const Value.absent(),
-    required double total,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       usuarioId = Value(usuarioId),
-       fecha = Value(fecha),
-       trabajo = Value(trabajo),
-       salarioBase = Value(salarioBase),
-       total = Value(total);
-  static Insertable<DailyPayrollData> custom({
-    Expression<String>? id,
-    Expression<String>? usuarioId,
-    Expression<DateTime>? fecha,
-    Expression<bool>? trabajo,
-    Expression<String>? jornada,
-    Expression<double>? salarioBase,
-    Expression<double>? estimulo,
-    Expression<double>? total,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (usuarioId != null) 'usuario_id': usuarioId,
-      if (fecha != null) 'fecha': fecha,
-      if (trabajo != null) 'trabajo': trabajo,
-      if (jornada != null) 'jornada': jornada,
-      if (salarioBase != null) 'salario_base': salarioBase,
-      if (estimulo != null) 'estimulo': estimulo,
-      if (total != null) 'total': total,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  DailyPayrollCompanion copyWith({
-    Value<String>? id,
-    Value<String>? usuarioId,
-    Value<DateTime>? fecha,
-    Value<bool>? trabajo,
-    Value<String?>? jornada,
-    Value<double>? salarioBase,
-    Value<double>? estimulo,
-    Value<double>? total,
-    Value<int>? rowid,
-  }) {
-    return DailyPayrollCompanion(
-      id: id ?? this.id,
-      usuarioId: usuarioId ?? this.usuarioId,
-      fecha: fecha ?? this.fecha,
-      trabajo: trabajo ?? this.trabajo,
-      jornada: jornada ?? this.jornada,
-      salarioBase: salarioBase ?? this.salarioBase,
-      estimulo: estimulo ?? this.estimulo,
-      total: total ?? this.total,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (usuarioId.present) {
-      map['usuario_id'] = Variable<String>(usuarioId.value);
-    }
-    if (fecha.present) {
-      map['fecha'] = Variable<DateTime>(fecha.value);
-    }
-    if (trabajo.present) {
-      map['trabajo'] = Variable<bool>(trabajo.value);
-    }
-    if (jornada.present) {
-      map['jornada'] = Variable<String>(jornada.value);
-    }
-    if (salarioBase.present) {
-      map['salario_base'] = Variable<double>(salarioBase.value);
-    }
-    if (estimulo.present) {
-      map['estimulo'] = Variable<double>(estimulo.value);
-    }
-    if (total.present) {
-      map['total'] = Variable<double>(total.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('DailyPayrollCompanion(')
-          ..write('id: $id, ')
-          ..write('usuarioId: $usuarioId, ')
-          ..write('fecha: $fecha, ')
-          ..write('trabajo: $trabajo, ')
-          ..write('jornada: $jornada, ')
-          ..write('salarioBase: $salarioBase, ')
-          ..write('estimulo: $estimulo, ')
-          ..write('total: $total, ')
+          ..write('topClientesJson: $topClientesJson, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -19540,20 +16572,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $RestaurantOrderItemsTable restaurantOrderItems =
       $RestaurantOrderItemsTable(this);
-  late final $TrustedContactsTable trustedContacts = $TrustedContactsTable(
-    this,
-  );
-  late final $SmsMessagesTable smsMessages = $SmsMessagesTable(this);
-  late final $RestaurantTablesTable restaurantTables = $RestaurantTablesTable(
-    this,
-  );
-  late final $OrderStateHistoryTable orderStateHistory =
-      $OrderStateHistoryTable(this);
   late final $PriceHistoryTable priceHistory = $PriceHistoryTable(this);
   late final $DailySummariesTable dailySummaries = $DailySummariesTable(this);
-  late final $DailyExpensesTable dailyExpenses = $DailyExpensesTable(this);
-  late final $DailyPurchasesTable dailyPurchases = $DailyPurchasesTable(this);
-  late final $DailyPayrollTable dailyPayroll = $DailyPayrollTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -19585,15 +16605,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     restaurantClients,
     restaurantOrders,
     restaurantOrderItems,
-    trustedContacts,
-    smsMessages,
-    restaurantTables,
-    orderStateHistory,
     priceHistory,
     dailySummaries,
-    dailyExpenses,
-    dailyPurchases,
-    dailyPayroll,
   ];
 }
 
@@ -20118,117 +17131,6 @@ final class $$UsersTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
-
-  static MultiTypedResultKey<$TrustedContactsTable, List<TrustedContact>>
-  _trustedContactsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.trustedContacts,
-    aliasName: $_aliasNameGenerator(db.users.id, db.trustedContacts.usuarioId),
-  );
-
-  $$TrustedContactsTableProcessedTableManager get trustedContactsRefs {
-    final manager = $$TrustedContactsTableTableManager(
-      $_db,
-      $_db.trustedContacts,
-    ).filter((f) => f.usuarioId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _trustedContactsRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<
-    $OrderStateHistoryTable,
-    List<OrderStateHistoryData>
-  >
-  _orderStateHistoryRefsTable(_$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(
-        db.orderStateHistory,
-        aliasName: $_aliasNameGenerator(
-          db.users.id,
-          db.orderStateHistory.usuarioId,
-        ),
-      );
-
-  $$OrderStateHistoryTableProcessedTableManager get orderStateHistoryRefs {
-    final manager = $$OrderStateHistoryTableTableManager(
-      $_db,
-      $_db.orderStateHistory,
-    ).filter((f) => f.usuarioId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _orderStateHistoryRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$DailyExpensesTable, List<DailyExpense>>
-  _dailyExpensesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.dailyExpenses,
-    aliasName: $_aliasNameGenerator(
-      db.users.id,
-      db.dailyExpenses.registradoPorUsuarioId,
-    ),
-  );
-
-  $$DailyExpensesTableProcessedTableManager get dailyExpensesRefs {
-    final manager = $$DailyExpensesTableTableManager($_db, $_db.dailyExpenses)
-        .filter(
-          (f) => f.registradoPorUsuarioId.id.sqlEquals(
-            $_itemColumn<String>('id')!,
-          ),
-        );
-
-    final cache = $_typedResult.readTableOrNull(_dailyExpensesRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$DailyPurchasesTable, List<DailyPurchase>>
-  _dailyPurchasesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.dailyPurchases,
-    aliasName: $_aliasNameGenerator(
-      db.users.id,
-      db.dailyPurchases.registradoPorUsuarioId,
-    ),
-  );
-
-  $$DailyPurchasesTableProcessedTableManager get dailyPurchasesRefs {
-    final manager = $$DailyPurchasesTableTableManager($_db, $_db.dailyPurchases)
-        .filter(
-          (f) => f.registradoPorUsuarioId.id.sqlEquals(
-            $_itemColumn<String>('id')!,
-          ),
-        );
-
-    final cache = $_typedResult.readTableOrNull(_dailyPurchasesRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$DailyPayrollTable, List<DailyPayrollData>>
-  _dailyPayrollRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.dailyPayroll,
-    aliasName: $_aliasNameGenerator(db.users.id, db.dailyPayroll.usuarioId),
-  );
-
-  $$DailyPayrollTableProcessedTableManager get dailyPayrollRefs {
-    final manager = $$DailyPayrollTableTableManager(
-      $_db,
-      $_db.dailyPayroll,
-    ).filter((f) => f.usuarioId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_dailyPayrollRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
 }
 
 class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
@@ -20480,131 +17382,6 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
           }) => $$RestaurantOrdersTableFilterComposer(
             $db: $db,
             $table: $db.restaurantOrders,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> trustedContactsRefs(
-    Expression<bool> Function($$TrustedContactsTableFilterComposer f) f,
-  ) {
-    final $$TrustedContactsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.trustedContacts,
-      getReferencedColumn: (t) => t.usuarioId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$TrustedContactsTableFilterComposer(
-            $db: $db,
-            $table: $db.trustedContacts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> orderStateHistoryRefs(
-    Expression<bool> Function($$OrderStateHistoryTableFilterComposer f) f,
-  ) {
-    final $$OrderStateHistoryTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.orderStateHistory,
-      getReferencedColumn: (t) => t.usuarioId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OrderStateHistoryTableFilterComposer(
-            $db: $db,
-            $table: $db.orderStateHistory,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> dailyExpensesRefs(
-    Expression<bool> Function($$DailyExpensesTableFilterComposer f) f,
-  ) {
-    final $$DailyExpensesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.dailyExpenses,
-      getReferencedColumn: (t) => t.registradoPorUsuarioId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$DailyExpensesTableFilterComposer(
-            $db: $db,
-            $table: $db.dailyExpenses,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> dailyPurchasesRefs(
-    Expression<bool> Function($$DailyPurchasesTableFilterComposer f) f,
-  ) {
-    final $$DailyPurchasesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.dailyPurchases,
-      getReferencedColumn: (t) => t.registradoPorUsuarioId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$DailyPurchasesTableFilterComposer(
-            $db: $db,
-            $table: $db.dailyPurchases,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> dailyPayrollRefs(
-    Expression<bool> Function($$DailyPayrollTableFilterComposer f) f,
-  ) {
-    final $$DailyPayrollTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.dailyPayroll,
-      getReferencedColumn: (t) => t.usuarioId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$DailyPayrollTableFilterComposer(
-            $db: $db,
-            $table: $db.dailyPayroll,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -20932,132 +17709,6 @@ class $$UsersTableAnnotationComposer
     );
     return f(composer);
   }
-
-  Expression<T> trustedContactsRefs<T extends Object>(
-    Expression<T> Function($$TrustedContactsTableAnnotationComposer a) f,
-  ) {
-    final $$TrustedContactsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.trustedContacts,
-      getReferencedColumn: (t) => t.usuarioId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$TrustedContactsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.trustedContacts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<T> orderStateHistoryRefs<T extends Object>(
-    Expression<T> Function($$OrderStateHistoryTableAnnotationComposer a) f,
-  ) {
-    final $$OrderStateHistoryTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.id,
-          referencedTable: $db.orderStateHistory,
-          getReferencedColumn: (t) => t.usuarioId,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer,
-              }) => $$OrderStateHistoryTableAnnotationComposer(
-                $db: $db,
-                $table: $db.orderStateHistory,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
-    return f(composer);
-  }
-
-  Expression<T> dailyExpensesRefs<T extends Object>(
-    Expression<T> Function($$DailyExpensesTableAnnotationComposer a) f,
-  ) {
-    final $$DailyExpensesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.dailyExpenses,
-      getReferencedColumn: (t) => t.registradoPorUsuarioId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$DailyExpensesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.dailyExpenses,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<T> dailyPurchasesRefs<T extends Object>(
-    Expression<T> Function($$DailyPurchasesTableAnnotationComposer a) f,
-  ) {
-    final $$DailyPurchasesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.dailyPurchases,
-      getReferencedColumn: (t) => t.registradoPorUsuarioId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$DailyPurchasesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.dailyPurchases,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<T> dailyPayrollRefs<T extends Object>(
-    Expression<T> Function($$DailyPayrollTableAnnotationComposer a) f,
-  ) {
-    final $$DailyPayrollTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.dailyPayroll,
-      getReferencedColumn: (t) => t.usuarioId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$DailyPayrollTableAnnotationComposer(
-            $db: $db,
-            $table: $db.dailyPayroll,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
 }
 
 class $$UsersTableTableManager
@@ -21081,11 +17732,6 @@ class $$UsersTableTableManager
             bool syncLogsRefs,
             bool ordersRefs,
             bool restaurantOrdersRefs,
-            bool trustedContactsRefs,
-            bool orderStateHistoryRefs,
-            bool dailyExpensesRefs,
-            bool dailyPurchasesRefs,
-            bool dailyPayrollRefs,
           })
         > {
   $$UsersTableTableManager(_$AppDatabase db, $UsersTable table)
@@ -21186,11 +17832,6 @@ class $$UsersTableTableManager
                 syncLogsRefs = false,
                 ordersRefs = false,
                 restaurantOrdersRefs = false,
-                trustedContactsRefs = false,
-                orderStateHistoryRefs = false,
-                dailyExpensesRefs = false,
-                dailyPurchasesRefs = false,
-                dailyPayrollRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -21202,11 +17843,6 @@ class $$UsersTableTableManager
                     if (syncLogsRefs) db.syncLogs,
                     if (ordersRefs) db.orders,
                     if (restaurantOrdersRefs) db.restaurantOrders,
-                    if (trustedContactsRefs) db.trustedContacts,
-                    if (orderStateHistoryRefs) db.orderStateHistory,
-                    if (dailyExpensesRefs) db.dailyExpenses,
-                    if (dailyPurchasesRefs) db.dailyPurchases,
-                    if (dailyPayrollRefs) db.dailyPayroll,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -21338,111 +17974,6 @@ class $$UsersTableTableManager
                               ),
                           typedResults: items,
                         ),
-                      if (trustedContactsRefs)
-                        await $_getPrefetchedData<
-                          User,
-                          $UsersTable,
-                          TrustedContact
-                        >(
-                          currentTable: table,
-                          referencedTable: $$UsersTableReferences
-                              ._trustedContactsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$UsersTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).trustedContactsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.usuarioId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (orderStateHistoryRefs)
-                        await $_getPrefetchedData<
-                          User,
-                          $UsersTable,
-                          OrderStateHistoryData
-                        >(
-                          currentTable: table,
-                          referencedTable: $$UsersTableReferences
-                              ._orderStateHistoryRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$UsersTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).orderStateHistoryRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.usuarioId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (dailyExpensesRefs)
-                        await $_getPrefetchedData<
-                          User,
-                          $UsersTable,
-                          DailyExpense
-                        >(
-                          currentTable: table,
-                          referencedTable: $$UsersTableReferences
-                              ._dailyExpensesRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$UsersTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).dailyExpensesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.registradoPorUsuarioId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (dailyPurchasesRefs)
-                        await $_getPrefetchedData<
-                          User,
-                          $UsersTable,
-                          DailyPurchase
-                        >(
-                          currentTable: table,
-                          referencedTable: $$UsersTableReferences
-                              ._dailyPurchasesRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$UsersTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).dailyPurchasesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.registradoPorUsuarioId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (dailyPayrollRefs)
-                        await $_getPrefetchedData<
-                          User,
-                          $UsersTable,
-                          DailyPayrollData
-                        >(
-                          currentTable: table,
-                          referencedTable: $$UsersTableReferences
-                              ._dailyPayrollRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$UsersTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).dailyPayrollRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.usuarioId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
                     ];
                   },
                 );
@@ -21471,11 +18002,6 @@ typedef $$UsersTableProcessedTableManager =
         bool syncLogsRefs,
         bool ordersRefs,
         bool restaurantOrdersRefs,
-        bool trustedContactsRefs,
-        bool orderStateHistoryRefs,
-        bool dailyExpensesRefs,
-        bool dailyPurchasesRefs,
-        bool dailyPayrollRefs,
       })
     >;
 typedef $$ClientesTableCreateCompanionBuilder =
@@ -32027,6 +28553,7 @@ typedef $$RestaurantOrdersTableCreateCompanionBuilder =
       Value<String?> metodoPago,
       Value<double> montoTotal,
       required String creadoPorUsuarioId,
+      Value<String> fechaPedido,
       Value<DateTime> fechaCreacion,
       Value<bool> smsEnviado,
       Value<bool> smsConfirmado,
@@ -32046,6 +28573,7 @@ typedef $$RestaurantOrdersTableUpdateCompanionBuilder =
       Value<String?> metodoPago,
       Value<double> montoTotal,
       Value<String> creadoPorUsuarioId,
+      Value<String> fechaPedido,
       Value<DateTime> fechaCreacion,
       Value<bool> smsEnviado,
       Value<bool> smsConfirmado,
@@ -32134,54 +28662,6 @@ final class $$RestaurantOrdersTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
-
-  static MultiTypedResultKey<$SmsMessagesTable, List<SmsMessage>>
-  _smsMessagesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.smsMessages,
-    aliasName: $_aliasNameGenerator(
-      db.restaurantOrders.id,
-      db.smsMessages.orderId,
-    ),
-  );
-
-  $$SmsMessagesTableProcessedTableManager get smsMessagesRefs {
-    final manager = $$SmsMessagesTableTableManager(
-      $_db,
-      $_db.smsMessages,
-    ).filter((f) => f.orderId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_smsMessagesRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<
-    $OrderStateHistoryTable,
-    List<OrderStateHistoryData>
-  >
-  _orderStateHistoryRefsTable(_$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(
-        db.orderStateHistory,
-        aliasName: $_aliasNameGenerator(
-          db.restaurantOrders.id,
-          db.orderStateHistory.orderId,
-        ),
-      );
-
-  $$OrderStateHistoryTableProcessedTableManager get orderStateHistoryRefs {
-    final manager = $$OrderStateHistoryTableTableManager(
-      $_db,
-      $_db.orderStateHistory,
-    ).filter((f) => f.orderId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _orderStateHistoryRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
 }
 
 class $$RestaurantOrdersTableFilterComposer
@@ -32230,6 +28710,11 @@ class $$RestaurantOrdersTableFilterComposer
 
   ColumnFilters<double> get montoTotal => $composableBuilder(
     column: $table.montoTotal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fechaPedido => $composableBuilder(
+    column: $table.fechaPedido,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -32328,56 +28813,6 @@ class $$RestaurantOrdersTableFilterComposer
     );
     return f(composer);
   }
-
-  Expression<bool> smsMessagesRefs(
-    Expression<bool> Function($$SmsMessagesTableFilterComposer f) f,
-  ) {
-    final $$SmsMessagesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.smsMessages,
-      getReferencedColumn: (t) => t.orderId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$SmsMessagesTableFilterComposer(
-            $db: $db,
-            $table: $db.smsMessages,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> orderStateHistoryRefs(
-    Expression<bool> Function($$OrderStateHistoryTableFilterComposer f) f,
-  ) {
-    final $$OrderStateHistoryTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.orderStateHistory,
-      getReferencedColumn: (t) => t.orderId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OrderStateHistoryTableFilterComposer(
-            $db: $db,
-            $table: $db.orderStateHistory,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
 }
 
 class $$RestaurantOrdersTableOrderingComposer
@@ -32426,6 +28861,11 @@ class $$RestaurantOrdersTableOrderingComposer
 
   ColumnOrderings<double> get montoTotal => $composableBuilder(
     column: $table.montoTotal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fechaPedido => $composableBuilder(
+    column: $table.fechaPedido,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -32544,6 +28984,11 @@ class $$RestaurantOrdersTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get fechaPedido => $composableBuilder(
+    column: $table.fechaPedido,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get fechaCreacion => $composableBuilder(
     column: $table.fechaCreacion,
     builder: (column) => column,
@@ -32641,57 +29086,6 @@ class $$RestaurantOrdersTableAnnotationComposer
         );
     return f(composer);
   }
-
-  Expression<T> smsMessagesRefs<T extends Object>(
-    Expression<T> Function($$SmsMessagesTableAnnotationComposer a) f,
-  ) {
-    final $$SmsMessagesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.smsMessages,
-      getReferencedColumn: (t) => t.orderId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$SmsMessagesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.smsMessages,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<T> orderStateHistoryRefs<T extends Object>(
-    Expression<T> Function($$OrderStateHistoryTableAnnotationComposer a) f,
-  ) {
-    final $$OrderStateHistoryTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.id,
-          referencedTable: $db.orderStateHistory,
-          getReferencedColumn: (t) => t.orderId,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer,
-              }) => $$OrderStateHistoryTableAnnotationComposer(
-                $db: $db,
-                $table: $db.orderStateHistory,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
-    return f(composer);
-  }
 }
 
 class $$RestaurantOrdersTableTableManager
@@ -32711,8 +29105,6 @@ class $$RestaurantOrdersTableTableManager
             bool clienteId,
             bool creadoPorUsuarioId,
             bool restaurantOrderItemsRefs,
-            bool smsMessagesRefs,
-            bool orderStateHistoryRefs,
           })
         > {
   $$RestaurantOrdersTableTableManager(
@@ -32740,6 +29132,7 @@ class $$RestaurantOrdersTableTableManager
                 Value<String?> metodoPago = const Value.absent(),
                 Value<double> montoTotal = const Value.absent(),
                 Value<String> creadoPorUsuarioId = const Value.absent(),
+                Value<String> fechaPedido = const Value.absent(),
                 Value<DateTime> fechaCreacion = const Value.absent(),
                 Value<bool> smsEnviado = const Value.absent(),
                 Value<bool> smsConfirmado = const Value.absent(),
@@ -32757,6 +29150,7 @@ class $$RestaurantOrdersTableTableManager
                 metodoPago: metodoPago,
                 montoTotal: montoTotal,
                 creadoPorUsuarioId: creadoPorUsuarioId,
+                fechaPedido: fechaPedido,
                 fechaCreacion: fechaCreacion,
                 smsEnviado: smsEnviado,
                 smsConfirmado: smsConfirmado,
@@ -32776,6 +29170,7 @@ class $$RestaurantOrdersTableTableManager
                 Value<String?> metodoPago = const Value.absent(),
                 Value<double> montoTotal = const Value.absent(),
                 required String creadoPorUsuarioId,
+                Value<String> fechaPedido = const Value.absent(),
                 Value<DateTime> fechaCreacion = const Value.absent(),
                 Value<bool> smsEnviado = const Value.absent(),
                 Value<bool> smsConfirmado = const Value.absent(),
@@ -32793,6 +29188,7 @@ class $$RestaurantOrdersTableTableManager
                 metodoPago: metodoPago,
                 montoTotal: montoTotal,
                 creadoPorUsuarioId: creadoPorUsuarioId,
+                fechaPedido: fechaPedido,
                 fechaCreacion: fechaCreacion,
                 smsEnviado: smsEnviado,
                 smsConfirmado: smsConfirmado,
@@ -32813,15 +29209,11 @@ class $$RestaurantOrdersTableTableManager
                 clienteId = false,
                 creadoPorUsuarioId = false,
                 restaurantOrderItemsRefs = false,
-                smsMessagesRefs = false,
-                orderStateHistoryRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (restaurantOrderItemsRefs) db.restaurantOrderItems,
-                    if (smsMessagesRefs) db.smsMessages,
-                    if (orderStateHistoryRefs) db.orderStateHistory,
                   ],
                   addJoins:
                       <
@@ -32895,48 +29287,6 @@ class $$RestaurantOrdersTableTableManager
                               ),
                           typedResults: items,
                         ),
-                      if (smsMessagesRefs)
-                        await $_getPrefetchedData<
-                          RestaurantOrder,
-                          $RestaurantOrdersTable,
-                          SmsMessage
-                        >(
-                          currentTable: table,
-                          referencedTable: $$RestaurantOrdersTableReferences
-                              ._smsMessagesRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$RestaurantOrdersTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).smsMessagesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.orderId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (orderStateHistoryRefs)
-                        await $_getPrefetchedData<
-                          RestaurantOrder,
-                          $RestaurantOrdersTable,
-                          OrderStateHistoryData
-                        >(
-                          currentTable: table,
-                          referencedTable: $$RestaurantOrdersTableReferences
-                              ._orderStateHistoryRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$RestaurantOrdersTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).orderStateHistoryRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.orderId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
                     ];
                   },
                 );
@@ -32961,8 +29311,6 @@ typedef $$RestaurantOrdersTableProcessedTableManager =
         bool clienteId,
         bool creadoPorUsuarioId,
         bool restaurantOrderItemsRefs,
-        bool smsMessagesRefs,
-        bool orderStateHistoryRefs,
       })
     >;
 typedef $$RestaurantOrderItemsTableCreateCompanionBuilder =
@@ -33329,1382 +29677,6 @@ typedef $$RestaurantOrderItemsTableProcessedTableManager =
       RestaurantOrderItem,
       PrefetchHooks Function({bool orderId})
     >;
-typedef $$TrustedContactsTableCreateCompanionBuilder =
-    TrustedContactsCompanion Function({
-      required String id,
-      required String rol,
-      required String usuarioId,
-      required String numeroTelefono,
-      Value<bool> activo,
-      Value<int> rowid,
-    });
-typedef $$TrustedContactsTableUpdateCompanionBuilder =
-    TrustedContactsCompanion Function({
-      Value<String> id,
-      Value<String> rol,
-      Value<String> usuarioId,
-      Value<String> numeroTelefono,
-      Value<bool> activo,
-      Value<int> rowid,
-    });
-
-final class $$TrustedContactsTableReferences
-    extends
-        BaseReferences<_$AppDatabase, $TrustedContactsTable, TrustedContact> {
-  $$TrustedContactsTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $UsersTable _usuarioIdTable(_$AppDatabase db) => db.users.createAlias(
-    $_aliasNameGenerator(db.trustedContacts.usuarioId, db.users.id),
-  );
-
-  $$UsersTableProcessedTableManager get usuarioId {
-    final $_column = $_itemColumn<String>('usuario_id')!;
-
-    final manager = $$UsersTableTableManager(
-      $_db,
-      $_db.users,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_usuarioIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$TrustedContactsTableFilterComposer
-    extends Composer<_$AppDatabase, $TrustedContactsTable> {
-  $$TrustedContactsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get rol => $composableBuilder(
-    column: $table.rol,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get numeroTelefono => $composableBuilder(
-    column: $table.numeroTelefono,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get activo => $composableBuilder(
-    column: $table.activo,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$UsersTableFilterComposer get usuarioId {
-    final $$UsersTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.usuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableFilterComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$TrustedContactsTableOrderingComposer
-    extends Composer<_$AppDatabase, $TrustedContactsTable> {
-  $$TrustedContactsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get rol => $composableBuilder(
-    column: $table.rol,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get numeroTelefono => $composableBuilder(
-    column: $table.numeroTelefono,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get activo => $composableBuilder(
-    column: $table.activo,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$UsersTableOrderingComposer get usuarioId {
-    final $$UsersTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.usuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableOrderingComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$TrustedContactsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $TrustedContactsTable> {
-  $$TrustedContactsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get rol =>
-      $composableBuilder(column: $table.rol, builder: (column) => column);
-
-  GeneratedColumn<String> get numeroTelefono => $composableBuilder(
-    column: $table.numeroTelefono,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get activo =>
-      $composableBuilder(column: $table.activo, builder: (column) => column);
-
-  $$UsersTableAnnotationComposer get usuarioId {
-    final $$UsersTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.usuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableAnnotationComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$TrustedContactsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $TrustedContactsTable,
-          TrustedContact,
-          $$TrustedContactsTableFilterComposer,
-          $$TrustedContactsTableOrderingComposer,
-          $$TrustedContactsTableAnnotationComposer,
-          $$TrustedContactsTableCreateCompanionBuilder,
-          $$TrustedContactsTableUpdateCompanionBuilder,
-          (TrustedContact, $$TrustedContactsTableReferences),
-          TrustedContact,
-          PrefetchHooks Function({bool usuarioId})
-        > {
-  $$TrustedContactsTableTableManager(
-    _$AppDatabase db,
-    $TrustedContactsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$TrustedContactsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$TrustedContactsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$TrustedContactsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<String> rol = const Value.absent(),
-                Value<String> usuarioId = const Value.absent(),
-                Value<String> numeroTelefono = const Value.absent(),
-                Value<bool> activo = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => TrustedContactsCompanion(
-                id: id,
-                rol: rol,
-                usuarioId: usuarioId,
-                numeroTelefono: numeroTelefono,
-                activo: activo,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String id,
-                required String rol,
-                required String usuarioId,
-                required String numeroTelefono,
-                Value<bool> activo = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => TrustedContactsCompanion.insert(
-                id: id,
-                rol: rol,
-                usuarioId: usuarioId,
-                numeroTelefono: numeroTelefono,
-                activo: activo,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$TrustedContactsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({usuarioId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (usuarioId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.usuarioId,
-                                referencedTable:
-                                    $$TrustedContactsTableReferences
-                                        ._usuarioIdTable(db),
-                                referencedColumn:
-                                    $$TrustedContactsTableReferences
-                                        ._usuarioIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$TrustedContactsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $TrustedContactsTable,
-      TrustedContact,
-      $$TrustedContactsTableFilterComposer,
-      $$TrustedContactsTableOrderingComposer,
-      $$TrustedContactsTableAnnotationComposer,
-      $$TrustedContactsTableCreateCompanionBuilder,
-      $$TrustedContactsTableUpdateCompanionBuilder,
-      (TrustedContact, $$TrustedContactsTableReferences),
-      TrustedContact,
-      PrefetchHooks Function({bool usuarioId})
-    >;
-typedef $$SmsMessagesTableCreateCompanionBuilder =
-    SmsMessagesCompanion Function({
-      required String id,
-      required String orderId,
-      required String tipo,
-      required String payload,
-      required String origen,
-      required String destino,
-      required String estado,
-      Value<DateTime> timestamp,
-      Value<int> intentos,
-      Value<int> rowid,
-    });
-typedef $$SmsMessagesTableUpdateCompanionBuilder =
-    SmsMessagesCompanion Function({
-      Value<String> id,
-      Value<String> orderId,
-      Value<String> tipo,
-      Value<String> payload,
-      Value<String> origen,
-      Value<String> destino,
-      Value<String> estado,
-      Value<DateTime> timestamp,
-      Value<int> intentos,
-      Value<int> rowid,
-    });
-
-final class $$SmsMessagesTableReferences
-    extends BaseReferences<_$AppDatabase, $SmsMessagesTable, SmsMessage> {
-  $$SmsMessagesTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static $RestaurantOrdersTable _orderIdTable(_$AppDatabase db) =>
-      db.restaurantOrders.createAlias(
-        $_aliasNameGenerator(db.smsMessages.orderId, db.restaurantOrders.id),
-      );
-
-  $$RestaurantOrdersTableProcessedTableManager get orderId {
-    final $_column = $_itemColumn<String>('order_id')!;
-
-    final manager = $$RestaurantOrdersTableTableManager(
-      $_db,
-      $_db.restaurantOrders,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_orderIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$SmsMessagesTableFilterComposer
-    extends Composer<_$AppDatabase, $SmsMessagesTable> {
-  $$SmsMessagesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get tipo => $composableBuilder(
-    column: $table.tipo,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get payload => $composableBuilder(
-    column: $table.payload,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get origen => $composableBuilder(
-    column: $table.origen,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get destino => $composableBuilder(
-    column: $table.destino,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get estado => $composableBuilder(
-    column: $table.estado,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get timestamp => $composableBuilder(
-    column: $table.timestamp,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get intentos => $composableBuilder(
-    column: $table.intentos,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$RestaurantOrdersTableFilterComposer get orderId {
-    final $$RestaurantOrdersTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.orderId,
-      referencedTable: $db.restaurantOrders,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$RestaurantOrdersTableFilterComposer(
-            $db: $db,
-            $table: $db.restaurantOrders,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$SmsMessagesTableOrderingComposer
-    extends Composer<_$AppDatabase, $SmsMessagesTable> {
-  $$SmsMessagesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get tipo => $composableBuilder(
-    column: $table.tipo,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get payload => $composableBuilder(
-    column: $table.payload,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get origen => $composableBuilder(
-    column: $table.origen,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get destino => $composableBuilder(
-    column: $table.destino,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get estado => $composableBuilder(
-    column: $table.estado,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get timestamp => $composableBuilder(
-    column: $table.timestamp,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get intentos => $composableBuilder(
-    column: $table.intentos,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$RestaurantOrdersTableOrderingComposer get orderId {
-    final $$RestaurantOrdersTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.orderId,
-      referencedTable: $db.restaurantOrders,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$RestaurantOrdersTableOrderingComposer(
-            $db: $db,
-            $table: $db.restaurantOrders,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$SmsMessagesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $SmsMessagesTable> {
-  $$SmsMessagesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get tipo =>
-      $composableBuilder(column: $table.tipo, builder: (column) => column);
-
-  GeneratedColumn<String> get payload =>
-      $composableBuilder(column: $table.payload, builder: (column) => column);
-
-  GeneratedColumn<String> get origen =>
-      $composableBuilder(column: $table.origen, builder: (column) => column);
-
-  GeneratedColumn<String> get destino =>
-      $composableBuilder(column: $table.destino, builder: (column) => column);
-
-  GeneratedColumn<String> get estado =>
-      $composableBuilder(column: $table.estado, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get timestamp =>
-      $composableBuilder(column: $table.timestamp, builder: (column) => column);
-
-  GeneratedColumn<int> get intentos =>
-      $composableBuilder(column: $table.intentos, builder: (column) => column);
-
-  $$RestaurantOrdersTableAnnotationComposer get orderId {
-    final $$RestaurantOrdersTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.orderId,
-      referencedTable: $db.restaurantOrders,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$RestaurantOrdersTableAnnotationComposer(
-            $db: $db,
-            $table: $db.restaurantOrders,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$SmsMessagesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $SmsMessagesTable,
-          SmsMessage,
-          $$SmsMessagesTableFilterComposer,
-          $$SmsMessagesTableOrderingComposer,
-          $$SmsMessagesTableAnnotationComposer,
-          $$SmsMessagesTableCreateCompanionBuilder,
-          $$SmsMessagesTableUpdateCompanionBuilder,
-          (SmsMessage, $$SmsMessagesTableReferences),
-          SmsMessage,
-          PrefetchHooks Function({bool orderId})
-        > {
-  $$SmsMessagesTableTableManager(_$AppDatabase db, $SmsMessagesTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$SmsMessagesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$SmsMessagesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$SmsMessagesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<String> orderId = const Value.absent(),
-                Value<String> tipo = const Value.absent(),
-                Value<String> payload = const Value.absent(),
-                Value<String> origen = const Value.absent(),
-                Value<String> destino = const Value.absent(),
-                Value<String> estado = const Value.absent(),
-                Value<DateTime> timestamp = const Value.absent(),
-                Value<int> intentos = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => SmsMessagesCompanion(
-                id: id,
-                orderId: orderId,
-                tipo: tipo,
-                payload: payload,
-                origen: origen,
-                destino: destino,
-                estado: estado,
-                timestamp: timestamp,
-                intentos: intentos,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String id,
-                required String orderId,
-                required String tipo,
-                required String payload,
-                required String origen,
-                required String destino,
-                required String estado,
-                Value<DateTime> timestamp = const Value.absent(),
-                Value<int> intentos = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => SmsMessagesCompanion.insert(
-                id: id,
-                orderId: orderId,
-                tipo: tipo,
-                payload: payload,
-                origen: origen,
-                destino: destino,
-                estado: estado,
-                timestamp: timestamp,
-                intentos: intentos,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$SmsMessagesTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({orderId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (orderId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.orderId,
-                                referencedTable: $$SmsMessagesTableReferences
-                                    ._orderIdTable(db),
-                                referencedColumn: $$SmsMessagesTableReferences
-                                    ._orderIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$SmsMessagesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $SmsMessagesTable,
-      SmsMessage,
-      $$SmsMessagesTableFilterComposer,
-      $$SmsMessagesTableOrderingComposer,
-      $$SmsMessagesTableAnnotationComposer,
-      $$SmsMessagesTableCreateCompanionBuilder,
-      $$SmsMessagesTableUpdateCompanionBuilder,
-      (SmsMessage, $$SmsMessagesTableReferences),
-      SmsMessage,
-      PrefetchHooks Function({bool orderId})
-    >;
-typedef $$RestaurantTablesTableCreateCompanionBuilder =
-    RestaurantTablesCompanion Function({
-      required String id,
-      required int numero,
-      required int capacidad,
-      required String estado,
-      Value<String?> ubicacion,
-      Value<int> rowid,
-    });
-typedef $$RestaurantTablesTableUpdateCompanionBuilder =
-    RestaurantTablesCompanion Function({
-      Value<String> id,
-      Value<int> numero,
-      Value<int> capacidad,
-      Value<String> estado,
-      Value<String?> ubicacion,
-      Value<int> rowid,
-    });
-
-class $$RestaurantTablesTableFilterComposer
-    extends Composer<_$AppDatabase, $RestaurantTablesTable> {
-  $$RestaurantTablesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get numero => $composableBuilder(
-    column: $table.numero,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get capacidad => $composableBuilder(
-    column: $table.capacidad,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get estado => $composableBuilder(
-    column: $table.estado,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get ubicacion => $composableBuilder(
-    column: $table.ubicacion,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$RestaurantTablesTableOrderingComposer
-    extends Composer<_$AppDatabase, $RestaurantTablesTable> {
-  $$RestaurantTablesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get numero => $composableBuilder(
-    column: $table.numero,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get capacidad => $composableBuilder(
-    column: $table.capacidad,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get estado => $composableBuilder(
-    column: $table.estado,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get ubicacion => $composableBuilder(
-    column: $table.ubicacion,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$RestaurantTablesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $RestaurantTablesTable> {
-  $$RestaurantTablesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<int> get numero =>
-      $composableBuilder(column: $table.numero, builder: (column) => column);
-
-  GeneratedColumn<int> get capacidad =>
-      $composableBuilder(column: $table.capacidad, builder: (column) => column);
-
-  GeneratedColumn<String> get estado =>
-      $composableBuilder(column: $table.estado, builder: (column) => column);
-
-  GeneratedColumn<String> get ubicacion =>
-      $composableBuilder(column: $table.ubicacion, builder: (column) => column);
-}
-
-class $$RestaurantTablesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $RestaurantTablesTable,
-          RestaurantTable,
-          $$RestaurantTablesTableFilterComposer,
-          $$RestaurantTablesTableOrderingComposer,
-          $$RestaurantTablesTableAnnotationComposer,
-          $$RestaurantTablesTableCreateCompanionBuilder,
-          $$RestaurantTablesTableUpdateCompanionBuilder,
-          (
-            RestaurantTable,
-            BaseReferences<
-              _$AppDatabase,
-              $RestaurantTablesTable,
-              RestaurantTable
-            >,
-          ),
-          RestaurantTable,
-          PrefetchHooks Function()
-        > {
-  $$RestaurantTablesTableTableManager(
-    _$AppDatabase db,
-    $RestaurantTablesTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$RestaurantTablesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$RestaurantTablesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$RestaurantTablesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<int> numero = const Value.absent(),
-                Value<int> capacidad = const Value.absent(),
-                Value<String> estado = const Value.absent(),
-                Value<String?> ubicacion = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => RestaurantTablesCompanion(
-                id: id,
-                numero: numero,
-                capacidad: capacidad,
-                estado: estado,
-                ubicacion: ubicacion,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String id,
-                required int numero,
-                required int capacidad,
-                required String estado,
-                Value<String?> ubicacion = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => RestaurantTablesCompanion.insert(
-                id: id,
-                numero: numero,
-                capacidad: capacidad,
-                estado: estado,
-                ubicacion: ubicacion,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$RestaurantTablesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $RestaurantTablesTable,
-      RestaurantTable,
-      $$RestaurantTablesTableFilterComposer,
-      $$RestaurantTablesTableOrderingComposer,
-      $$RestaurantTablesTableAnnotationComposer,
-      $$RestaurantTablesTableCreateCompanionBuilder,
-      $$RestaurantTablesTableUpdateCompanionBuilder,
-      (
-        RestaurantTable,
-        BaseReferences<_$AppDatabase, $RestaurantTablesTable, RestaurantTable>,
-      ),
-      RestaurantTable,
-      PrefetchHooks Function()
-    >;
-typedef $$OrderStateHistoryTableCreateCompanionBuilder =
-    OrderStateHistoryCompanion Function({
-      required String id,
-      required String orderId,
-      required String estado,
-      required DateTime timestamp,
-      Value<String?> usuarioId,
-      Value<bool> viaSms,
-      Value<int> rowid,
-    });
-typedef $$OrderStateHistoryTableUpdateCompanionBuilder =
-    OrderStateHistoryCompanion Function({
-      Value<String> id,
-      Value<String> orderId,
-      Value<String> estado,
-      Value<DateTime> timestamp,
-      Value<String?> usuarioId,
-      Value<bool> viaSms,
-      Value<int> rowid,
-    });
-
-final class $$OrderStateHistoryTableReferences
-    extends
-        BaseReferences<
-          _$AppDatabase,
-          $OrderStateHistoryTable,
-          OrderStateHistoryData
-        > {
-  $$OrderStateHistoryTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $RestaurantOrdersTable _orderIdTable(_$AppDatabase db) =>
-      db.restaurantOrders.createAlias(
-        $_aliasNameGenerator(
-          db.orderStateHistory.orderId,
-          db.restaurantOrders.id,
-        ),
-      );
-
-  $$RestaurantOrdersTableProcessedTableManager get orderId {
-    final $_column = $_itemColumn<String>('order_id')!;
-
-    final manager = $$RestaurantOrdersTableTableManager(
-      $_db,
-      $_db.restaurantOrders,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_orderIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static $UsersTable _usuarioIdTable(_$AppDatabase db) => db.users.createAlias(
-    $_aliasNameGenerator(db.orderStateHistory.usuarioId, db.users.id),
-  );
-
-  $$UsersTableProcessedTableManager? get usuarioId {
-    final $_column = $_itemColumn<String>('usuario_id');
-    if ($_column == null) return null;
-    final manager = $$UsersTableTableManager(
-      $_db,
-      $_db.users,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_usuarioIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$OrderStateHistoryTableFilterComposer
-    extends Composer<_$AppDatabase, $OrderStateHistoryTable> {
-  $$OrderStateHistoryTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get estado => $composableBuilder(
-    column: $table.estado,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get timestamp => $composableBuilder(
-    column: $table.timestamp,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get viaSms => $composableBuilder(
-    column: $table.viaSms,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$RestaurantOrdersTableFilterComposer get orderId {
-    final $$RestaurantOrdersTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.orderId,
-      referencedTable: $db.restaurantOrders,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$RestaurantOrdersTableFilterComposer(
-            $db: $db,
-            $table: $db.restaurantOrders,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$UsersTableFilterComposer get usuarioId {
-    final $$UsersTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.usuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableFilterComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$OrderStateHistoryTableOrderingComposer
-    extends Composer<_$AppDatabase, $OrderStateHistoryTable> {
-  $$OrderStateHistoryTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get estado => $composableBuilder(
-    column: $table.estado,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get timestamp => $composableBuilder(
-    column: $table.timestamp,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get viaSms => $composableBuilder(
-    column: $table.viaSms,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$RestaurantOrdersTableOrderingComposer get orderId {
-    final $$RestaurantOrdersTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.orderId,
-      referencedTable: $db.restaurantOrders,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$RestaurantOrdersTableOrderingComposer(
-            $db: $db,
-            $table: $db.restaurantOrders,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$UsersTableOrderingComposer get usuarioId {
-    final $$UsersTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.usuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableOrderingComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$OrderStateHistoryTableAnnotationComposer
-    extends Composer<_$AppDatabase, $OrderStateHistoryTable> {
-  $$OrderStateHistoryTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get estado =>
-      $composableBuilder(column: $table.estado, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get timestamp =>
-      $composableBuilder(column: $table.timestamp, builder: (column) => column);
-
-  GeneratedColumn<bool> get viaSms =>
-      $composableBuilder(column: $table.viaSms, builder: (column) => column);
-
-  $$RestaurantOrdersTableAnnotationComposer get orderId {
-    final $$RestaurantOrdersTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.orderId,
-      referencedTable: $db.restaurantOrders,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$RestaurantOrdersTableAnnotationComposer(
-            $db: $db,
-            $table: $db.restaurantOrders,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$UsersTableAnnotationComposer get usuarioId {
-    final $$UsersTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.usuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableAnnotationComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$OrderStateHistoryTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $OrderStateHistoryTable,
-          OrderStateHistoryData,
-          $$OrderStateHistoryTableFilterComposer,
-          $$OrderStateHistoryTableOrderingComposer,
-          $$OrderStateHistoryTableAnnotationComposer,
-          $$OrderStateHistoryTableCreateCompanionBuilder,
-          $$OrderStateHistoryTableUpdateCompanionBuilder,
-          (OrderStateHistoryData, $$OrderStateHistoryTableReferences),
-          OrderStateHistoryData,
-          PrefetchHooks Function({bool orderId, bool usuarioId})
-        > {
-  $$OrderStateHistoryTableTableManager(
-    _$AppDatabase db,
-    $OrderStateHistoryTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$OrderStateHistoryTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$OrderStateHistoryTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$OrderStateHistoryTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<String> orderId = const Value.absent(),
-                Value<String> estado = const Value.absent(),
-                Value<DateTime> timestamp = const Value.absent(),
-                Value<String?> usuarioId = const Value.absent(),
-                Value<bool> viaSms = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => OrderStateHistoryCompanion(
-                id: id,
-                orderId: orderId,
-                estado: estado,
-                timestamp: timestamp,
-                usuarioId: usuarioId,
-                viaSms: viaSms,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String id,
-                required String orderId,
-                required String estado,
-                required DateTime timestamp,
-                Value<String?> usuarioId = const Value.absent(),
-                Value<bool> viaSms = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => OrderStateHistoryCompanion.insert(
-                id: id,
-                orderId: orderId,
-                estado: estado,
-                timestamp: timestamp,
-                usuarioId: usuarioId,
-                viaSms: viaSms,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$OrderStateHistoryTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({orderId = false, usuarioId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (orderId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.orderId,
-                                referencedTable:
-                                    $$OrderStateHistoryTableReferences
-                                        ._orderIdTable(db),
-                                referencedColumn:
-                                    $$OrderStateHistoryTableReferences
-                                        ._orderIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-                    if (usuarioId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.usuarioId,
-                                referencedTable:
-                                    $$OrderStateHistoryTableReferences
-                                        ._usuarioIdTable(db),
-                                referencedColumn:
-                                    $$OrderStateHistoryTableReferences
-                                        ._usuarioIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$OrderStateHistoryTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $OrderStateHistoryTable,
-      OrderStateHistoryData,
-      $$OrderStateHistoryTableFilterComposer,
-      $$OrderStateHistoryTableOrderingComposer,
-      $$OrderStateHistoryTableAnnotationComposer,
-      $$OrderStateHistoryTableCreateCompanionBuilder,
-      $$OrderStateHistoryTableUpdateCompanionBuilder,
-      (OrderStateHistoryData, $$OrderStateHistoryTableReferences),
-      OrderStateHistoryData,
-      PrefetchHooks Function({bool orderId, bool usuarioId})
-    >;
 typedef $$PriceHistoryTableCreateCompanionBuilder =
     PriceHistoryCompanion Function({
       required String id,
@@ -34943,6 +29915,7 @@ typedef $$DailySummariesTableCreateCompanionBuilder =
       Value<double> distribucionYurdenis,
       Value<double> distribucionMildrey,
       Value<double> distribucionNegocio,
+      Value<String?> topClientesJson,
       Value<int> rowid,
     });
 typedef $$DailySummariesTableUpdateCompanionBuilder =
@@ -34958,6 +29931,7 @@ typedef $$DailySummariesTableUpdateCompanionBuilder =
       Value<double> distribucionYurdenis,
       Value<double> distribucionMildrey,
       Value<double> distribucionNegocio,
+      Value<String?> topClientesJson,
       Value<int> rowid,
     });
 
@@ -35022,6 +29996,11 @@ class $$DailySummariesTableFilterComposer
 
   ColumnFilters<double> get distribucionNegocio => $composableBuilder(
     column: $table.distribucionNegocio,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get topClientesJson => $composableBuilder(
+    column: $table.topClientesJson,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -35089,6 +30068,11 @@ class $$DailySummariesTableOrderingComposer
     column: $table.distribucionNegocio,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get topClientesJson => $composableBuilder(
+    column: $table.topClientesJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DailySummariesTableAnnotationComposer
@@ -35152,6 +30136,11 @@ class $$DailySummariesTableAnnotationComposer
     column: $table.distribucionNegocio,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get topClientesJson => $composableBuilder(
+    column: $table.topClientesJson,
+    builder: (column) => column,
+  );
 }
 
 class $$DailySummariesTableTableManager
@@ -35198,6 +30187,7 @@ class $$DailySummariesTableTableManager
                 Value<double> distribucionYurdenis = const Value.absent(),
                 Value<double> distribucionMildrey = const Value.absent(),
                 Value<double> distribucionNegocio = const Value.absent(),
+                Value<String?> topClientesJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DailySummariesCompanion(
                 fecha: fecha,
@@ -35211,6 +30201,7 @@ class $$DailySummariesTableTableManager
                 distribucionYurdenis: distribucionYurdenis,
                 distribucionMildrey: distribucionMildrey,
                 distribucionNegocio: distribucionNegocio,
+                topClientesJson: topClientesJson,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -35226,6 +30217,7 @@ class $$DailySummariesTableTableManager
                 Value<double> distribucionYurdenis = const Value.absent(),
                 Value<double> distribucionMildrey = const Value.absent(),
                 Value<double> distribucionNegocio = const Value.absent(),
+                Value<String?> topClientesJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DailySummariesCompanion.insert(
                 fecha: fecha,
@@ -35239,6 +30231,7 @@ class $$DailySummariesTableTableManager
                 distribucionYurdenis: distribucionYurdenis,
                 distribucionMildrey: distribucionMildrey,
                 distribucionNegocio: distribucionNegocio,
+                topClientesJson: topClientesJson,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -35265,1081 +30258,6 @@ typedef $$DailySummariesTableProcessedTableManager =
       ),
       DailySummary,
       PrefetchHooks Function()
-    >;
-typedef $$DailyExpensesTableCreateCompanionBuilder =
-    DailyExpensesCompanion Function({
-      required String id,
-      required String concepto,
-      required double monto,
-      required DateTime fecha,
-      Value<String?> registradoPorUsuarioId,
-      Value<int> rowid,
-    });
-typedef $$DailyExpensesTableUpdateCompanionBuilder =
-    DailyExpensesCompanion Function({
-      Value<String> id,
-      Value<String> concepto,
-      Value<double> monto,
-      Value<DateTime> fecha,
-      Value<String?> registradoPorUsuarioId,
-      Value<int> rowid,
-    });
-
-final class $$DailyExpensesTableReferences
-    extends BaseReferences<_$AppDatabase, $DailyExpensesTable, DailyExpense> {
-  $$DailyExpensesTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $UsersTable _registradoPorUsuarioIdTable(_$AppDatabase db) =>
-      db.users.createAlias(
-        $_aliasNameGenerator(
-          db.dailyExpenses.registradoPorUsuarioId,
-          db.users.id,
-        ),
-      );
-
-  $$UsersTableProcessedTableManager? get registradoPorUsuarioId {
-    final $_column = $_itemColumn<String>('registrado_por_usuario_id');
-    if ($_column == null) return null;
-    final manager = $$UsersTableTableManager(
-      $_db,
-      $_db.users,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(
-      _registradoPorUsuarioIdTable($_db),
-    );
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$DailyExpensesTableFilterComposer
-    extends Composer<_$AppDatabase, $DailyExpensesTable> {
-  $$DailyExpensesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get concepto => $composableBuilder(
-    column: $table.concepto,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get monto => $composableBuilder(
-    column: $table.monto,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get fecha => $composableBuilder(
-    column: $table.fecha,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$UsersTableFilterComposer get registradoPorUsuarioId {
-    final $$UsersTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.registradoPorUsuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableFilterComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$DailyExpensesTableOrderingComposer
-    extends Composer<_$AppDatabase, $DailyExpensesTable> {
-  $$DailyExpensesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get concepto => $composableBuilder(
-    column: $table.concepto,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get monto => $composableBuilder(
-    column: $table.monto,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get fecha => $composableBuilder(
-    column: $table.fecha,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$UsersTableOrderingComposer get registradoPorUsuarioId {
-    final $$UsersTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.registradoPorUsuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableOrderingComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$DailyExpensesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $DailyExpensesTable> {
-  $$DailyExpensesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get concepto =>
-      $composableBuilder(column: $table.concepto, builder: (column) => column);
-
-  GeneratedColumn<double> get monto =>
-      $composableBuilder(column: $table.monto, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get fecha =>
-      $composableBuilder(column: $table.fecha, builder: (column) => column);
-
-  $$UsersTableAnnotationComposer get registradoPorUsuarioId {
-    final $$UsersTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.registradoPorUsuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableAnnotationComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$DailyExpensesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $DailyExpensesTable,
-          DailyExpense,
-          $$DailyExpensesTableFilterComposer,
-          $$DailyExpensesTableOrderingComposer,
-          $$DailyExpensesTableAnnotationComposer,
-          $$DailyExpensesTableCreateCompanionBuilder,
-          $$DailyExpensesTableUpdateCompanionBuilder,
-          (DailyExpense, $$DailyExpensesTableReferences),
-          DailyExpense,
-          PrefetchHooks Function({bool registradoPorUsuarioId})
-        > {
-  $$DailyExpensesTableTableManager(_$AppDatabase db, $DailyExpensesTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$DailyExpensesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$DailyExpensesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$DailyExpensesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<String> concepto = const Value.absent(),
-                Value<double> monto = const Value.absent(),
-                Value<DateTime> fecha = const Value.absent(),
-                Value<String?> registradoPorUsuarioId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => DailyExpensesCompanion(
-                id: id,
-                concepto: concepto,
-                monto: monto,
-                fecha: fecha,
-                registradoPorUsuarioId: registradoPorUsuarioId,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String id,
-                required String concepto,
-                required double monto,
-                required DateTime fecha,
-                Value<String?> registradoPorUsuarioId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => DailyExpensesCompanion.insert(
-                id: id,
-                concepto: concepto,
-                monto: monto,
-                fecha: fecha,
-                registradoPorUsuarioId: registradoPorUsuarioId,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$DailyExpensesTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({registradoPorUsuarioId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (registradoPorUsuarioId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.registradoPorUsuarioId,
-                                referencedTable: $$DailyExpensesTableReferences
-                                    ._registradoPorUsuarioIdTable(db),
-                                referencedColumn: $$DailyExpensesTableReferences
-                                    ._registradoPorUsuarioIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$DailyExpensesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $DailyExpensesTable,
-      DailyExpense,
-      $$DailyExpensesTableFilterComposer,
-      $$DailyExpensesTableOrderingComposer,
-      $$DailyExpensesTableAnnotationComposer,
-      $$DailyExpensesTableCreateCompanionBuilder,
-      $$DailyExpensesTableUpdateCompanionBuilder,
-      (DailyExpense, $$DailyExpensesTableReferences),
-      DailyExpense,
-      PrefetchHooks Function({bool registradoPorUsuarioId})
-    >;
-typedef $$DailyPurchasesTableCreateCompanionBuilder =
-    DailyPurchasesCompanion Function({
-      required String id,
-      required String insumo,
-      Value<String?> proveedor,
-      required double cantidad,
-      required double costo,
-      required DateTime fecha,
-      Value<String?> registradoPorUsuarioId,
-      Value<int> rowid,
-    });
-typedef $$DailyPurchasesTableUpdateCompanionBuilder =
-    DailyPurchasesCompanion Function({
-      Value<String> id,
-      Value<String> insumo,
-      Value<String?> proveedor,
-      Value<double> cantidad,
-      Value<double> costo,
-      Value<DateTime> fecha,
-      Value<String?> registradoPorUsuarioId,
-      Value<int> rowid,
-    });
-
-final class $$DailyPurchasesTableReferences
-    extends BaseReferences<_$AppDatabase, $DailyPurchasesTable, DailyPurchase> {
-  $$DailyPurchasesTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $UsersTable _registradoPorUsuarioIdTable(_$AppDatabase db) =>
-      db.users.createAlias(
-        $_aliasNameGenerator(
-          db.dailyPurchases.registradoPorUsuarioId,
-          db.users.id,
-        ),
-      );
-
-  $$UsersTableProcessedTableManager? get registradoPorUsuarioId {
-    final $_column = $_itemColumn<String>('registrado_por_usuario_id');
-    if ($_column == null) return null;
-    final manager = $$UsersTableTableManager(
-      $_db,
-      $_db.users,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(
-      _registradoPorUsuarioIdTable($_db),
-    );
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$DailyPurchasesTableFilterComposer
-    extends Composer<_$AppDatabase, $DailyPurchasesTable> {
-  $$DailyPurchasesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get insumo => $composableBuilder(
-    column: $table.insumo,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get proveedor => $composableBuilder(
-    column: $table.proveedor,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get cantidad => $composableBuilder(
-    column: $table.cantidad,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get costo => $composableBuilder(
-    column: $table.costo,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get fecha => $composableBuilder(
-    column: $table.fecha,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$UsersTableFilterComposer get registradoPorUsuarioId {
-    final $$UsersTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.registradoPorUsuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableFilterComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$DailyPurchasesTableOrderingComposer
-    extends Composer<_$AppDatabase, $DailyPurchasesTable> {
-  $$DailyPurchasesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get insumo => $composableBuilder(
-    column: $table.insumo,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get proveedor => $composableBuilder(
-    column: $table.proveedor,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get cantidad => $composableBuilder(
-    column: $table.cantidad,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get costo => $composableBuilder(
-    column: $table.costo,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get fecha => $composableBuilder(
-    column: $table.fecha,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$UsersTableOrderingComposer get registradoPorUsuarioId {
-    final $$UsersTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.registradoPorUsuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableOrderingComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$DailyPurchasesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $DailyPurchasesTable> {
-  $$DailyPurchasesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get insumo =>
-      $composableBuilder(column: $table.insumo, builder: (column) => column);
-
-  GeneratedColumn<String> get proveedor =>
-      $composableBuilder(column: $table.proveedor, builder: (column) => column);
-
-  GeneratedColumn<double> get cantidad =>
-      $composableBuilder(column: $table.cantidad, builder: (column) => column);
-
-  GeneratedColumn<double> get costo =>
-      $composableBuilder(column: $table.costo, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get fecha =>
-      $composableBuilder(column: $table.fecha, builder: (column) => column);
-
-  $$UsersTableAnnotationComposer get registradoPorUsuarioId {
-    final $$UsersTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.registradoPorUsuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableAnnotationComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$DailyPurchasesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $DailyPurchasesTable,
-          DailyPurchase,
-          $$DailyPurchasesTableFilterComposer,
-          $$DailyPurchasesTableOrderingComposer,
-          $$DailyPurchasesTableAnnotationComposer,
-          $$DailyPurchasesTableCreateCompanionBuilder,
-          $$DailyPurchasesTableUpdateCompanionBuilder,
-          (DailyPurchase, $$DailyPurchasesTableReferences),
-          DailyPurchase,
-          PrefetchHooks Function({bool registradoPorUsuarioId})
-        > {
-  $$DailyPurchasesTableTableManager(
-    _$AppDatabase db,
-    $DailyPurchasesTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$DailyPurchasesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$DailyPurchasesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$DailyPurchasesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<String> insumo = const Value.absent(),
-                Value<String?> proveedor = const Value.absent(),
-                Value<double> cantidad = const Value.absent(),
-                Value<double> costo = const Value.absent(),
-                Value<DateTime> fecha = const Value.absent(),
-                Value<String?> registradoPorUsuarioId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => DailyPurchasesCompanion(
-                id: id,
-                insumo: insumo,
-                proveedor: proveedor,
-                cantidad: cantidad,
-                costo: costo,
-                fecha: fecha,
-                registradoPorUsuarioId: registradoPorUsuarioId,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String id,
-                required String insumo,
-                Value<String?> proveedor = const Value.absent(),
-                required double cantidad,
-                required double costo,
-                required DateTime fecha,
-                Value<String?> registradoPorUsuarioId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => DailyPurchasesCompanion.insert(
-                id: id,
-                insumo: insumo,
-                proveedor: proveedor,
-                cantidad: cantidad,
-                costo: costo,
-                fecha: fecha,
-                registradoPorUsuarioId: registradoPorUsuarioId,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$DailyPurchasesTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({registradoPorUsuarioId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (registradoPorUsuarioId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.registradoPorUsuarioId,
-                                referencedTable: $$DailyPurchasesTableReferences
-                                    ._registradoPorUsuarioIdTable(db),
-                                referencedColumn:
-                                    $$DailyPurchasesTableReferences
-                                        ._registradoPorUsuarioIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$DailyPurchasesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $DailyPurchasesTable,
-      DailyPurchase,
-      $$DailyPurchasesTableFilterComposer,
-      $$DailyPurchasesTableOrderingComposer,
-      $$DailyPurchasesTableAnnotationComposer,
-      $$DailyPurchasesTableCreateCompanionBuilder,
-      $$DailyPurchasesTableUpdateCompanionBuilder,
-      (DailyPurchase, $$DailyPurchasesTableReferences),
-      DailyPurchase,
-      PrefetchHooks Function({bool registradoPorUsuarioId})
-    >;
-typedef $$DailyPayrollTableCreateCompanionBuilder =
-    DailyPayrollCompanion Function({
-      required String id,
-      required String usuarioId,
-      required DateTime fecha,
-      required bool trabajo,
-      Value<String?> jornada,
-      required double salarioBase,
-      Value<double> estimulo,
-      required double total,
-      Value<int> rowid,
-    });
-typedef $$DailyPayrollTableUpdateCompanionBuilder =
-    DailyPayrollCompanion Function({
-      Value<String> id,
-      Value<String> usuarioId,
-      Value<DateTime> fecha,
-      Value<bool> trabajo,
-      Value<String?> jornada,
-      Value<double> salarioBase,
-      Value<double> estimulo,
-      Value<double> total,
-      Value<int> rowid,
-    });
-
-final class $$DailyPayrollTableReferences
-    extends
-        BaseReferences<_$AppDatabase, $DailyPayrollTable, DailyPayrollData> {
-  $$DailyPayrollTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static $UsersTable _usuarioIdTable(_$AppDatabase db) => db.users.createAlias(
-    $_aliasNameGenerator(db.dailyPayroll.usuarioId, db.users.id),
-  );
-
-  $$UsersTableProcessedTableManager get usuarioId {
-    final $_column = $_itemColumn<String>('usuario_id')!;
-
-    final manager = $$UsersTableTableManager(
-      $_db,
-      $_db.users,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_usuarioIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$DailyPayrollTableFilterComposer
-    extends Composer<_$AppDatabase, $DailyPayrollTable> {
-  $$DailyPayrollTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get fecha => $composableBuilder(
-    column: $table.fecha,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get trabajo => $composableBuilder(
-    column: $table.trabajo,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get jornada => $composableBuilder(
-    column: $table.jornada,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get salarioBase => $composableBuilder(
-    column: $table.salarioBase,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get estimulo => $composableBuilder(
-    column: $table.estimulo,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get total => $composableBuilder(
-    column: $table.total,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$UsersTableFilterComposer get usuarioId {
-    final $$UsersTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.usuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableFilterComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$DailyPayrollTableOrderingComposer
-    extends Composer<_$AppDatabase, $DailyPayrollTable> {
-  $$DailyPayrollTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get fecha => $composableBuilder(
-    column: $table.fecha,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get trabajo => $composableBuilder(
-    column: $table.trabajo,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get jornada => $composableBuilder(
-    column: $table.jornada,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get salarioBase => $composableBuilder(
-    column: $table.salarioBase,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get estimulo => $composableBuilder(
-    column: $table.estimulo,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get total => $composableBuilder(
-    column: $table.total,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$UsersTableOrderingComposer get usuarioId {
-    final $$UsersTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.usuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableOrderingComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$DailyPayrollTableAnnotationComposer
-    extends Composer<_$AppDatabase, $DailyPayrollTable> {
-  $$DailyPayrollTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get fecha =>
-      $composableBuilder(column: $table.fecha, builder: (column) => column);
-
-  GeneratedColumn<bool> get trabajo =>
-      $composableBuilder(column: $table.trabajo, builder: (column) => column);
-
-  GeneratedColumn<String> get jornada =>
-      $composableBuilder(column: $table.jornada, builder: (column) => column);
-
-  GeneratedColumn<double> get salarioBase => $composableBuilder(
-    column: $table.salarioBase,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<double> get estimulo =>
-      $composableBuilder(column: $table.estimulo, builder: (column) => column);
-
-  GeneratedColumn<double> get total =>
-      $composableBuilder(column: $table.total, builder: (column) => column);
-
-  $$UsersTableAnnotationComposer get usuarioId {
-    final $$UsersTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.usuarioId,
-      referencedTable: $db.users,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UsersTableAnnotationComposer(
-            $db: $db,
-            $table: $db.users,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$DailyPayrollTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $DailyPayrollTable,
-          DailyPayrollData,
-          $$DailyPayrollTableFilterComposer,
-          $$DailyPayrollTableOrderingComposer,
-          $$DailyPayrollTableAnnotationComposer,
-          $$DailyPayrollTableCreateCompanionBuilder,
-          $$DailyPayrollTableUpdateCompanionBuilder,
-          (DailyPayrollData, $$DailyPayrollTableReferences),
-          DailyPayrollData,
-          PrefetchHooks Function({bool usuarioId})
-        > {
-  $$DailyPayrollTableTableManager(_$AppDatabase db, $DailyPayrollTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$DailyPayrollTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$DailyPayrollTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$DailyPayrollTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<String> usuarioId = const Value.absent(),
-                Value<DateTime> fecha = const Value.absent(),
-                Value<bool> trabajo = const Value.absent(),
-                Value<String?> jornada = const Value.absent(),
-                Value<double> salarioBase = const Value.absent(),
-                Value<double> estimulo = const Value.absent(),
-                Value<double> total = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => DailyPayrollCompanion(
-                id: id,
-                usuarioId: usuarioId,
-                fecha: fecha,
-                trabajo: trabajo,
-                jornada: jornada,
-                salarioBase: salarioBase,
-                estimulo: estimulo,
-                total: total,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String id,
-                required String usuarioId,
-                required DateTime fecha,
-                required bool trabajo,
-                Value<String?> jornada = const Value.absent(),
-                required double salarioBase,
-                Value<double> estimulo = const Value.absent(),
-                required double total,
-                Value<int> rowid = const Value.absent(),
-              }) => DailyPayrollCompanion.insert(
-                id: id,
-                usuarioId: usuarioId,
-                fecha: fecha,
-                trabajo: trabajo,
-                jornada: jornada,
-                salarioBase: salarioBase,
-                estimulo: estimulo,
-                total: total,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$DailyPayrollTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({usuarioId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (usuarioId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.usuarioId,
-                                referencedTable: $$DailyPayrollTableReferences
-                                    ._usuarioIdTable(db),
-                                referencedColumn: $$DailyPayrollTableReferences
-                                    ._usuarioIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$DailyPayrollTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $DailyPayrollTable,
-      DailyPayrollData,
-      $$DailyPayrollTableFilterComposer,
-      $$DailyPayrollTableOrderingComposer,
-      $$DailyPayrollTableAnnotationComposer,
-      $$DailyPayrollTableCreateCompanionBuilder,
-      $$DailyPayrollTableUpdateCompanionBuilder,
-      (DailyPayrollData, $$DailyPayrollTableReferences),
-      DailyPayrollData,
-      PrefetchHooks Function({bool usuarioId})
     >;
 
 class $AppDatabaseManager {
@@ -36397,22 +30315,8 @@ class $AppDatabaseManager {
       $$RestaurantOrdersTableTableManager(_db, _db.restaurantOrders);
   $$RestaurantOrderItemsTableTableManager get restaurantOrderItems =>
       $$RestaurantOrderItemsTableTableManager(_db, _db.restaurantOrderItems);
-  $$TrustedContactsTableTableManager get trustedContacts =>
-      $$TrustedContactsTableTableManager(_db, _db.trustedContacts);
-  $$SmsMessagesTableTableManager get smsMessages =>
-      $$SmsMessagesTableTableManager(_db, _db.smsMessages);
-  $$RestaurantTablesTableTableManager get restaurantTables =>
-      $$RestaurantTablesTableTableManager(_db, _db.restaurantTables);
-  $$OrderStateHistoryTableTableManager get orderStateHistory =>
-      $$OrderStateHistoryTableTableManager(_db, _db.orderStateHistory);
   $$PriceHistoryTableTableManager get priceHistory =>
       $$PriceHistoryTableTableManager(_db, _db.priceHistory);
   $$DailySummariesTableTableManager get dailySummaries =>
       $$DailySummariesTableTableManager(_db, _db.dailySummaries);
-  $$DailyExpensesTableTableManager get dailyExpenses =>
-      $$DailyExpensesTableTableManager(_db, _db.dailyExpenses);
-  $$DailyPurchasesTableTableManager get dailyPurchases =>
-      $$DailyPurchasesTableTableManager(_db, _db.dailyPurchases);
-  $$DailyPayrollTableTableManager get dailyPayroll =>
-      $$DailyPayrollTableTableManager(_db, _db.dailyPayroll);
 }
