@@ -4,12 +4,13 @@ import 'package:etecsa/features/orders/domain/entities/restaurant_order.dart' as
 import 'package:etecsa/features/orders/domain/entities/order_state.dart';
 import 'package:uuid/uuid.dart';
 
-/// Resuelve el próximo valor de `intentos_reenvio`.
-///
-/// Si se pasa [override], lo setea tal cual; si no, incrementa en 1.
-/// Función pura para que la regla sea testeable sin BD.
-int resolveNextRetryCount({required int current, int? override}) =>
-    override ?? current + 1;
+/// Hoy en formato de negocio `yyyy-MM-dd`.
+String _todayIso() {
+  final now = DateTime.now();
+  final month = now.month.toString().padLeft(2, '0');
+  final day = now.day.toString().padLeft(2, '0');
+  return '${now.year}-$month-$day';
+}
 
 /// Drift datasource for restaurant orders.
 class OrderDatasource {
@@ -57,12 +58,15 @@ class OrderDatasource {
     return _mapRowToOrder(row, items);
   }
 
-  Future<List<domain.RestaurantOrder>> getTodayOrders() async {
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
+  /// Orders assigned to the current business day (`fechaPedido == hoy`).
+  Future<List<domain.RestaurantOrder>> getTodayOrders() {
+    return getOrdersByDay(_todayIso());
+  }
 
+  /// Orders assigned to business day [fechaIso] (`yyyy-MM-dd`), newest first.
+  Future<List<domain.RestaurantOrder>> getOrdersByDay(String fechaIso) async {
     final rows = await (_db.select(_db.restaurantOrders)
-          ..where((o) => o.fechaCreacion.isBiggerOrEqualValue(startOfDay))
+          ..where((o) => o.fechaPedido.equals(fechaIso))
           ..orderBy([(o) => OrderingTerm.desc(o.fechaCreacion)]))
         .get();
 
@@ -100,44 +104,30 @@ class OrderDatasource {
     return orders;
   }
 
+  /// Advances the state of [orderId] to [newState].
+  ///
+  /// Validates the move with the three-state machine: an invalid
+  /// transition throws [StateError] and leaves `estado` untouched
+  /// (spec: Invalid transition leaves estado unchanged).
   Future<void> updateOrderState(String orderId, OrderState newState) async {
+    final current = await (_db.select(_db.restaurantOrders)
+          ..where((o) => o.id.equals(orderId)))
+        .getSingleOrNull();
+    if (current == null) {
+      throw StateError('Order $orderId not found');
+    }
+
+    final from = _parseState(current.estado);
+    if (!from.canTransitionTo(newState)) {
+      throw StateError(
+        'Invalid order transition ${current.estado} → ${newState.name}',
+      );
+    }
+
     await (_db.update(_db.restaurantOrders)
           ..where((o) => o.id.equals(orderId)))
         .write(RestaurantOrdersCompanion(
           estado: Value(newState.name),
-        ));
-  }
-
-  /// Persiste el resultado del envío del SMS PED.
-  ///
-  /// Actualiza `sms_enviado` e `intentos_reenvio`: si se pasa [intentos]
-  /// lo setea tal cual; si no, incrementa el valor actual en 1.
-  Future<void> markSmsStatus(
-    String orderId, {
-    required bool enviado,
-    int? intentos,
-  }) async {
-    final current = await (_db.select(_db.restaurantOrders)
-          ..where((o) => o.id.equals(orderId)))
-        .getSingleOrNull();
-    final next = resolveNextRetryCount(
-      current: current?.intentosReenvio ?? 0,
-      override: intentos,
-    );
-    await (_db.update(_db.restaurantOrders)
-          ..where((o) => o.id.equals(orderId)))
-        .write(RestaurantOrdersCompanion(
-          smsEnviado: Value(enviado),
-          intentosReenvio: Value(next),
-        ));
-  }
-
-  /// Persiste la confirmación (ACK) del SMS por parte de Cocina.
-  Future<void> markSmsConfirmado(String orderId, bool confirmado) async {
-    await (_db.update(_db.restaurantOrders)
-          ..where((o) => o.id.equals(orderId)))
-        .write(RestaurantOrdersCompanion(
-          smsConfirmado: Value(confirmado),
         ));
   }
 

@@ -13,17 +13,17 @@ Work units → PRs: U1 schema→PR1; U2 orders core+row actions→PR2; U3 deleti
 
 ## Phase 1: Schema v16
 
-- [ ] 1.1 RED: rewrite `test/core/database/schema_v14{,_additional_tables}_test.dart` for v16, `fecha_pedido`, 7 drops, preserved Users/Clients/Products (auth·Migration; order·Legacy Data Migration); verify red.
-- [ ] 1.2 GREEN: `app_database.dart` v16 — addColumn `fecha_pedido`/`topClientesJson`, DELETE legacy orders, DROP 7 tables + POS orders/order_items, logged 8-value role CASE, seed admin iff Users empty; delete 7 table classes.
-- [ ] 1.3 `dart run build_runner build`; run `flutter test test/core/database` once → 7 baseline failures green.
+- [x] 1.1 RED: rewrite `test/core/database/schema_v14{,_additional_tables}_test.dart` for v16, `fecha_pedido`, 7 drops, preserved Users/Clients/Products (auth·Migration; order·Legacy Data Migration); verify red.
+- [x] 1.2 GREEN: `app_database.dart` v16 — addColumn `fecha_pedido`/`topClientesJson`, DELETE legacy orders, DROP 7 tables + POS orders/order_items, logged 8-value role CASE, seed admin iff Users empty; delete 7 table classes.
+- [x] 1.3 `dart run build_runner build`; run `flutter test test/core/database` once → 7 baseline failures green.
 
 ## Phase 2: Orders Core
 
 - [x] 2.1 RED: `order_state_test.dart` — valid `pedido→confirmado→recogido`, invalid/terminal rejected, unknown→pedido (order·Three-State).
 - [x] 2.2 GREEN: `order_state.dart` enum + `canTransitionTo`; `restaurant_order.dart` +`fechaPedido`, drop tipoPedido/mesaId/metodoPago/motivoCancelacion/sms*/canalOrigen/horaSolicitada (order·Day Field).
 - [x] 2.3 RED→GREEN: new `order_id_test.dart` then `order_id.dart` `buildOrderId` A/V, originSeq=1, dailySeq (order·ID Format).
-- [ ] 2.4 RED: `order_datasource_test.dart` — fechaPedido write, rejected transition unchanged, unknown→pedido (order·Three-State/Day Field).
-- [ ] 2.5 GREEN: `order_datasource.dart` + `order_repository(_impl).dart` — validated `updateOrderState`, day queries/write, drop `markSms*`.
+- [x] 2.4 RED: `order_datasource_test.dart` — fechaPedido write, rejected transition unchanged, unknown→pedido (order·Three-State/Day Field).
+- [x] 2.5 GREEN: `order_datasource.dart` + `order_repository(_impl).dart` — validated `updateOrderState`, day queries/write, drop `markSms*`.
 
 ## Phase 3: Row Actions
 

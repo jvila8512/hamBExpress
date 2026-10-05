@@ -26,6 +26,10 @@ class OrderRepositoryImpl extends OrderRepository {
       _datasource.getTodayOrders();
 
   @override
+  Future<List<RestaurantOrder>> getOrdersByDay(String fechaIso) =>
+      _datasource.getOrdersByDay(fechaIso);
+
+  @override
   Future<List<RestaurantOrder>> getOrdersSince(DateTime from) =>
       _datasource.getOrdersSince(from);
 
@@ -44,13 +48,4 @@ class OrderRepositoryImpl extends OrderRepository {
   @override
   Future<List<RestaurantOrder>> searchOrders(String query) =>
       _datasource.searchOrders(query);
-
-  @override
-  Future<void> markSmsStatus(String orderId,
-          {required bool enviado, int? intentos}) =>
-      _datasource.markSmsStatus(orderId, enviado: enviado, intentos: intentos);
-
-  @override
-  Future<void> markSmsConfirmado(String orderId, bool confirmado) =>
-      _datasource.markSmsConfirmado(orderId, confirmado);
 }

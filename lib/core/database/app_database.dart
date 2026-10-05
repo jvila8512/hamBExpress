@@ -530,6 +530,10 @@ class DailySummaries extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
 
+  /// In-memory database for tests; applies the real migration strategy
+  /// (schema v16, seeds) against [executor].
+  AppDatabase.forTesting(super.executor);
+
   static AppDatabase? _instance;
 
   static AppDatabase get instance {

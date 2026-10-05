@@ -9,8 +9,11 @@ abstract class OrderRepository {
   /// Get an order by ID.
   Future<RestaurantOrder?> getOrderById(String id);
 
-  /// Get all orders for today.
+  /// Get all orders for today (`fechaPedido` == current business day).
   Future<List<RestaurantOrder>> getTodayOrders();
+
+  /// Get all orders assigned to business day [fechaIso] (`yyyy-MM-dd`).
+  Future<List<RestaurantOrder>> getOrdersByDay(String fechaIso);
 
   /// Get all orders created since [from] (inclusive), newest first.
   Future<List<RestaurantOrder>> getOrdersSince(DateTime from);
@@ -18,7 +21,10 @@ abstract class OrderRepository {
   /// Get orders by state.
   Future<List<RestaurantOrder>> getOrdersByState(OrderState state);
 
-  /// Update order state.
+  /// Advance the order state, validating the three-state machine.
+  ///
+  /// Throws [StateError] when the transition is invalid; the stored
+  /// `estado` stays unchanged in that case.
   Future<void> updateOrderState(String orderId, OrderState newState);
 
   /// Update order with full data.
@@ -29,15 +35,4 @@ abstract class OrderRepository {
 
   /// Search orders by client name or phone.
   Future<List<RestaurantOrder>> searchOrders(String query);
-
-  /// Persist the PED SMS send result for [orderId].
-  ///
-  /// Updates `sms_enviado` and `intentos_reenvio`: when [intentos] is
-  /// given it is set as-is, otherwise the current value is incremented
-  /// by 1.
-  Future<void> markSmsStatus(String orderId,
-      {required bool enviado, int? intentos});
-
-  /// Persist the kitchen ACK for the PED SMS of [orderId].
-  Future<void> markSmsConfirmado(String orderId, bool confirmado);
 }

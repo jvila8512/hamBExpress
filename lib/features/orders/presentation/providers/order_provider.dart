@@ -124,14 +124,6 @@ class OrderNotifier extends Notifier<OrderState> {
       smsPayload.toJson(),
     );
 
-    // Persiste el resultado en BD (best-effort: si falla, el pedido y el
-    // SMS ya existen; se informa sin revertir el resultado).
-    try {
-      await _repository.markSmsStatus(order.id, enviado: smsSent);
-    } catch (e) {
-      _error = 'No se pudo guardar el estado del SMS: $e';
-    }
-
     if (smsSent) {
       _smsPendingIds.remove(order.id);
       _smsService.startAckTimer(order.id, () {
@@ -179,14 +171,6 @@ class OrderNotifier extends Notifier<OrderState> {
       kitchenPhone,
       smsPayload.toJson(),
     );
-
-    // Persiste el resultado e incrementa intentos en BD (best-effort:
-    // se informa el fallo sin cambiar el resultado del envío).
-    try {
-      await _repository.markSmsStatus(order.id, enviado: smsSent);
-    } catch (e) {
-      _error = 'No se pudo guardar el estado del SMS: $e';
-    }
 
     if (smsSent) {
       _smsPendingIds.remove(orderId);
