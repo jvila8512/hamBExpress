@@ -27,8 +27,8 @@ Work units → PRs: U1 schema→PR1; U2 orders core+row actions→PR2; U3 deleti
 
 ## Phase 3: Row Actions
 
-- [ ] 3.1 RED: new `state_action_labels_test.dart` — Confirmar / Marcar recogido / Recogido (order·Row Actions).
-- [ ] 3.2 GREEN: create `orders/presentation/widgets/order_row_actions.dart` (`sms:<cell>?body=`, `tel:<cell>`, label/advance); wire `order_history_screen.dart`.
+- [x] 3.1 RED: new `state_action_labels_test.dart` — Confirmar / Marcar recogido / Recogido (order·Row Actions).
+- [x] 3.2 GREEN: create `orders/presentation/widgets/order_row_actions.dart` (`sms:<cell>?body=`, `tel:<cell>`, label/advance); wire `order_history_screen.dart`.
 
 ## Phase 4: Deletions
 

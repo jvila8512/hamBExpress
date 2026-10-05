@@ -1,6 +1,6 @@
 # Apply Progress — simplificar-hamburguesa
 
-Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`)
+Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`) · Phase 3 (Row Actions 3.1–3.2, branch `pr/13-row-actions`)
 Mode: strict TDD · Last updated: 2026-10-05
 
 ## Status
@@ -9,7 +9,7 @@ Mode: strict TDD · Last updated: 2026-10-05
 |---|---|---|
 | 1. Schema v16 | 1.1–1.3 | ✅ Done (commits on `pr/11-schema-v16`) |
 | 2. Orders core | 2.1–2.5 | ✅ Done (commits below) |
-| 3. Row actions | 3.1–3.2 | ⬜ Pending |
+| 3. Row actions | 3.1–3.2 | ✅ Done (commits below) |
 | 4. Deletions | 4.1–4.3 | ⬜ Pending |
 | 5. Roles, guard, menus | 5.1–5.2 | ⬜ Pending |
 | 6. Days + close | 6.1–6.3 | ⬜ Pending |
@@ -97,17 +97,73 @@ Mode: strict TDD · Last updated: 2026-10-05
   `.g.dart` exists, tracked, unchanged in git. No generated file was deleted.
 - Full suite NOT run in this unit (Phase 8 / orchestrator limit).
 
+## Phase 3 — completed work (3.1–3.2)
+
+- **3.1 RED** — `test/features/orders/presentation/widgets/order_row_actions_test.dart`
+  (4 widget tests): `pedido` → visible label `Confirmar` + tap advances to
+  `confirmado`; `confirmado` → `Marcar recogido` + tap advances to `recogido`;
+  `recogido` → label `Recogido`, tap invokes **inspect only** (asserts
+  `onAdvance` never fired — terminal = no transition action); plus one test
+  asserting the row exposes exactly the three spec actions (SMS / call / state).
+  RED was a compile failure (`order_row_actions.dart` not found,
+  `OrderRowActions` method not found), commit `3aee121`.
+- **3.2 GREEN** — `lib/features/orders/presentation/widgets/order_row_actions.dart`:
+  pure `orderStateActionLabel(OrderState)` (`Confirmar` / `Marcar recogido` /
+  `Recogido`), `nextOrderState(OrderState)` (`null` on terminal), URI builders
+  `buildSmsUri(cell, body)` → `sms:<cell>?body=<resumen>` and
+  `buildTelUri(cell)` → `tel:<cell>`; widget `OrderRowActions` renders the three
+  actions, disables SMS/call when `clientCell` is empty and delegates the
+  state button to `onAdvance(next)` / `onInspect()`. Intent launching is
+  injectable (`launchExternal`, default `launchUrl`).
+- **Wiring** — `order_history_screen.dart`: `OrderRowActions` appended to each
+  ticket card; `_loadClientCells()` resolves `clienteId → telefono` via
+  `clientRepositoryProvider.getAllClients()` (best-effort: on failure the map
+  stays empty and SMS/call disable instead of breaking the list);
+  `_advanceState(order, next)` calls `repo.updateOrderState` then reloads the
+  list, surfacing a SnackBar on rejection. **No other feature's handlers were
+  removed** — the screen had no per-row actions before this unit, so no
+  cancel/notify/delete flow was orphaned (0 analyzer errors, no out-of-scope
+  file touched).
+
+## Phase 3 — evidence
+
+- **Safety net (pre-modification)**: `dart analyze lib test` = **0 errors,
+  47 warnings, 86 infos (133)** — identical to the recorded Phase 1/2 baseline;
+  `flutter test test/features/orders` = **50 passed / 0 failed**.
+- `dart analyze lib test` after the unit: **0 errors, 47 warnings, 86 infos
+  (133 issues)** — caps (0 / ≤47 / ≤86) met with **zero new diagnostics**.
+- `flutter test test/features/orders` after the unit: **54 passed / 0 failed**
+  (50 baseline + 4 new).
+- Full suite NOT run (Phase 8); `flutter build` NOT run (CDN geo-blocked).
+- `.g.dart`: untouched — `lib/core/database/app_database.g.dart` exists, tracked,
+  unchanged (`app_database.dart` was not modified, so no build_runner run).
+- Test-file naming deviation: task 3.1 names `state_action_labels_test.dart`;
+  the work-unit contract for this batch specified
+  `test/features/orders/presentation/widgets/order_row_actions_test.dart`
+  (same 4 assertions, colocated with the widget) — used the contract path.
+- Label source: spec + design + proposal + tasks all say **`Confirmar`** for
+  `pedido` (the launch prompt's paraphrase "Confirmar pedido" appears in no
+  artifact); implemented `Confirmar` per spec Order Row Actions.
+- Terminal-state copy: spec mandates the button label `Recogido` for the
+  terminal state; "no transition action" is enforced behaviorally (tap →
+  inspect, `onAdvance` never invoked).
+- Proposal's "advance/inspect sheet" is NOT implemented — design.md (authoritative)
+  specifies the label mapping and `OrderRowActions → updateOrderState` flow
+  without a sheet, and the spec requirement says tapping advances directly.
+
 ## TDD Cycle Evidence (strict TDD)
 
 | Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
 |------|-----------|-------|------------|-----|-------|-------------|----------|
+| 3.1 | `test/features/orders/presentation/widgets/order_row_actions_test.dart` | Widget | ✅ Orders suite 50/50 | ✅ `3aee121` (compile: widget missing) | ✅ `997b28e` (4/4) | ✅ 4 cases (3 states + three-actions row) | ➖ None needed |
+| 3.2 | same | Widget | ✅ analyze 0/47/86 before edit | ✅ `3aee121` (shared RED) | ✅ executed, orders suite 54/54 | ✅ covered by 3.1 label matrix | ➖ None needed (wiring only, verified by analyze + suite) |
 | 2.1 | `test/features/orders/domain/entities/order_state_test.dart` | Unit | N/A (new) | ✅ `5bb9000` | ✅ `d00e50c` | ✅ 17 cases | ➖ None needed |
 | 2.2 | same + `order_state` consumers | Unit | ✅ 2.1 green | ✅ `5bb9000` | ✅ `d00e50c` | ✅ covered by 2.1 cases | ➖ None needed |
 | 2.3 | `test/features/orders/domain/entities/order_id_test.dart` | Unit | N/A (new) | ✅ `9b16844` | ✅ `ab8a6d9` | ✅ A/V + seq cases | ➖ None needed |
 | 2.4 | `test/features/orders/infrastructure/datasources/order_datasource_test.dart` | Unit (drift in-memory) | ✅ prior orders suite | ✅ `62227b0` | ✅ this unit (50/50) | ✅ 14 datasource cases (fechaPedido write×2, valid/invalid/terminal/backwards transitions, unknown estado, updateOrder day field, day queries×2, repo delegation) | ➖ None needed |
 | 2.5 | same + 3 notifier test fakes | Unit | ✅ Orders suite run first: 50/50 | ✅ `62227b0` (shared RED) | ✅ executed, 50/50 pass | ✅ covered by 2.4 matrix | ➖ None needed (verify-only run; executor modified no code) |
 
-- **Test summary**: orders suite 50 tests passing; layers: Unit only (drift in-memory executor for datasource); pure functions added: `_todayIso()`, `resolveNextRetryCount` removed as dead.
+- **Test summary**: orders suite 54 tests passing (50 after Phase 2 + 4 from 3.1); layers: Unit (drift in-memory executor for datasource) + Widget (`flutter_test`); pure functions added: `_todayIso()`, `orderStateActionLabel`, `nextOrderState`, `buildSmsUri`, `buildTelUri`; `resolveNextRetryCount` removed as dead.
 
 ## Notes / follow-ups
 
@@ -119,9 +175,13 @@ Mode: strict TDD · Last updated: 2026-10-05
 - `client_management_screen.dart:9` unused import of `order_provider` is
   pre-existing (counted in the 47 warnings; Phase 7 touches this screen).
 - 3 stray PNGs at repo root remain untracked by design; never stage them.
-- Remaining: Phases 3–8. Phase 4.3 still owns deleting
+- Remaining: Phases 4–8. Phase 4.3 still owns deleting
   `test/features/sms/*`, `order_notifier_{resend_sms,sms_persist}_test`,
   `restaurant_order_sms_test` — hence those files were kept (not deleted) here.
+- Phase 3 touched only `order_row_actions.dart`, `order_history_screen.dart`
+  and its new test: zero out-of-scope files, zero new analyzer diagnostics.
+  The history screen had no per-row actions before, so nothing was removed
+  and no cancel/notify/delete handler (Phases 4/7) was orphaned.
 
 ## Commits
 
@@ -136,3 +196,10 @@ Mode: strict TDD · Last updated: 2026-10-05
 - `ab8a6d9` — `feat: add buildOrderId for A/V day-sequential order ids` (2.3 GREEN).
 - `62227b0` — `test: define day-field and validated-transition datasource expectations (red)` (2.4 RED).
 - 2.5 GREEN: one `feat:` (source) + one `test:` (test fakes) — see git log on `pr/12-orders-core`.
+
+### Phase 3 (branch `pr/13-row-actions`, from `pr/12-orders-core` @ `f291af9`)
+- `3aee121` — `test: define order row state-button label expectations (red)` (3.1 RED; +110, the new test file only).
+- `997b28e` — `feat: add OrderRowActions with state-driven labels and sms/tel intents` (3.2 GREEN part 1; +113, the widget).
+- `c5a012e` — `feat: wire OrderRowActions into order history rows` (3.2 GREEN part 2; +48, `order_history_screen.dart`).
+- Docs commit: `tasks.md` `[x]` 3.1/3.2 + this `apply-progress.md` Phase 3 merge.
+- Code total: 271 added lines (under the 400-line review budget for this slice).
