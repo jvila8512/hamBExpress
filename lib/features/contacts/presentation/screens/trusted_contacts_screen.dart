@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:etecsa/config/theme/app_colors.dart';
-import 'package:etecsa/core/database/app_database.dart' hide TrustedContact;
+import 'package:etecsa/core/database/app_database.dart';
 import 'package:etecsa/features/contacts/domain/entities/trusted_contact.dart';
 import 'package:etecsa/features/contacts/presentation/providers/contact_provider.dart';
 import 'package:etecsa/features/shared/widgets/side_menu.dart';

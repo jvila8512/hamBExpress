@@ -1,12 +1,12 @@
-# Skill Registry — ExpresPOS
+# Skill Registry — ExpresPOS / hamBExpress
 
-Last updated: 2026-09-04
+Last updated: 2026-10-02 (sdd-init, artifact store: engram)
 
 ## Sources scanned
 
 - C:\Users\Javier\.config\opencode\skills
 - C:\Users\Javier\.agents\skills
-- C:\Users\Javier\.gemini\skills (+ mirrors .cursor, .copilot)
+- C:\Users\Javier\.gemini\skills (+ mirrors .cursor, .copilot, .qwen — deduplicated)
 - Project: skills/, .opencode/skills/, .claude/skills/, .gemini/skills/, .cursor/skills/, .github/skills/, .codex/skills/, .qwen/skills/, .kiro/skills/, .openclaw/skills/, .pi/skills/, .agent/skills/, .agents/skills/, .atl/skills/ (none exist)
 - Convention files: AGENTS.md, CLAUDE.md, GEMINI.md, .cursorrules, copilot-instructions.md (none found in project root)
 
@@ -24,7 +24,7 @@ Last updated: 2026-09-04
 | `chained-pr` | Trigger: PRs over 400 lines, stacked PRs, review slices. Split oversized changes into chained PRs that protect review focus. | user | `C:\Users\Javier\.config\opencode\skills\chained-pr\SKILL.md` |
 | `cognitive-doc-design` | Design docs that reduce cognitive load. Trigger: writing guides, READMEs, RFCs, onboarding, architecture, or review-facing docs. | user | `C:\Users\Javier\.config\opencode\skills\cognitive-doc-design\SKILL.md` |
 | `comment-writer` | Write warm, direct collaboration comments. Trigger: PR feedback, issue replies, reviews, Slack messages, or GitHub comments. | user | `C:\Users\Javier\.config\opencode\skills\comment-writer\SKILL.md` |
-| `find-skills` | Helps users discover and install agent skills when they ask questions like how do I do X, find a skill for X. | user | `C:\Users\Javier\.agents\skills\find-skills\SKILL.md` |
+| `find-skills` | Helps users discover and install agent skills when they ask questions like how do I do X, find a skill for X, is there a skill that can... | user | `C:\Users\Javier\.agents\skills\find-skills\SKILL.md` |
 | `go-testing` | Trigger: Go tests, go test coverage, Bubbletea teatest, golden files. Apply focused Go testing patterns. | user | `C:\Users\Javier\.config\opencode\skills\go-testing\SKILL.md` |
 | `issue-creation` | Create Gentle AI issues with issue-first checks. Trigger: creating GitHub issues, bug reports, or feature requests. | user | `C:\Users\Javier\.config\opencode\skills\issue-creation\SKILL.md` |
 | `judgment-day` | Trigger: judgment day, dual review, adversarial review, juzgar. Run blind dual review, fix confirmed issues, then re-judge. | user | `C:\Users\Javier\.config\opencode\skills\judgment-day\SKILL.md` |
@@ -33,6 +33,8 @@ Last updated: 2026-09-04
 | `work-unit-commits` | Plan commits as reviewable work units. Trigger: implementation, commit splitting, chained PRs, or keeping tests and docs with code. | user | `C:\Users\Javier\.config\opencode\skills\work-unit-commits\SKILL.md` |
 
 Excluded per rule: `sdd-*`, `_shared`, `skill-registry` (deduplicated by name, project scope preferred — no project skills found).
+
+Built-in (injected by opencode, no file path — cannot be passed as a path): `customize-opencode`.
 
 ## Loading protocol
 
