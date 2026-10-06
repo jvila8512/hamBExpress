@@ -1,29 +1,31 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:etecsa/config/router/app_router.dart';
 
+/// `/workers` cases of the admin-only route guard (auth → Route Guard delta).
+/// The generalized `routeGuardDecision` replaced `workersRedirectDecision`.
 void main() {
-  group('workersRedirectDecision (guard de /workers)', () {
+  group('routeGuardDecision (guard de /workers)', () {
     test('admin puede navegar a /workers (sin redirect)', () async {
-      final decision = await workersRedirectDecision(
-        loggedIn: true,
+      final decision = routeGuardDecision(
+        authenticated: true,
         role: 'admin',
         currentPath: '/workers',
       );
       expect(decision, isNull);
     });
 
-    test('super_admin puede navegar a /workers (sin redirect)', () async {
-      final decision = await workersRedirectDecision(
-        loggedIn: true,
+    test('super_admin ya no existe: queda redirigido a /', () async {
+      final decision = routeGuardDecision(
+        authenticated: true,
         role: 'super_admin',
         currentPath: '/workers',
       );
-      expect(decision, isNull);
+      expect(decision, '/');
     });
 
     test('cocina es redirigido a /', () async {
-      final decision = await workersRedirectDecision(
-        loggedIn: true,
+      final decision = routeGuardDecision(
+        authenticated: true,
         role: 'cocina',
         currentPath: '/workers',
       );
@@ -31,14 +33,14 @@ void main() {
     });
 
     test('redes/vendedor es redirigido a /', () async {
-      final decision = await workersRedirectDecision(
-        loggedIn: true,
+      final decision = routeGuardDecision(
+        authenticated: true,
         role: 'redes',
         currentPath: '/workers',
       );
       expect(decision, '/');
-      final vendedor = await workersRedirectDecision(
-        loggedIn: true,
+      final vendedor = routeGuardDecision(
+        authenticated: true,
         role: 'vendedor',
         currentPath: '/workers',
       );
@@ -46,8 +48,8 @@ void main() {
     });
 
     test('domicilio es redirigido a /', () async {
-      final decision = await workersRedirectDecision(
-        loggedIn: true,
+      final decision = routeGuardDecision(
+        authenticated: true,
         role: 'domicilio',
         currentPath: '/workers',
       );
@@ -55,8 +57,8 @@ void main() {
     });
 
     test('mesero es redirigido a /', () async {
-      final decision = await workersRedirectDecision(
-        loggedIn: true,
+      final decision = routeGuardDecision(
+        authenticated: true,
         role: 'mesero',
         currentPath: '/workers',
       );
@@ -64,8 +66,8 @@ void main() {
     });
 
     test('sin sesión a /workers -> /login (nunca renderiza usuarios)', () async {
-      final decision = await workersRedirectDecision(
-        loggedIn: false,
+      final decision = routeGuardDecision(
+        authenticated: false,
         role: '',
         currentPath: '/workers',
       );
@@ -73,8 +75,8 @@ void main() {
     });
 
     test('no afecta rutas que no son /workers', () async {
-      final decision = await workersRedirectDecision(
-        loggedIn: true,
+      final decision = routeGuardDecision(
+        authenticated: true,
         role: 'cocina',
         currentPath: '/orders/new',
       );

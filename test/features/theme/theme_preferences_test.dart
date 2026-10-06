@@ -5,33 +5,36 @@ import 'package:etecsa/config/theme/theme_preferences.dart';
 import 'package:etecsa/config/theme/theme_provider.dart';
 
 void main() {
-  group('defaultThemeForRole', () {
-    test('cocina maps to dark mode', () {
-      expect(defaultThemeForRole('cocina'), ThemeMode.dark);
-    });
-
-    test('cocina match is case-insensitive', () {
-      expect(defaultThemeForRole('COCINA'), ThemeMode.dark);
-    });
-
-    test('redes maps to light mode', () {
-      expect(defaultThemeForRole('redes'), ThemeMode.light);
-    });
-
-    test('domicilio maps to light mode', () {
-      expect(defaultThemeForRole('domicilio'), ThemeMode.light);
-    });
-
-    test('admin maps to light mode', () {
+  group('defaultThemeForRole — two-entry matrix, no dark entry', () {
+    test('admin defaults to light', () {
       expect(defaultThemeForRole('admin'), ThemeMode.light);
     });
 
-    test('super_admin maps to light mode', () {
-      expect(defaultThemeForRole('super_admin'), ThemeMode.light);
+    test('vendedor defaults to light', () {
+      expect(defaultThemeForRole('vendedor'), ThemeMode.light);
     });
 
-    test('mesero maps to light mode', () {
-      expect(defaultThemeForRole('mesero'), ThemeMode.light);
+    test('role matching is case-insensitive', () {
+      expect(defaultThemeForRole('VENDEDOR'), ThemeMode.light);
+      expect(defaultThemeForRole('Admin'), ThemeMode.light);
+    });
+
+    test('no legacy role defaults to dark', () {
+      const legacy = [
+        'super_admin',
+        'redes',
+        'cocina',
+        'mesero',
+        'domicilio',
+        'almacenero',
+      ];
+      for (final role in legacy) {
+        expect(
+          defaultThemeForRole(role),
+          ThemeMode.light,
+          reason: 'deleted role "$role" must not carry a dark default',
+        );
+      }
     });
 
     test('unknown role falls back to light mode', () {
@@ -72,24 +75,28 @@ void main() {
   });
 
   group('resolveMode — saved choice overrides role default', () {
-    test('saved light overrides cocina dark default', () {
-      expect(resolveMode(ThemeMode.light, 'cocina'), ThemeMode.light);
+    test('saved light wins over the light role default', () {
+      expect(resolveMode(ThemeMode.light, 'vendedor'), ThemeMode.light);
     });
 
-    test('saved dark overrides admin light default', () {
+    test('saved dark overrides the admin light default', () {
       expect(resolveMode(ThemeMode.dark, 'admin'), ThemeMode.dark);
     });
 
-    test('saved system overrides any role default', () {
-      expect(resolveMode(ThemeMode.system, 'mesero'), ThemeMode.system);
+    test('saved system wins over any role default', () {
+      expect(resolveMode(ThemeMode.system, 'admin'), ThemeMode.system);
     });
 
-    test('no saved choice: cocina role default dark wins', () {
-      expect(resolveMode(null, 'cocina'), ThemeMode.dark);
+    test('no saved choice: admin role default light wins', () {
+      expect(resolveMode(null, 'admin'), ThemeMode.light);
     });
 
-    test('no saved choice: redes role default light wins', () {
-      expect(resolveMode(null, 'redes'), ThemeMode.light);
+    test('no saved choice: vendedor role default light wins', () {
+      expect(resolveMode(null, 'vendedor'), ThemeMode.light);
+    });
+
+    test('no saved choice: a legacy role never falls back to dark', () {
+      expect(resolveMode(null, 'cocina'), ThemeMode.light);
     });
   });
 }

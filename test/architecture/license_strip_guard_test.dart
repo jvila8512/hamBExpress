@@ -190,9 +190,11 @@ void main() {
       );
     });
 
-    test('side menu lists exactly Usuarios and Configuracion for all roles', () {
-      expect(count(menuSrc, 'AppMenuItem(icon:'), 2,
-          reason: 'R5: one list, two navigation entries for every role');
+    test('side menu lists the two-role entries: admin 2, vendedor 3', () {
+      expect(count(menuSrc, 'AppMenuItem(icon:'), 5,
+          reason: 'role-flows: admin [Usuarios, Configuración] + '
+              'vendedor [Pedidos, Clientes, Días]');
+      // Admin menu: exactly two entries.
       expect(
         menuSrc.contains(
           "AppMenuItem(icon: Icons.people_alt, label: 'Usuarios', route: '/workers')",
@@ -205,6 +207,39 @@ void main() {
         ),
         isTrue,
       );
+      // Vendedor menu: order, client and day entries.
+      expect(
+        menuSrc.contains(
+          "AppMenuItem(icon: Icons.receipt_long, label: 'Pedidos', route: '/orders/history')",
+        ),
+        isTrue,
+      );
+      expect(
+        menuSrc.contains(
+          "AppMenuItem(icon: Icons.people, label: 'Clientes', route: '/clients')",
+        ),
+        isTrue,
+      );
+      expect(
+        menuSrc.contains(
+          "AppMenuItem(icon: Icons.calendar_month, label: 'Días', route: '/days')",
+        ),
+        isTrue,
+      );
+      // No super_admin menu variant and no deleted-role labels survive.
+      for (final legacyLabel in [
+        'SUPER ADMIN',
+        'REDES',
+        'COCINA',
+        'DOMICILIO',
+        'MESERO',
+      ]) {
+        expect(
+          menuSrc.contains("'$legacyLabel'"),
+          isFalse,
+          reason: 'role-flows: deleted role label "$legacyLabel" in the menu',
+        );
+      }
       expect(menuSrc.contains("'Inicio'"), isFalse);
       expect(menuSrc.contains('Nuevo Pedido'), isFalse,
           reason: 'R5: Nuevo Pedido lives on the dashboard, not the menu');
