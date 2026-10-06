@@ -32,9 +32,9 @@ Work units → PRs: U1 schema→PR1; U2 orders core+row actions→PR2; U3 deleti
 
 ## Phase 4: Deletions
 
-- [ ] 4.1 Delete 32 files: `features/{sms,contacts,exports,help}` (21), `features/expenses/**` (2), `categories_screen|category_form_screen|import_products_screen|categories_provider`, `kitchen_queue_screen|delivery_list_screen|order_tracking_screen`, `order_timer.dart`, `export_options_dialog.dart`, barrel entries (sms-protocol, trusted-contacts REMOVED).
-- [ ] 4.2 Clean every reference: `main.dart` receiver/SmsService, `app_router.dart` dead routes (/products/import, /categories*, /expenses, /orders/tracking, /kitchen, /delivery, /contacts, /exports, /help), `order_provider.dart`, `order_form_screen.dart`, `side_menu.dart`, `home_screen.dart`, `pubspec.yaml` telephony_sdt, `AndroidManifest.xml` SMS perms.
-- [ ] 4.3 Delete `test/features/sms/*`, `order_notifier_{resend_sms,sms_persist}_test`, `restaurant_order_sms_test`; fix `license_strip_guard_test.dart`, `order_notifier_create_order_test.dart`; `dart analyze lib test` = 0 errors.
+- [x] 4.1 Delete 33 files (task said 32; `{sms,contacts,exports,help}` is 22, not 21 — one barrel undercounted): `features/{sms,contacts,exports,help}` (22), `features/expenses/**` (2), `categories_screen|category_form_screen|import_products_screen|categories_provider` (4), `kitchen_queue_screen|delivery_list_screen|order_tracking_screen` (3), `order_timer.dart`, `export_options_dialog.dart`, barrel entries (sms-protocol, trusted-contacts REMOVED).
+- [x] 4.2 Clean every reference: `main.dart` receiver/SmsService, `app_router.dart` dead routes (/products/import, /categories*, /expenses, /orders/tracking, /kitchen, /delivery, /contacts, /exports, /help), `order_provider.dart`, `order_form_screen.dart`, `side_menu.dart`, `home_screen.dart`, `pubspec.yaml` telephony_sdt, `AndroidManifest.xml` SMS perms.
+- [x] 4.3 Delete `test/features/sms/*` (3), `order_notifier_{resend_sms,sms_persist}_test` (2) — 5 files, 53 tests; `restaurant_order_sms_test` does not exist in the repo (stale task text, nothing to delete); fix `license_strip_guard_test.dart` (GREEN via 4.1/4.2 source removal, no test edit needed) and `order_notifier_create_order_test.dart`; `dart analyze lib test` = 0 errors.
 
 ## Phase 5: Roles, Guard, Menus
 

@@ -1,7 +1,7 @@
 # Apply Progress — simplificar-hamburguesa
 
-Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`) · Phase 3 (Row Actions 3.1–3.2, branch `pr/13-row-actions`)
-Mode: strict TDD · Last updated: 2026-10-05
+Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`) · Phase 3 (Row Actions 3.1–3.2, branch `pr/13-row-actions`) · Phase 4 (Deletions 4.1–4.3, branch `pr/14-deletions`)
+Mode: strict TDD · Last updated: 2026-10-06
 
 ## Status
 
@@ -10,7 +10,7 @@ Mode: strict TDD · Last updated: 2026-10-05
 | 1. Schema v16 | 1.1–1.3 | ✅ Done (commits on `pr/11-schema-v16`) |
 | 2. Orders core | 2.1–2.5 | ✅ Done (commits below) |
 | 3. Row actions | 3.1–3.2 | ✅ Done (commits below) |
-| 4. Deletions | 4.1–4.3 | ⬜ Pending |
+| 4. Deletions | 4.1–4.3 | ✅ Done (commits below) |
 | 5. Roles, guard, menus | 5.1–5.2 | ⬜ Pending |
 | 6. Days + close | 6.1–6.3 | ⬜ Pending |
 | 7. Forms + catalog | 7.1–7.2 | ⬜ Pending |
@@ -151,10 +151,117 @@ Mode: strict TDD · Last updated: 2026-10-05
   specifies the label mapping and `OrderRowActions → updateOrderState` flow
   without a sheet, and the spec requirement says tapping advances directly.
 
+## Phase 4 — completed work (4.1–4.3)
+
+- **4.1 Deletions — 33 lib files** (`git rm`/worktree deletions, all explicit):
+  - `features/sms/**` (7): `sms.dart`, `domain/domain.dart`,
+    `domain/entities/sms_payload.dart`, `domain/services/sms_parser.dart`,
+    `infrastructure/infrastructure.dart`,
+    `infrastructure/services/{broadcast_receiver,sms_service}.dart`.
+  - `features/contacts/**` (10): `contacts.dart`, `domain/{domain,entities/trusted_contact,repositories/contact_repository}.dart`,
+    `infrastructure/{infrastructure,datasources/contact_datasource,repositories/contact_repository_impl}.dart`,
+    `presentation/{providers/providers,providers/contact_provider,screens/trusted_contacts_screen}.dart`.
+  - `features/exports/**` (4), `features/help/**` (1),
+    `features/expenses/presentation/screens/{expenses,expense_form}_screen.dart` (2).
+  - Products catalog: `categories_screen.dart`, `category_form_screen.dart`,
+    `import_products_screen.dart`, `categories_provider.dart` (4).
+  - Orders: `kitchen_queue_screen.dart`, `delivery_list_screen.dart`,
+    `order_tracking_screen.dart` (3).
+  - `config/theme/widgets/order_timer.dart`, `shared/widgets/export_options_dialog.dart`.
+  - **Count reconciliation**: tasks.md said **32**; actual is **33**. The
+    `{sms,contacts,exports,help}` group is **22** files, not 21 (the task text
+    undercounted one barrel file). `features/expenses/**` really is 2 (only the
+    two screens existed). No stray file was deleted beyond the listed scope.
+- **4.2 Reference cleanup — 11 modified files** (surgical: dead imports,
+  dead routes, dead widgets/lines only):
+  - `lib/main.dart` — dropped `broadcast_receiver`/`sms_service`/
+    `telephony_sdt` imports, the `_initSmsReceiver()` call and its function.
+  - `lib/config/router/app_router.dart` — 9 dead `GoRoute`s removed
+    (`/products/import`, `/categories`, `/categories/new`,
+    `/categories/edit/:id`, `/expenses`, `/orders/tracking`, `/kitchen`,
+    `/delivery`, `/contacts`, `/exports`, `/help`) + their screen imports;
+    14 routes remain.
+  - `lib/features/orders/presentation/providers/order_provider.dart` —
+    `smsServiceProvider`, `SmsPayload`/`SmsService` imports, `resendSms`,
+    `isSmsPending`/`smsPendingStates`/`isSmsPendingState`, `_smsPendingIds`,
+    the PED/HEC/ENT send blocks; `createOrder` → `Future<void>`
+    (`destinationPhone` dropped), `updateState` signature narrowed.
+  - `lib/features/orders/presentation/screens/order_form_screen.dart` —
+    kitchen-phone lookup, SMS snackbars, `_smsPending`, category tabs/grouping.
+  - `lib/features/home/presentation/screens/home_screen.dart` — links to
+    `/orders/tracking`, `/contacts` (×3), `/kitchen`, `/delivery`, `/exports`,
+    `/expenses`.
+  - `lib/features/products/.../{products_screen,product_form_screen}.dart` —
+    `categories_provider` import + category dropdown/filter,
+    `ExportOptionsDialog` → SnackBar.
+  - `lib/features/shared/widgets/widgets.dart` — barrel entry
+    `export_options_dialog.dart`.
+  - `pubspec.yaml` — `telephony_sdt: ^0.2.3` (+ its comment) removed;
+    `pubspec.lock` regenerated earlier by `flutter pub get` (0 `telephony`
+    entries) — **no `flutter pub get` was re-run this unit (pubspec.yaml was
+    not changed by this executor)**.
+  - `android/app/src/main/AndroidManifest.xml` — `SEND_SMS`, `RECEIVE_SMS`,
+    `READ_SMS` permissions and the `IncomingSmsReceiver` `<receiver>` block
+    removed; re-read after edit, XML well-formed (root `<manifest>`).
+  - `side_menu.dart` needed no edit: it never referenced a deleted route
+    (only `/workers` and `/settings` survive).
+- **4.3 Tests**: 5 test files deleted (53 tests) —
+  `test/features/sms/{domain/services/{sms_parser,sms_serializer},
+  infrastructure/services/sms_service}_test.dart`,
+  `order_notifier_{resend_sms,sms_persist}_test.dart`;
+  `restaurant_order_sms_test` **does not exist** in the repo (stale task text).
+  `order_notifier_create_order_test.dart` fixed: `_FakeSmsService` removed,
+  3 tests re-pinned to the SMS-free contract (save+prepend / list order /
+  error rethrow + `isLoading`).
+  `license_strip_guard_test.dart` needed **no edit** — the RED committed at
+  `8a960c3` turns GREEN purely through the 4.1/4.2 source removals.
+- **Hazard check**: nothing imports the deleted `features/contacts/` — the
+  Phase-1 bridge stubs in `lib/features/daily_close/` were left untouched
+  (they reference dropped drift tables, not the contacts feature).
+
+## Phase 4 — evidence
+
+- `dart analyze lib test` (final, committed tree): **0 errors, 37 warnings,
+  74 infos (111 issues)**. Gates: 0 errors ✅ / ≤47 warnings ✅ (37) /
+  ≤86 infos ✅ (74) — the deletions REMOVED 10 warnings and 12 infos vs the
+  recorded 47/86 baseline; no new diagnostic introduced.
+- Full suite `flutter test` (final): **138 passed / 0 failed**
+  (`+138: All tests passed!`, exit 0).
+- **Test-count reconciliation**: measured baseline **191** → now **138**;
+  delta **−53** = exactly the `test(`+`testWidgets(` count of the 5 test files
+  deleted in 4.3 (7 + 4 + 23 + 9 + 10 = 53). Static count at `8a960c3` = 189
+  (+2 dynamically generated elsewhere) = 191; 191 − 53 = 138. **Zero tests lost
+  beyond the subjects deleted by 4.1.**
+- RED→GREEN proof for `8a960c3` was executed in an isolated worktree at
+  `9275ae0` (commit 1, source deletions not yet applied): **136 passed,
+  2 failed** — precisely the two Phase-4 guard assertions
+  ("drops the SMS receiver", "help screen is gone"), 0 compile errors. Commit 2
+  flips those to GREEN (verified by the final 138/138 run).
+- `flutter pub get` was **not** needed this unit (no `pubspec.yaml` change by
+  this executor); the pre-existing lock update stands and the scratch worktree
+  run also resolved `Got dependencies!` cleanly.
+- Zero-reference greps over `lib` + `test` (`git grep -I -E`): `sms-protocol`
+  **0**, `trusted-contacts` **0**, `SmsService` **0**, each removed route
+  (`/products/import`, `/categories*`, `/expenses`, `/orders/tracking`,
+  `/kitchen`, `/delivery`, `/contacts`, `/exports`, `/help`) **0**;
+  `telephony_sdt` **2** — both inside `license_strip_guard_test.dart` as
+  intentional negative assertions, **0** in `pubspec.yaml`/`pubspec.lock`.
+  `SEND_SMS|RECEIVE_SMS|READ_SMS|SMS_RECEIVED` appear only in `docs/` PRDs and
+  the archived `2026-07-14-hamburguesa-express-mvp` change (audit trail,
+  never edited).
+- `.g.dart`: `lib/core/database/app_database.g.dart` exists, tracked,
+  untouched by this phase (confirmed in the scratch worktree checkout too).
+- `flutter build` NOT run (CDN geo-blocked). No branch created/pushed;
+  no `5730bba1`/`6dc69496`/`9b973616` staged.
+
+
 ## TDD Cycle Evidence (strict TDD)
 
 | Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
 |------|-----------|-------|------------|-----|-------|-------------|----------|
+| 4.1 | — (deletions; no test subject) | — | ✅ `dart analyze lib test` 0/47/86 + suite 191 baseline captured first | ➖ None — Phase 4 contract: the safety net IS the analyzer + full suite | ✅ `a3ba44e` — analyze 0/37/74, suite 138/138 | ✅ 33 lib deletions each greped to 0 references | ➖ None needed |
+| 4.2 | same net (reference cleanup) | — | ✅ 0/47/86 before edits | ➖ None — no new behavior, removal only | ✅ `a3ba44e` — dead-route grep 0/0/0/0/0/0/0/0/0, XML re-read well-formed | ✅ each of the 9 removed routes greped individually over `lib`+`test` | ➖ None needed |
+| 4.3 | `test/architecture/license_strip_guard_test.dart` + `order_notifier_create_order_test.dart` | Source guard + Unit | ✅ analyze 0/47/86, suite 191 | ✅ `8a960c3` (guard pins SMS receiver + help removal; 2 assertions red at `9275ae0`) | ✅ `a3ba44e` — guard 24/24, full suite 138/138 | ✅ 2 guard assertions (SMS receiver, help dir) + 3 re-pinned create-order cases; 53 obsolete tests removed with their subjects | ➖ None needed |
 | 3.1 | `test/features/orders/presentation/widgets/order_row_actions_test.dart` | Widget | ✅ Orders suite 50/50 | ✅ `3aee121` (compile: widget missing) | ✅ `997b28e` (4/4) | ✅ 4 cases (3 states + three-actions row) | ➖ None needed |
 | 3.2 | same | Widget | ✅ analyze 0/47/86 before edit | ✅ `3aee121` (shared RED) | ✅ executed, orders suite 54/54 | ✅ covered by 3.1 label matrix | ➖ None needed (wiring only, verified by analyze + suite) |
 | 2.1 | `test/features/orders/domain/entities/order_state_test.dart` | Unit | N/A (new) | ✅ `5bb9000` | ✅ `d00e50c` | ✅ 17 cases | ➖ None needed |
@@ -175,9 +282,13 @@ Mode: strict TDD · Last updated: 2026-10-05
 - `client_management_screen.dart:9` unused import of `order_provider` is
   pre-existing (counted in the 47 warnings; Phase 7 touches this screen).
 - 3 stray PNGs at repo root remain untracked by design; never stage them.
-- Remaining: Phases 4–8. Phase 4.3 still owns deleting
-  `test/features/sms/*`, `order_notifier_{resend_sms,sms_persist}_test`,
-  `restaurant_order_sms_test` — hence those files were kept (not deleted) here.
+- Phase 4.3 deleted `test/features/sms/*` (3) +
+  `order_notifier_{resend_sms,sms_persist}_test` (2) = 53 tests, accounted in
+  the 191 → 138 reconciliation above;
+  `restaurant_order_sms_test` never existed in this repo (stale task text).
+- Phase 4 touched `side_menu.dart`? **No** — it needed no edit (it only ever
+  listed `/workers` and `/settings`).
+- Remaining: Phases 5–8.
 - Phase 3 touched only `order_row_actions.dart`, `order_history_screen.dart`
   and its new test: zero out-of-scope files, zero new analyzer diagnostics.
   The history screen had no per-row actions before, so nothing was removed
@@ -203,3 +314,14 @@ Mode: strict TDD · Last updated: 2026-10-05
 - `c5a012e` — `feat: wire OrderRowActions into order history rows` (3.2 GREEN part 2; +48, `order_history_screen.dart`).
 - Docs commit: `tasks.md` `[x]` 3.1/3.2 + this `apply-progress.md` Phase 3 merge.
 - Code total: 271 added lines (under the 400-line review budget for this slice).
+
+### Phase 4 (branch `pr/14-deletions`, from `pr/13-row-actions` @ `5d7c061`)
+- `8a960c3` — `test: pin SMS receiver and help feature removal in license guard (red)` (4.3 RED, pre-existing before this unit).
+- `9275ae0` — `test: drop SMS-era tests and align create-order expectations with SMS-free flow` (4.3 test half; −947/+16, 6 files: 5 deletions + 1 fix).
+- `a3ba44e` — `feat: delete SMS, contacts, exports, help and expenses surfaces with dead routes` (4.1+4.2 and the GREEN of `8a960c3`; −8075/+22, 44 files: 33 deletions + 11 reference-cleanup edits).
+- Docs commit: `tasks.md` `[x]` 4.1/4.2/4.3 + this `apply-progress.md` Phase 4 merge.
+- Commit order note: the `test:` unit lands first because the `feat:`-only
+  intermediate would not compile (`dart analyze lib test` would flag the
+  deleted `sms_service.dart` imports). At `9275ae0` the tree compiles and runs
+  136/138 with only the 2 intended guard RED assertions failing; `a3ba44e`
+  flips them GREEN. Both commits compile; only `9275ae0` is red, by design.
