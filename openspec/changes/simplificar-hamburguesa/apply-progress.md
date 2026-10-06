@@ -1,6 +1,6 @@
 # Apply Progress — simplificar-hamburguesa
 
-Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`) · Phase 3 (Row Actions 3.1–3.2, branch `pr/13-row-actions`) · Phase 4 (Deletions 4.1–4.3, branch `pr/14-deletions`)
+Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`) · Phase 3 (Row Actions 3.1–3.2, branch `pr/13-row-actions`) · Phase 4 (Deletions 4.1–4.3, branch `pr/14-deletions`) · Phase 5 (Roles/Guard/Menus 5.1–5.2, branch `pr/15-roles-guard`)
 Mode: strict TDD · Last updated: 2026-10-06
 
 ## Status
@@ -11,7 +11,7 @@ Mode: strict TDD · Last updated: 2026-10-06
 | 2. Orders core | 2.1–2.5 | ✅ Done (commits below) |
 | 3. Row actions | 3.1–3.2 | ✅ Done (commits below) |
 | 4. Deletions | 4.1–4.3 | ✅ Done (commits below) |
-| 5. Roles, guard, menus | 5.1–5.2 | ⬜ Pending |
+| 5. Roles, guard, menus | 5.1–5.2 | ✅ Done (commits on `pr/15-roles-guard`) |
 | 6. Days + close | 6.1–6.3 | ⬜ Pending |
 | 7. Forms + catalog | 7.1–7.2 | ⬜ Pending |
 | 8. Final verification | 8.1 | ⬜ Pending (analyzers/targets below) |
@@ -255,10 +255,128 @@ Mode: strict TDD · Last updated: 2026-10-06
   no `5730bba1`/`6dc69496`/`9b973616` staged.
 
 
+## Phase 5 — completed work (5.1–5.2)
+
+- **5.1 RED — 5 test files, commit `7478531`** (safety net first: the 4 pre-existing
+  files ran **66/66 green** before any edit):
+  - `test/features/auth/role_mapping_test.dart` — rewritten to the **8 legacy DB
+    values → 2 roles** mapping via `mapLegacyRoleToAppRole` (the CASE in the
+    doc comment mirrors `_remapRolesToTwoRoles` line by line, ELSE included),
+    plus `UserRole.values == [admin, vendedor]`, `isAdmin`/`isVendedor`
+    getters, a legacy-string negative case, and the phone group preserved.
+  - `test/config/router/route_guard_test.dart` — **NEW**, 23 cases covering
+    `routeGuardDecision`: admin-only `/workers`, `/settings`,
+    `/products`, `/products/new`, `/products/edit/:id` (admin → null,
+    vendedor → `/`, `super_admin` legacy value → `/`), unauthenticated admin
+    path → `/login`, shared `/orders/history`, `/orders/new`, `/clients`,
+    `/days` open to both roles, public `/login|/register|/splash` never guarded.
+  - `test/features/workers/workers_route_guard_test.dart` — same 8 cases,
+    ported from `workersRedirectDecision(loggedIn:)` to
+    `routeGuardDecision(authenticated:)`; `super_admin` flipped from allow →
+    redirect `/` (the role no longer exists).
+  - `test/features/theme/theme_preferences_test.dart` — theme-preferences delta:
+    2-entry light matrix, "no legacy role defaults dark", resolveMode override
+    cases; store round-trip group untouched.
+  - `test/architecture/license_strip_guard_test.dart` — **forced update (see
+    evidence)**: T5's "one list, two entries for every role" pin contradicts
+    the role-flows delta; repinned to admin 2 + vendedor 3 entries and no
+    legacy role labels.
+- **5.2 GREEN — 7 lib files, commit `7274b18`**:
+  - `user.dart`: `enum UserRole { admin, vendedor }`; getters reduced to
+    `isAdmin` / `isVendedor` (SMS-era getters `isRedes/isCocina/isDomicilio/
+    isMesero` deleted).
+  - `auth_datasource_impl.dart`: `mapPosRoleToSmsRole` →
+    `mapLegacyRoleToAppRole` (8-value switch + ELSE → `vendedor`, identical to
+    the v16 CASE); register's first-user role `super_admin` → `admin` (the
+    2-role set forbids creating `super_admin`, and a stored `super_admin`
+    would now be locked out of `/workers` by the guard).
+  - `app_router.dart`: `workersRedirectDecision` **replaced** by
+    `routeGuardDecision(currentPath:, role:, authenticated:)` over the
+    admin-only path set; redirect block calls it for every non-public path.
+  - `side_menu.dart`: `_adminMenuItems` [Usuarios→`/workers`,
+    Configuración→`/settings`] + `_vendedorMenuItems` [Pedidos→`/orders/history`,
+    Clientes→`/clients`, Días→`/days`]; `_roleTitle` reduced to
+    ADMINISTRADOR/VENDEDOR/MENÚ (legacy role labels deleted); unknown role →
+    vendedor menu (least privilege).
+  - `home_screen.dart`: 2 dashboards — admin (existing, keeps `Nuevo Pedido` +
+    `Cierre del Día`) and new `Nuevo Pedido`-first `vendedor` dashboard with
+    Pedidos Hoy/Pendientes stats and Clientes/Días quick links; the
+    redes/cocina/domicilio/mesero dashboards (~150 lines) deleted; unknown
+    role → vendedor dashboard (least privilege).
+  - `theme_provider.dart`: `_roleThemeDefaults` = exactly 2 entries
+    `{admin: light, vendedor: light}`, fallback light; no `dark` on any role
+    default (dark only via saved user choice).
+  - `status_badge.dart`: fixed 3-hex palette per role-flows —
+    `pedido`→Achiote `#D9531E` (AppColors.accent), `confirmado`→Mostaza
+    `#E4A22E` (warningDark), `recogido`→Mojo `#7C9A3B` (successDark), both
+    themes (swaps the previous pedido/confirmado accent-warning pairing).
+
+## Phase 5 — evidence
+
+- **Safety net (pre-modification)**: the 4 existing target files ran
+  **66/66 passed** (16 role_mapping + 8 workers guard + 18 theme + 24 license
+  guard) on `def0633`.
+- **RED (commit `7478531`, real captured output)**:
+  - `role_mapping_test.dart` → compile RED, `Method not found:
+    'mapLegacyRoleToAppRole'` ×10 + `The getter 'isVendedor' isn't defined
+    for the type 'User'` ×4, `Some tests failed.` exit 1.
+  - `route_guard_test.dart` → compile RED, `Method not found:
+    'routeGuardDecision'` ×23 sites, `Some tests failed.` exit 1.
+  - `workers_route_guard_test.dart` → compile RED, `Method not found:
+    'routeGuardDecision'` (8 call sites), `Some tests failed.` exit 1.
+  - `theme_preferences_test.dart` → **assertion RED, 14 passed / 2 failed**:
+    `no legacy role defaults to dark` — `Expected: ThemeMode:<light>
+    Actual: ThemeMode:<dark>`, reason `deleted role "cocina" must not carry a
+    dark default`; `no saved choice: a legacy role never falls back to dark`
+    — same expected/actual at `resolveMode(null, 'cocina')`.
+  - `license_strip_guard_test.dart` → **assertion RED, 23 passed / 1 failed**:
+    `Expected: <5> Actual: <2>` with reason `role-flows: admin [Usuarios,
+    Configuración] + vendedor [Pedidos, Clientes, Días]`.
+  - RED-commit analyze: `dart analyze lib` = **0 errors** (102 pre-existing
+    warnings/infos in lib untouched); `dart analyze lib test` = 52 errors —
+    all 52 are the intentional undefined-symbol references inside the 5 RED
+    test files (`routeGuardDecision`, `mapLegacyRoleToAppRole`, `UserRole`,
+    `isVendedor`); warnings stayed at 37. RED is red by design (Phase-3
+    precedent).
+- **Gates (final, commit `7274b18`)**:
+  - `dart analyze lib test` = **0 errors, 36 warnings, 65 infos**
+    (101 issues). Caps: 0 errors ✅ / ≤47 warnings ✅ (36, −1 vs the 37
+    baseline) / ≤86 infos ✅ (65, −9 vs the 74 baseline) — no new
+    diagnostics; the drop comes from the deleted SMS-era test/source lines.
+  - Full `flutter test` = **162 passed / 0 failed** (`+162: All tests
+    passed!`, exit 0).
+  - **Count reconciliation vs 138**: 138 + role_mapping 16→19 (+3) +
+    theme 18→16 (−2) + NEW route_guard (+23) + workers 8→8 + license guard
+    24→24 = **162**. tasks.md 8.1's "≥217" target is stale (it was computed
+    against the pre-Phase-4 210/7 baseline); real baseline was **138**, added
+    **+24**, now **162**.
+- **Mapping source of truth**: Dart `mapLegacyRoleToAppRole`
+  (`auth_datasource_impl.dart`) vs SQL `_remapRolesToTwoRoles`
+  (`app_database.dart:834-848`) — compared branch by branch: super_admin/admin
+  → `admin`; redes/cocina/mesero/domicilio/almacenero/vendedor → `vendedor`;
+  ELSE/`default` → `vendedor`. **Identical, no divergent mapping.**
+- **Spec-gap conflict found & repinned (not silently skipped)**: the license
+  guard's T5 asserted *one menu list with 2 entries for every role* and named
+  "for all roles" — the role-flows delta mandates admin=2/vendedor=3, so the
+  assertion was updated in the RED commit (it was failing `count=5 vs 2`
+  before side_menu changed). Without this repin the suite could never go green
+  while honoring the spec. This file was NOT listed in task 5.1's test set —
+  recorded here as a forced, spec-driven test update.
+- `.g.dart`: `lib/core/database/app_database.g.dart` exists, tracked,
+  untouched (`app_database.dart` not modified; no build_runner run).
+- `flutter build` NOT run (CDN geo-blocked). `flutter pub get` not needed
+  (no pubspec change). No stray PNG staged. Branch created locally only —
+  nothing pushed, `main`/`daniel`/`pr/11`–`pr/14`/`feature/hamburguesa-express`
+  untouched.
+
+
+
 ## TDD Cycle Evidence (strict TDD)
 
 | Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
 |------|-----------|-------|------------|-----|-------|-------------|----------|
+| 5.1 | `role_mapping_test.dart`, `route_guard_test.dart` (new), `workers_route_guard_test.dart`, `theme_preferences_test.dart` + forced repin of `license_strip_guard_test.dart` T5 | Unit + source guard | ✅ the 4 pre-existing files 66/66 green at `def0633` | ✅ `7478531` — compile RED ×3 files (undefined `mapLegacyRoleToAppRole`/`routeGuardDecision`/`UserRole`+`isVendedor`) + assertion RED ×2 (theme 14/2 dark-default; license guard `Expected <5> Actual <2>`) | ✅ `7274b18` — the 5 files 90/90, full suite 162/162 | ✅ 10 mapping cases (8 values + ELSE + totality), 23 guard cases (5 admin paths × 3 actors + 6 shared + 3 public), 16 theme cases (2-entry matrix, legacy-no-dark, override) | ➖ None needed |
+| 5.2 | same 5 test files (GREEN of 5.1) | Unit + source guard | ✅ analyze before edits: 0 errors/37 warnings/74 infos, suite 138 | ✅ `7478531` (shared RED — source untouched at that commit) | ✅ `7274b18` — `dart analyze lib test` 0/36/65, full suite 162/162 | ✅ covered by the 5.1 matrix (guard decision table, mapping ELSE, badge hexes pinned by doc-comment + role-flows) | ➖ None needed (7 files, +107/−218) |
 | 4.1 | — (deletions; no test subject) | — | ✅ `dart analyze lib test` 0/47/86 + suite 191 baseline captured first | ➖ None — Phase 4 contract: the safety net IS the analyzer + full suite | ✅ `a3ba44e` — analyze 0/37/74, suite 138/138 | ✅ 33 lib deletions each greped to 0 references | ➖ None needed |
 | 4.2 | same net (reference cleanup) | — | ✅ 0/47/86 before edits | ➖ None — no new behavior, removal only | ✅ `a3ba44e` — dead-route grep 0/0/0/0/0/0/0/0/0, XML re-read well-formed | ✅ each of the 9 removed routes greped individually over `lib`+`test` | ➖ None needed |
 | 4.3 | `test/architecture/license_strip_guard_test.dart` + `order_notifier_create_order_test.dart` | Source guard + Unit | ✅ analyze 0/47/86, suite 191 | ✅ `8a960c3` (guard pins SMS receiver + help removal; 2 assertions red at `9275ae0`) | ✅ `a3ba44e` — guard 24/24, full suite 138/138 | ✅ 2 guard assertions (SMS receiver, help dir) + 3 re-pinned create-order cases; 53 obsolete tests removed with their subjects | ➖ None needed |
@@ -271,6 +389,7 @@ Mode: strict TDD · Last updated: 2026-10-06
 | 2.5 | same + 3 notifier test fakes | Unit | ✅ Orders suite run first: 50/50 | ✅ `62227b0` (shared RED) | ✅ executed, 50/50 pass | ✅ covered by 2.4 matrix | ➖ None needed (verify-only run; executor modified no code) |
 
 - **Test summary**: orders suite 54 tests passing (50 after Phase 2 + 4 from 3.1); layers: Unit (drift in-memory executor for datasource) + Widget (`flutter_test`); pure functions added: `_todayIso()`, `orderStateActionLabel`, `nextOrderState`, `buildSmsUri`, `buildTelUri`; `resolveNextRetryCount` removed as dead.
+- **Phase 5 test summary**: full suite **162 passing** (138 baseline +24: route_guard +23, role_mapping +3, theme −2); layers: Unit (pure functions: `routeGuardDecision`, `mapLegacyRoleToAppRole`, `defaultThemeForRole`/`resolveMode`) + source guards; pure functions added: `routeGuardDecision`, `_isAdminOnlyPath`, `mapLegacyRoleToAppRole` (renamed), `_roleThemeDefaults`; `workersRedirectDecision`, `mapPosRoleToSmsRole` removed as dead.
 
 ## Notes / follow-ups
 
@@ -288,7 +407,21 @@ Mode: strict TDD · Last updated: 2026-10-06
   `restaurant_order_sms_test` never existed in this repo (stale task text).
 - Phase 4 touched `side_menu.dart`? **No** — it needed no edit (it only ever
   listed `/workers` and `/settings`).
-- Remaining: Phases 5–8.
+- Remaining: Phases 6–8.
+- Phase 5 spec-gap (NOT tasked anywhere — flag for the orchestrator):
+  `workers_screen.dart` still offers the deleted roles in its picker
+  (`_assignableRoles`/labels: `super_admin`, `redes`, `cocina`, `mesero`,
+  `domicilio`; default `'redes'`) and `settings_screen.dart:423` still checks
+  `role == 'super_admin'`. Both contradict the 2-role allowed set and will
+  surface in 8.1's dead-role grep; no task 5/6/7 covers them.
+- Phase 5 known transient: the vendedor `Días` entries (menu + dashboard)
+  point at `/days`, whose route/screens land in task 6.3 — tapping them
+  between this PR and the Phase 6 PR 404s. Accepted under the chain
+  (`feature-branch-chain`, PR5 follows immediately).
+- Phase 5 guard semantics: `routeGuardDecision` guards ONLY the admin-only
+  path set (unauthenticated → `/login` on those); unauthenticated access to
+  shared paths is left to the router exactly as before this phase (pre-existing
+  behavior, not part of the design decision table).
 - Phase 3 touched only `order_row_actions.dart`, `order_history_screen.dart`
   and its new test: zero out-of-scope files, zero new analyzer diagnostics.
   The history screen had no per-row actions before, so nothing was removed
@@ -325,3 +458,10 @@ Mode: strict TDD · Last updated: 2026-10-06
   deleted `sms_service.dart` imports). At `9275ae0` the tree compiles and runs
   136/138 with only the 2 intended guard RED assertions failing; `a3ba44e`
   flips them GREEN. Both commits compile; only `9275ae0` is red, by design.
+
+### Phase 5 (branch `pr/15-roles-guard`, from `pr/14-deletions` @ `def0633`)
+- `7478531` — `test: pin two-role remap, route guard decision table and light-only theme defaults (red)` (5.1 RED; 5 files, +469/−143: 4 rewritten/updated + 1 new `route_guard_test.dart`).
+- `7274b18` — `feat: collapse to two roles with admin-only route guard and role-based menus` (5.2 GREEN + turning 5.1 green; 7 files, +107/−218).
+- Docs commit: `tasks.md` `[x]` 5.1/5.2 + this `apply-progress.md` Phase 5 merge.
+- Code+test total for the slice: +576/−361 (negative delta; well under the 400-line review budget concern because 361 lines are deletions of dead role UI).
+- Both commits pushed nowhere — local branch only.

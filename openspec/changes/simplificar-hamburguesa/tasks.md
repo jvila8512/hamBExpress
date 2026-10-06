@@ -38,8 +38,8 @@ Work units → PRs: U1 schema→PR1; U2 orders core+row actions→PR2; U3 deleti
 
 ## Phase 5: Roles, Guard, Menus
 
-- [ ] 5.1 RED: extend `role_mapping_test.dart` (8 values), new `route_guard_test.dart`, update `workers_route_guard_test.dart`, `theme_preferences_test.dart` (auth·Route Guard; theme-preferences).
-- [ ] 5.2 GREEN: `user.dart` 2-role enum; `routeGuardDecision` in `app_router.dart`; 2-role `side_menu.dart`/`home_screen.dart` + Nuevo Pedido; `theme_provider.dart` 2 light; `status_badge.dart` 3 hexes (role-flows).
+- [x] 5.1 RED: extend `role_mapping_test.dart` (8 values), new `route_guard_test.dart`, update `workers_route_guard_test.dart`, `theme_preferences_test.dart` (auth·Route Guard; theme-preferences).
+- [x] 5.2 GREEN: `user.dart` 2-role enum; `routeGuardDecision` in `app_router.dart`; 2-role `side_menu.dart`/`home_screen.dart` + Nuevo Pedido; `theme_provider.dart` 2 light; `status_badge.dart` 3 hexes (role-flows).
 
 ## Phase 6: Days + Close
 
