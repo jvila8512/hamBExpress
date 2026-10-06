@@ -4,7 +4,6 @@ import 'package:etecsa/features/orders/domain/entities/order_state.dart';
 import 'package:etecsa/features/orders/domain/entities/restaurant_order.dart';
 import 'package:etecsa/features/orders/domain/repositories/order_repository.dart';
 import 'package:etecsa/features/orders/presentation/providers/order_provider.dart';
-import 'package:etecsa/features/sms/infrastructure/services/sms_service.dart';
 
 // ---------------------------------------------------------------------------
 // Fakes (sin mocks externos: hand-rolled, 2 fakes vs 3+ asserts por test)
@@ -52,19 +51,6 @@ class _FakeOrderRepository implements OrderRepository {
   Future<void> updateOrderState(String orderId, OrderState newState) async {}
 }
 
-class _FakeSmsService extends SmsService {
-  bool result = true;
-  String? lastPhone;
-  String? lastMessage;
-
-  @override
-  Future<bool> sendSms(String phoneNumber, String message) async {
-    lastPhone = phoneNumber;
-    lastMessage = message;
-    return result;
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -77,74 +63,56 @@ RestaurantOrder _sampleOrder() => RestaurantOrder(
       items: [OrderItem(code: 'H1', qty: 2, price: 100)],
     );
 
-ProviderContainer _makeContainer(
-    _FakeOrderRepository repo, _FakeSmsService sms) {
+ProviderContainer _makeContainer(_FakeOrderRepository repo) {
   final container = ProviderContainer(overrides: [
     orderRepositoryProvider.overrideWithValue(repo),
-    smsServiceProvider.overrideWithValue(sms),
   ]);
   addTearDown(container.dispose);
   return container;
 }
 
 void main() {
-  group('OrderNotifier.createOrder devuelve bool y no traga errores', () {
-    test('repo-ok + sms-ok → true, guarda pedido y envía SMS al destino',
-        () async {
+  group('OrderNotifier.createOrder no SMS: guarda y no traga errores', () {
+    test('repo-ok → guarda el pedido, lo apila y no setea error', () async {
       final repo = _FakeOrderRepository();
-      final sms = _FakeSmsService()..result = true;
-      final container = _makeContainer(repo, sms);
+      final container = _makeContainer(repo);
       final notifier = container.read(orderProvider.notifier);
 
-      final bool ok = await notifier.createOrder(
-        _sampleOrder(),
-        destinationPhone: '555-1234',
-      );
+      await notifier.createOrder(_sampleOrder());
 
-      expect(ok, isTrue);
       expect(repo.created, hasLength(1));
-      expect(sms.lastPhone, '555-1234');
-      expect(sms.lastMessage, contains('R1-0101-001'));
       expect(notifier.orders.map((o) => o.id), contains('R1-0101-001'));
       expect(notifier.error, isNull);
+      expect(notifier.isLoading, isFalse);
     });
 
-    test('sms-false → false pero el pedido queda guardado (SMS pendiente)',
-        () async {
+    test('varios pedidos → el más nuevo queda primero en la lista', () async {
       final repo = _FakeOrderRepository();
-      final sms = _FakeSmsService()..result = false;
-      final container = _makeContainer(repo, sms);
+      final container = _makeContainer(repo);
       final notifier = container.read(orderProvider.notifier);
 
-      final bool ok = await notifier.createOrder(
-        _sampleOrder(),
-        destinationPhone: '555-1234',
-      );
+      await notifier.createOrder(_sampleOrder());
+      await notifier
+          .createOrder(_sampleOrder().copyWith(id: 'R1-0101-002'));
 
-      expect(ok, isFalse);
-      expect(repo.created, hasLength(1));
-      expect(notifier.orders, hasLength(1));
+      expect(notifier.orders.map((o) => o.id).toList(),
+          ['R1-0101-002', 'R1-0101-001']);
       expect(notifier.error, isNull);
     });
 
     test('repo-throw → relanza para que el form lo vea y setea error',
         () async {
       final repo = _FakeOrderRepository()..throwOnCreate = true;
-      final sms = _FakeSmsService();
-      final container = _makeContainer(repo, sms);
+      final container = _makeContainer(repo);
       final notifier = container.read(orderProvider.notifier);
 
       await expectLater(
-        () => notifier.createOrder(
-          _sampleOrder(),
-          destinationPhone: '555-1234',
-        ),
+        () => notifier.createOrder(_sampleOrder()),
         throwsException,
       );
       expect(notifier.error, isNotNull);
       expect(notifier.orders, isEmpty);
-      // El SMS jamás debió intentarse si el guardado falló.
-      expect(sms.lastPhone, isNull);
+      expect(notifier.isLoading, isFalse);
     });
   });
 }
