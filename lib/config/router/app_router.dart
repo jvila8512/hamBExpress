@@ -6,23 +6,13 @@ import 'package:etecsa/features/auth/presentation/screens/login_screen.dart';
 import 'package:etecsa/features/auth/presentation/screens/register_screen.dart';
 import 'package:etecsa/features/shared/presentation/screens/splash_screen.dart';
 import 'package:etecsa/features/products/presentation/screens/products_screen.dart';
-import 'package:etecsa/features/products/presentation/screens/categories_screen.dart';
 import 'package:etecsa/features/products/presentation/screens/product_form_screen.dart';
-import 'package:etecsa/features/products/presentation/screens/category_form_screen.dart';
-import 'package:etecsa/features/products/presentation/screens/import_products_screen.dart';
-import 'package:etecsa/features/expenses/presentation/screens/expenses_screen.dart';
 import 'package:etecsa/features/home/presentation/screens/home_screen.dart';
 import 'package:etecsa/features/settings/presentation/screens/settings_screen.dart';
-import 'package:etecsa/features/help/presentation/screens/help_screen.dart';
 import 'package:etecsa/features/orders/presentation/screens/order_form_screen.dart';
-import 'package:etecsa/features/orders/presentation/screens/order_tracking_screen.dart';
 import 'package:etecsa/features/orders/presentation/screens/order_history_screen.dart';
-import 'package:etecsa/features/orders/presentation/screens/kitchen_queue_screen.dart';
-import 'package:etecsa/features/orders/presentation/screens/delivery_list_screen.dart';
 import 'package:etecsa/features/clients/presentation/screens/client_management_screen.dart';
-import 'package:etecsa/features/contacts/presentation/screens/trusted_contacts_screen.dart';
 import 'package:etecsa/features/daily_close/presentation/screens/daily_close_screen.dart';
-import 'package:etecsa/features/exports/presentation/screens/export_import_screen.dart';
 import 'package:etecsa/features/workers/presentation/screens/workers_screen.dart';
 import 'package:etecsa/core/database/app_database.dart';
 
@@ -99,33 +89,6 @@ final appRouter = GoRouter(
         return ProductFormScreen(productId: productId);
       },
     ),
-    GoRoute(
-      path: '/products/import',
-      builder: (context, state) => const ImportProductsScreen(),
-    ),
-
-    // ── Categories ───────────────────────────────────────────────
-    GoRoute(
-      path: '/categories',
-      builder: (context, state) => const CategoriesScreen(),
-    ),
-    GoRoute(
-      path: '/categories/new',
-      builder: (context, state) => const CategoryFormScreen(),
-    ),
-    GoRoute(
-      path: '/categories/edit/:id',
-      builder: (context, state) {
-        final categoryId = state.pathParameters['id'];
-        return CategoryFormScreen(categoryId: categoryId);
-      },
-    ),
-
-    // ── Expenses ─────────────────────────────────────────────────
-    GoRoute(
-      path: '/expenses',
-      builder: (context, state) => const ExpensesScreen(),
-    ),
 
     // ── Orders ───────────────────────────────────────────────────
     GoRoute(
@@ -133,24 +96,8 @@ final appRouter = GoRouter(
       builder: (context, state) => const OrderFormScreen(),
     ),
     GoRoute(
-      path: '/orders/tracking',
-      builder: (context, state) => const OrderTrackingScreen(),
-    ),
-    GoRoute(
       path: '/orders/history',
       builder: (context, state) => const OrderHistoryScreen(),
-    ),
-
-    // ── Kitchen ──────────────────────────────────────────────────
-    GoRoute(
-      path: '/kitchen',
-      builder: (context, state) => const KitchenQueueScreen(),
-    ),
-
-    // ── Delivery ─────────────────────────────────────────────────
-    GoRoute(
-      path: '/delivery',
-      builder: (context, state) => const DeliveryListScreen(),
     ),
 
     // ── Workers (admin/super_admin) ─────────────────────────────
@@ -165,32 +112,16 @@ final appRouter = GoRouter(
       builder: (context, state) => const ClientManagementScreen(),
     ),
 
-    // ── Trusted Contacts ─────────────────────────────────────────
-    GoRoute(
-      path: '/contacts',
-      builder: (context, state) => const TrustedContactsScreen(),
-    ),
-
     // ── Daily Close ──────────────────────────────────────────────
     GoRoute(
       path: '/daily-close',
       builder: (context, state) => const DailyCloseScreen(),
     ),
 
-    // ── Export / Import (SMS fallback) ────────────────────────────
-    GoRoute(
-      path: '/exports',
-      builder: (context, state) => const ExportImportScreen(),
-    ),
-
-    // ── Settings & Help ──────────────────────────────────────────
+    // ── Settings ─────────────────────────────────────────────────
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
-    ),
-    GoRoute(
-      path: '/help',
-      builder: (context, state) => const HelpScreen(),
     ),
   ],
 

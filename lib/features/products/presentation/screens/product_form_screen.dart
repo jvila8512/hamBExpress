@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:etecsa/features/products/presentation/providers/products_provider.dart';
-import 'package:etecsa/features/products/presentation/providers/categories_provider.dart';
 import 'package:etecsa/config/theme/app_colors.dart';
 import 'package:etecsa/core/database/app_database.dart';
 
@@ -335,8 +334,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = ref.watch(categoriesProvider);
-
     if (isEditing && !_isInitialized) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -441,25 +438,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ),
               textCapitalization: TextCapitalization.characters,
               maxLength: 5,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedCategoryId,
-              decoration: const InputDecoration(
-                labelText: 'Categoría',
-                prefixIcon: Icon(Icons.category),
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                const DropdownMenuItem(
-                  value: null,
-                  child: Text('Sin categoría'),
-                ),
-                ...categories.categories.map(
-                  (c) => DropdownMenuItem(value: c.id, child: Text(c.name)),
-                ),
-              ],
-              onChanged: (v) => setState(() => _selectedCategoryId = v),
             ),
             const SizedBox(height: 16),
             TextFormField(

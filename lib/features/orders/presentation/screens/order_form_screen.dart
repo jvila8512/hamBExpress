@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
@@ -10,13 +9,10 @@ import 'package:etecsa/features/clients/domain/entities/restaurant_client.dart';
 import 'package:etecsa/features/clients/presentation/providers/client_provider.dart';
 import 'package:etecsa/features/orders/domain/entities/restaurant_order.dart';
 import 'package:etecsa/features/orders/domain/entities/order_state.dart';
-import 'package:etecsa/features/contacts/presentation/providers/contact_provider.dart';
 import 'package:etecsa/features/orders/presentation/providers/order_provider.dart';
 import 'package:etecsa/features/orders/presentation/screens/order_submit_helpers.dart';
 import 'package:etecsa/features/products/presentation/providers/products_provider.dart';
-import 'package:etecsa/features/products/presentation/providers/categories_provider.dart';
-import 'package:etecsa/core/database/app_database.dart'
-    show Product, Category;
+import 'package:etecsa/core/database/app_database.dart' show Product;
 import 'package:etecsa/features/shared/widgets/side_menu.dart';
 
 // ---------------------------------------------------------------------------
@@ -27,7 +23,7 @@ import 'package:etecsa/features/shared/widgets/side_menu.dart';
 /// Flujo:
 /// 1. Buscar cliente por teléfono → si no existe, formulario de creación.
 /// 2. Seleccionar productos del catálogo con contadores +/-.
-/// 3. Enviar a cocina → genera folio, crea orden, envía SMS PED.
+/// 3. Enviar a cocina → genera folio y crea el pedido.
 
 class OrderFormScreen extends ConsumerStatefulWidget {
   const OrderFormScreen({super.key});
@@ -52,13 +48,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   final _newReferenceController = TextEditingController();
 
   // ── Catálogo ─────────────────────────────────────────────────────────
-  String? _selectedCategoryId; // null = "todos"
   final Map<String, int> _quantities = {}; // productId → cantidad
 
   // ── Envío ────────────────────────────────────────────────────────────
   bool _isSubmitting = false;
   bool _orderSent = false;
-  bool _smsPending = false;
   String? _createdOrderId;
 
   @override
@@ -66,7 +60,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     super.initState();
     Future.microtask(() {
       ref.read(productsProvider.notifier).loadProducts();
-      ref.read(categoriesProvider.notifier).loadCategories();
       ref.read(clientProvider.notifier).loadAll();
     });
   }
@@ -284,38 +277,20 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
 
     try {
-      // Resolver el número de Cocina desde Contactos de Confianza.
-      final kitchenPhones = await ref
-          .read(contactRepositoryProvider)
-          .getActivePhonesForRole('cocina');
-      final kitchenPhone = resolveKitchenPhone(kitchenPhones);
-
-      final smsOk = await ref
-          .read(orderProvider.notifier)
-          .createOrder(order, destinationPhone: kitchenPhone);
+      await ref.read(orderProvider.notifier).createOrder(order);
 
       if (mounted) {
         setState(() {
           _isSubmitting = false;
           _orderSent = true;
           _createdOrderId = orderId;
-          _smsPending = kitchenPhone == null || !smsOk;
         });
-        if (kitchenPhone == null) {
-          _showSnack(
-              'Pedido guardado SIN enviar SMS: configurá el número de Cocina en Contactos de Confianza');
-        } else if (smsOk) {
-          _showSnack(
-              'Pedido $orderId enviado a cocina — esperando confirmación');
-        } else {
-          _showSnack(
-              'Pedido guardado pero SMS no enviado — reintentá desde Seguimiento');
-        }
+        _showSnack('Pedido $orderId guardado');
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        _showSnack('Error al enviar pedido: $e');
+        _showSnack('Error al guardar pedido: $e');
       }
     }
   }
@@ -355,39 +330,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
     // Providers
     final productsState = ref.watch(productsProvider);
-    final categoriesState = ref.watch(categoriesProvider);
     final clientsAsync = ref.watch(clientProvider);
 
     // Productos filtrados (no eliminados — ya filtrado por provider)
     final allProducts = productsState.products;
-
-    // Categorías: todas las que existan en la BD
-    final categories = categoriesState.categories;
-
-    // Productos agrupados por categoría
-    final grouped = <String, List<Product>>{};
-    for (final cat in categories) {
-      final catProducts = allProducts
-          .where((p) => p.categoryId == cat.id)
-          .toList();
-      if (catProducts.isNotEmpty) {
-        grouped[cat.id] = catProducts;
-      }
-    }
-    // Productos sin categoría
-    final uncategorized = allProducts
-        .where((p) =>
-            p.categoryId == null ||
-            !categories.any((c) => c.id == p.categoryId))
-        .toList();
-    if (uncategorized.isNotEmpty) {
-      grouped['__sin_categoria__'] = uncategorized;
-    }
-
-    // Productos de la categoría seleccionada (o todos)
-    final displayedProducts = _selectedCategoryId == null
-        ? allProducts
-        : (grouped[_selectedCategoryId] ?? []);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -400,16 +346,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         title: Text(
           _orderSent ? 'Pedido Enviado' : 'Nuevo Pedido',
         ),
-        actions: [
-          if (_orderSent)
-            TextButton.icon(
-              onPressed: () => context.go('/orders/tracking'),
-              icon: const Icon(Icons.list_alt, size: 20),
-              label: const Text('Ver tracking'),
-            ),
-        ],
       ),
-      body: _orderSent ? _buildSentView(colors, theme) : _buildForm(colors, theme, clientsAsync, categories, displayedProducts),
+      body: _orderSent ? _buildSentView(colors, theme) : _buildForm(colors, theme, clientsAsync, allProducts),
       bottomNavigationBar: _orderSent
           ? null
           : _buildBottomBar(colors, theme),
@@ -451,16 +389,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            if (_smsPending) ...[
-              const SizedBox(height: 8),
-              Text(
-                'SMS pendiente de envío — reintentá desde Seguimiento',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colors.warning,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
             const SizedBox(height: 8),
             Text(
               'Cuando cocina confirme, el estado cambiará automáticamente.',
@@ -472,7 +400,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               onPressed: () {
                 setState(() {
                   _orderSent = false;
-                  _smsPending = false;
                   _createdOrderId = null;
                   _quantities.clear();
                   _clearClient();
@@ -493,11 +420,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     AppColorsTheme colors,
     ThemeData theme,
     AsyncValue<List<RestaurantClient>> clientsAsync,
-    List<Category> categories,
-    List<Product> displayedProducts,
+    List<Product> products,
   ) {
     final productsState = ref.watch(productsProvider);
-    final allProducts = productsState.products;
     final isLoading = productsState.isLoading;
 
     return Column(
@@ -522,22 +447,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                     padding: EdgeInsets.all(32),
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if (allProducts.isEmpty)
+                else if (products.isEmpty)
                   _buildEmptyProducts(colors, theme)
-                else ...[
-                  // Tabs de categorías
-                  _buildCategoryTabs(colors, theme, categories),
-
-                  const SizedBox(height: 8),
-
-                  // Lista de productos
-                  if (displayedProducts.isEmpty)
-                    _buildEmptyCategory(colors, theme)
-                  else
-                    ...displayedProducts.map(
-                      (p) => _buildProductRow(p, colors, theme),
-                    ),
-                ],
+                else
+                  ...products.map(
+                    (p) => _buildProductRow(p, colors, theme),
+                  ),
               ],
             ),
           ),
@@ -796,68 +711,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  // ─── CATEGORÍA TABS ─────────────────────────────────────────────────
-
-  Widget _buildCategoryTabs(
-    AppColorsTheme colors,
-    ThemeData theme,
-    List<Category> categories,
-  ) {
-    final tabs = <Widget>[];
-    // "Todos"
-    tabs.add(_buildCategoryChip(
-      label: 'TODOS',
-      selected: _selectedCategoryId == null,
-      onTap: () => setState(() => _selectedCategoryId = null),
-      colors: colors,
-    ));
-
-    for (final cat in categories) {
-      tabs.add(const SizedBox(width: 8));
-      tabs.add(_buildCategoryChip(
-        label: cat.name,
-        selected: _selectedCategoryId == cat.id,
-        onTap: () => setState(() => _selectedCategoryId = cat.id),
-        colors: colors,
-      ));
-    }
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(children: tabs),
-    );
-  }
-
-  Widget _buildCategoryChip({
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-    required AppColorsTheme colors,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? colors.accent : colors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: selected ? colors.accent : colors.textSecondary.withValues(alpha: 0.3),
-          ),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.dmSans(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : colors.textPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-
   // ─── FILA DE PRODUCTO ──────────────────────────────────────────────
 
   Widget _buildProductRow(
@@ -1061,17 +914,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 textAlign: TextAlign.center),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyCategory(AppColorsTheme colors, ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Center(
-        child: Text('No hay productos en esta categoría',
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: colors.textSecondary)),
       ),
     );
   }

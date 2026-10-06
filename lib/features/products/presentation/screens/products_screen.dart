@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:etecsa/features/products/presentation/providers/products_provider.dart';
-import 'package:etecsa/features/products/presentation/providers/categories_provider.dart';
 import 'package:etecsa/features/products/presentation/screens/product_form_screen.dart';
 import 'package:etecsa/features/shared/widgets/side_menu.dart';
 import 'package:etecsa/config/theme/app_colors.dart';
 import 'package:etecsa/core/database/app_database.dart' show Product;
 import 'package:etecsa/core/services/export_service.dart';
-import 'package:etecsa/features/shared/widgets/export_options_dialog.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});
@@ -68,7 +66,9 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
               ? await ExportService.instance.exportProductsExcel()
               : await ExportService.instance.exportProductsPdf();
           if (mounted) {
-            ExportOptionsDialog.show(context, filePath: filePath, shareText: 'Lista de Productos');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Exportado: $filePath')),
+            );
           }
         } catch (e) {
           if (mounted) {

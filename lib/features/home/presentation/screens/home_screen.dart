@@ -261,13 +261,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 12),
           _buildActionButton(
-            icon: Icons.list_alt,
-            label: 'Ver Seguimiento',
-            color: AppColors.accent,
-            onTap: () => context.go('/orders/tracking'),
-          ),
-          const SizedBox(height: 12),
-          _buildActionButton(
             icon: Icons.history,
             label: 'Historial de Pedidos',
             color: AppColors.accent,
@@ -307,12 +300,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 12),
           _buildQuickLink('Clientes', Icons.people, () => context.go('/clients')),
-          const SizedBox(height: 8),
-          _buildQuickLink(
-            'Contactos de Confianza',
-            Icons.contact_phone,
-            () => context.go('/contacts'),
-          ),
         ],
       ),
     );
@@ -335,14 +322,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 20),
 
-          _buildActionButton(
-            icon: Icons.view_column,
-            label: 'Ver Cola de Cocina',
-            color: AppColors.accent,
-            onTap: () => context.go('/kitchen'),
-          ),
-          const SizedBox(height: 24),
-
           // Stats placeholder (would need live data)
           Row(
             children: [
@@ -360,23 +339,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 AppColors.accent,
               ),
             ],
-          ),
-          const SizedBox(height: 24),
-
-          Text(
-            'ACCESOS',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildQuickLink(
-            'Contactos de Confianza',
-            Icons.contact_phone,
-            () => context.go('/contacts'),
           ),
         ],
       ),
@@ -400,14 +362,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 20),
 
-          _buildActionButton(
-            icon: Icons.directions_bike,
-            label: 'Ver Entregas',
-            color: AppColors.successLight,
-            onTap: () => context.go('/delivery'),
-          ),
-          const SizedBox(height: 24),
-
           Row(
             children: [
               _buildStatCard(
@@ -424,23 +378,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 AppColors.accent,
               ),
             ],
-          ),
-          const SizedBox(height: 24),
-
-          Text(
-            'ACCESOS',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildQuickLink(
-            'Contactos de Confianza',
-            Icons.contact_phone,
-            () => context.go('/contacts'),
           ),
         ],
       ),
@@ -566,15 +503,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           // Quick Access Buttons
           _buildQuickAccessButtons(),
-          const SizedBox(height: 16),
-
-          // Export/Import shortcut (admin only)
-          _buildActionButton(
-            icon: Icons.file_upload,
-            label: 'Exportar/Importar (JSON)',
-            color: AppColors.accent,
-            onTap: () => context.go('/exports'),
-          ),
           const SizedBox(height: 32),
         ],
       ),
@@ -833,15 +761,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Icons.account_balance,
                 const Color(0xFFEF9F27),
                 () => context.go('/daily-close'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildQuickButton(
-                'Gastos',
-                Icons.receipt_long_outlined,
-                AppColors.accent,
-                () => context.go('/expenses'),
               ),
             ),
           ],

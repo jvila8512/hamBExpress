@@ -1170,14 +1170,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "28.2.12"
-  telephony_sdt:
-    dependency: "direct main"
-    description:
-      name: telephony_sdt
-      sha256: "463209911aa3b53b06a7dc67ecf127246e9723eabce7dc7aca57a333adec7196"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.3"
   term_glyph:
     dependency: transitive
     description:
