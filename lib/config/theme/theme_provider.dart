@@ -45,24 +45,21 @@ final fullThemeProvider = Provider<HamburguesaThemeData>((ref) {
   return HamburguesaThemeData.instance;
 });
 
+/// Role-default matrix: exactly the two remaining roles, both light.
+/// No entry assigns dark — dark remains reachable only through the
+/// user's explicit Settings toggle (saved choice always wins).
+const Map<String, ThemeMode> _roleThemeDefaults = <String, ThemeMode>{
+  'admin': ThemeMode.light,
+  'vendedor': ThemeMode.light,
+};
+
 /// Returns the recommended [ThemeMode] for a given user [role].
 ///
-/// From PRD §15:
-/// - Cocina → dark mode (default for kitchen screens)
-/// - Redes, Domicilio, Admin, Mesero → light mode
-ThemeMode defaultThemeForRole(String role) {
-  switch (role.toLowerCase()) {
-    case 'cocina':
-      return ThemeMode.dark;
-    case 'redes':
-    case 'domicilio':
-    case 'admin':
-    case 'super_admin':
-    case 'mesero':
-    default:
-      return ThemeMode.light;
-  }
-}
+/// Post-v16 the allowed set is `{admin, vendedor}` (auth delta) and both
+/// default to light (theme-preferences delta). Unknown/legacy role strings
+/// fall back to light as well — no code path assigns a dark role default.
+ThemeMode defaultThemeForRole(String role) =>
+    _roleThemeDefaults[role.toLowerCase()] ?? ThemeMode.light;
 
 /// Resuelve el modo efectivo para [role]: si hay una preferencia guardada
 /// ([saved]), la elección explícita del usuario gana sobre el default del

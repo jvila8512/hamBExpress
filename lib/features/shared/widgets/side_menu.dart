@@ -36,13 +36,22 @@ class _SideMenuState extends State<SideMenu> {
   String _appVersion = '';
   int _selectedIndex = 0;
 
-  // ── Menú único para todos los roles (spec R5) ─────────────────
-  final List<AppMenuItem> _menuItems = [
+  // ── Admin: Usuarios + Configuración (role-flows, 2 entries) ──
+  final List<AppMenuItem> _adminMenuItems = [
     const AppMenuItem(icon: Icons.people_alt, label: 'Usuarios', route: '/workers'),
     const AppMenuItem(icon: Icons.settings_outlined, label: 'Configuración', route: '/settings'),
   ];
 
-  List<AppMenuItem> get _currentMenuItems => _menuItems;
+  // ── Vendedor: Pedidos + Clientes + Días (role-flows) ─────────
+  final List<AppMenuItem> _vendedorMenuItems = [
+    const AppMenuItem(icon: Icons.receipt_long, label: 'Pedidos', route: '/orders/history'),
+    const AppMenuItem(icon: Icons.people, label: 'Clientes', route: '/clients'),
+    const AppMenuItem(icon: Icons.calendar_month, label: 'Días', route: '/days'),
+  ];
+
+  // Rol desconocido → menú de vendedor (menor privilegio).
+  List<AppMenuItem> get _currentMenuItems =>
+      _userRole == 'admin' ? _adminMenuItems : _vendedorMenuItems;
 
   @override
   void initState() {
@@ -114,20 +123,10 @@ class _SideMenuState extends State<SideMenu> {
 
   String get _roleTitle {
     switch (_userRole) {
-      case 'super_admin':
-        return 'SUPER ADMIN';
       case 'admin':
         return 'ADMINISTRADOR';
-      case 'redes':
-        return 'REDES';
       case 'vendedor':
-        return 'REDES';
-      case 'cocina':
-        return 'COCINA';
-      case 'domicilio':
-        return 'DOMICILIO';
-      case 'mesero':
-        return 'MESERO';
+        return 'VENDEDOR';
       default:
         return 'MENÚ';
     }

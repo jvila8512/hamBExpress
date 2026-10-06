@@ -6,19 +6,27 @@ import 'package:etecsa/features/auth/infrastructure/errors/auth_errors.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uuid/uuid.dart';
 
-/// Map legacy POS roles to new SMS restaurant roles.
-/// Executed during migration and on login for backward compatibility.
-String mapPosRoleToSmsRole(String posRole) {
-  switch (posRole) {
+/// Maps a legacy stored role onto the two-role set {admin, vendedor}.
+///
+/// Mirrors the v16 migration CASE in `app_database.dart`
+/// (`_remapRolesToTwoRoles`) exactly, including the ELSE branch: anything
+/// outside the 8 legacy values resolves to `vendedor`, so no stored role
+/// outside `{admin, vendedor}` can ever reach the session.
+String mapLegacyRoleToAppRole(String legacyRole) {
+  switch (legacyRole) {
     case 'super_admin':
+    case 'admin':
       return 'admin';
-    case 'vendedor':
-      return 'redes';
+    case 'redes':
+    case 'cocina':
+    case 'mesero':
+    case 'domicilio':
     case 'almacenero':
-      return 'cocina';
+    case 'vendedor':
+      return 'vendedor';
     default:
-      // 'admin', 'redes', 'cocina', 'domicilio', 'mesero' pass through
-      return posRole;
+      // ELSE branch of the v16 CASE.
+      return 'vendedor';
   }
 }
 
@@ -50,8 +58,8 @@ if (!dbUser.active) {
         throw CustomError('Usuario desactivado.');
       }
       
-      // Map POS role to SMS role on login
-      String userRoleToSave = mapPosRoleToSmsRole(dbUser.role);
+      // Normalize the stored role onto {admin, vendedor} on login
+      String userRoleToSave = mapLegacyRoleToAppRole(dbUser.role);
       
       // Guardar sesión
       final sessionToken = _uuid.v4();
@@ -89,10 +97,9 @@ if (!dbUser.active) {
         throw CustomError('El usuario ya existe');
       }
 
-      // Verificar si es el primer usuario (será super_admin)
-      final allUsers = await _db.getAllUsers();
-      final isFirstUser = allUsers.isEmpty;
-      final userRole = isFirstUser ? 'super_admin' : 'admin';
+      // Solo existe el rol admin (v16 remap); el primer usuario y todos
+      // los registros posteriores quedan en el set de dos roles.
+      const userRole = 'admin';
       
       final userId = const Uuid().v4();
       
@@ -113,7 +120,7 @@ if (!dbUser.active) {
       await _secureStorage.write(key: 'user_id', value: userId);
       await _secureStorage.write(key: 'user_role', value: userRole); // Guardar el rol correcto
 
-      final mappedRole = mapPosRoleToSmsRole(userRole);
+      final mappedRole = mapLegacyRoleToAppRole(userRole);
 
       return auth.User(
         id: userId,
@@ -157,7 +164,7 @@ if (!dbUser.active) {
         id: dbUser.id,
         email: dbUser.email ?? '',
         fullName: dbUser.fullName,
-        roles: [mapPosRoleToSmsRole(dbUser.role)],
+        roles: [mapLegacyRoleToAppRole(dbUser.role)],
         token: token,
         phone: storedPhone ?? dbUser.phone ?? '',
       );

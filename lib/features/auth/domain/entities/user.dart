@@ -1,5 +1,10 @@
 
 
+/// The allowed role set after the v16 remap: exactly two values exist.
+/// Legacy stored roles are normalized to these by
+/// `mapLegacyRoleToAppRole` (Dart side) and by the v16 migration CASE
+/// (database side).
+enum UserRole { admin, vendedor }
 
 class User {
 
@@ -20,12 +25,11 @@ class User {
   });
 
   bool get isAdmin {
-    return roles.contains('admin');
+    return roles.contains(UserRole.admin.name);
   }
 
-  bool get isRedes => roles.contains('redes');
-  bool get isCocina => roles.contains('cocina');
-  bool get isDomicilio => roles.contains('domicilio');
-  bool get isMesero => roles.contains('mesero');
+  bool get isVendedor {
+    return roles.contains(UserRole.vendedor.name);
+  }
 
 }

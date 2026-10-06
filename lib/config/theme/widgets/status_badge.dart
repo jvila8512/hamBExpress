@@ -5,10 +5,11 @@ import 'package:etecsa/config/theme/app_colors.dart';
 
 /// A colored pill badge that represents an [OrderState].
 ///
-/// Color mapping for the three-state machine:
-/// - `pedido`    → warning (Mostaza) — created, pending confirmation
-/// - `confirmado` → accent (Achiote) — confirmed, in progress
-/// - `recogido`  → success (Mojo) — picked up (terminal)
+/// Fixed palette mapping (role-flows delta) — the same three hex values
+/// in both themes:
+/// - `pedido`     → Achiote `#D9531E` — created, pending confirmation
+/// - `confirmado` → Mostaza `#E4A22E` — confirmed, in progress
+/// - `recogido`   → Mojo `#7C9A3B` — picked up (terminal)
 class StatusBadge extends StatelessWidget {
   final OrderState state;
   final double fontSize;
@@ -34,14 +35,19 @@ class StatusBadge extends StatelessWidget {
   }
 
   /// Resolves the background color for each [OrderState].
+  ///
+  /// The role-flows delta pins the three palette hexes for BOTH themes:
+  /// Achiote `#D9531E`, Mostaza `#E4A22E`, Mojo `#7C9A3B`.
+  /// [brightness] is kept for caller compatibility but does not change
+  /// the badge palette.
   static Color colorFor(OrderState state, {required Brightness brightness}) {
     switch (state) {
       case OrderState.pedido:
-        return AppColors.forBrightness(brightness).warning;
+        return AppColors.accent; // Achiote #D9531E
       case OrderState.confirmado:
-        return AppColors.accent;
+        return AppColors.warningDark; // Mostaza #E4A22E
       case OrderState.recogido:
-        return AppColors.forBrightness(brightness).success;
+        return AppColors.successDark; // Mojo #7C9A3B
     }
   }
 

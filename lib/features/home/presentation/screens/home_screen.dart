@@ -97,12 +97,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  // ── Role helpers ──────────────────────────────────────────────────
-  bool get _isAdmin => _userRole == 'admin' || _userRole == 'super_admin';
-  bool get _isRedes => _userRole == 'redes' || _userRole == 'vendedor';
-  bool get _isCocina => _userRole == 'cocina';
-  bool get _isDomicilio => _userRole == 'domicilio';
-  bool get _isMesero => _userRole == 'mesero';
+  // ── Role helpers (2-role model) ───────────────────────────────────
+  bool get _isAdmin => _userRole == 'admin';
 
   @override
   Widget build(BuildContext context) {
@@ -224,19 +220,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildContent(Map<String, dynamic> data) {
-    // ── Role-gated dashboards ──────────────────────────────────
-    if (_isRedes) return _buildRedesDashboard(data);
-    if (_isCocina) return _buildCocinaDashboard();
-    if (_isDomicilio) return _buildDomicilioDashboard();
-    if (_isMesero) return _buildMeseroDashboard();
-    return _buildAdminDashboard(data); // Default: admin
+    // ── Two dashboards (role-flows): admin / vendedor ───────────
+    // Rol desconocido → dashboard de vendedor (menor privilegio).
+    if (_isAdmin) return _buildAdminDashboard(data);
+    return _buildVendedorDashboard(data);
   }
 
   // ─────────────────────────────────────────────────────────────
-  // REDES Dashboard
+  // VENDEDOR Dashboard
   // ─────────────────────────────────────────────────────────────
 
-  Widget _buildRedesDashboard(Map<String, dynamic> data) {
+  Widget _buildVendedorDashboard(Map<String, dynamic> data) {
     final todayOrders = _getTodayOrdersCount(data);
     final pendingConfirm = _getPendingConfirmationCount(data);
 
@@ -246,8 +240,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildRoleCard(
-            icon: Icons.share,
-            title: 'Redes',
+            icon: Icons.point_of_sale,
+            title: 'Vendedor',
             subtitle: 'Atención al cliente',
           ),
           const SizedBox(height: 20),
@@ -300,132 +294,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 12),
           _buildQuickLink('Clientes', Icons.people, () => context.go('/clients')),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // COCINA Dashboard
-  // ─────────────────────────────────────────────────────────────
-
-  Widget _buildCocinaDashboard() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildRoleCard(
-            icon: Icons.restaurant,
-            title: 'Cocina',
-            subtitle: 'Cola de pedidos',
-          ),
-          const SizedBox(height: 20),
-
-          // Stats placeholder (would need live data)
-          Row(
-            children: [
-              _buildStatCard(
-                'Pendientes',
-                '—',
-                Icons.schedule,
-                AppColors.warningLight,
-              ),
-              const SizedBox(width: 12),
-              _buildStatCard(
-                'En cocina',
-                '—',
-                Icons.restaurant,
-                AppColors.accent,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // DOMICILIO Dashboard
-  // ─────────────────────────────────────────────────────────────
-
-  Widget _buildDomicilioDashboard() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildRoleCard(
-            icon: Icons.delivery_dining,
-            title: 'Domicilio',
-            subtitle: 'Entregas pendientes',
-          ),
-          const SizedBox(height: 20),
-
-          Row(
-            children: [
-              _buildStatCard(
-                'Pendientes',
-                '—',
-                Icons.pending_actions,
-                AppColors.warningLight,
-              ),
-              const SizedBox(width: 12),
-              _buildStatCard(
-                'En camino',
-                '—',
-                Icons.delivery_dining,
-                AppColors.accent,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // MESERO Dashboard
-  // ─────────────────────────────────────────────────────────────
-
-  Widget _buildMeseroDashboard() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildRoleCard(
-            icon: Icons.room_service,
-            title: 'Mesero',
-            subtitle: 'Pedidos de mesa',
-          ),
-          const SizedBox(height: 20),
-
-          _buildActionButton(
-            icon: Icons.add_circle_outline,
-            label: 'Nuevo Pedido Mesa',
-            color: AppColors.accent,
-            onTap: () => context.go('/orders/new'),
-          ),
-          const SizedBox(height: 24),
-
-          Row(
-            children: [
-              _buildStatCard(
-                'Mesas activas',
-                '—',
-                Icons.table_restaurant,
-                AppColors.accent,
-              ),
-              const SizedBox(width: 12),
-              _buildStatCard(
-                'Pendientes',
-                '—',
-                Icons.schedule,
-                AppColors.warningLight,
-              ),
-            ],
-          ),
+          _buildQuickLink('Días', Icons.calendar_month, () => context.go('/days')),
         ],
       ),
     );

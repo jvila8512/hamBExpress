@@ -23,20 +23,27 @@ Future<bool> _isLoggedIn() async {
   return token != null && token.isNotEmpty;
 }
 
-/// Guard de ruta `/workers` (navegación directa): puro y testeable.
+/// Rutas exclusivas de `admin` (auth → Admin-Only Route Guard).
+bool _isAdminOnlyPath(String currentPath) =>
+    currentPath == '/workers' ||
+    currentPath == '/settings' ||
+    currentPath == '/products' ||
+    currentPath.startsWith('/products/');
+
+/// Guard de ruta (navegación directa): puro y testeable.
 /// Devuelve el redirect a aplicar o null si se permite navegar.
 ///
-/// Solo `admin` y `super_admin` pueden entrar; los demás roles van a su home
-/// (`/`); sin sesión a login (el login decide registro si no hay usuarios).
-String? workersRedirectDecision({
-  required bool loggedIn,
-  required String role,
+/// Admin-only: `/workers`, `/settings`, `/products*`.
+/// Abiertas a ambos roles: `/orders`, `/clients`, `/days` (design.md).
+/// Sin sesión en una ruta admin → login; rol ≠ `admin` → home (`/`).
+String? routeGuardDecision({
   required String currentPath,
+  required String role,
+  required bool authenticated,
 }) {
-  if (currentPath != '/workers') return null;
-  if (!loggedIn) return '/login';
-  final isAdminOrSuper = role == 'admin' || role == 'super_admin';
-  return isAdminOrSuper ? null : '/';
+  if (!_isAdminOnlyPath(currentPath)) return null;
+  if (!authenticated) return '/login';
+  return role == 'admin' ? null : '/';
 }
 
 Future<bool> _isFirstTime() async {
@@ -100,7 +107,7 @@ final appRouter = GoRouter(
       builder: (context, state) => const OrderHistoryScreen(),
     ),
 
-    // ── Workers (admin/super_admin) ─────────────────────────────
+    // ── Workers (admin) ────────────────────────────────────────
     GoRoute(
       path: '/workers',
       builder: (context, state) => const WorkersScreen(),
@@ -140,15 +147,15 @@ final appRouter = GoRouter(
     final isFirst = await _isFirstTime();
     final loggedIn = await _isLoggedIn();
 
-    // Verificar acceso a /workers (solo admin y super_admin)
+    // Guard de rutas admin (/workers, /settings, /products*)
     final role = await _secureStorage.read(key: 'user_role') ?? '';
-    final workersRedirect = workersRedirectDecision(
-      loggedIn: loggedIn,
-      role: role,
+    final guardRedirect = routeGuardDecision(
       currentPath: currentPath,
+      role: role,
+      authenticated: loggedIn,
     );
-    if (workersRedirect != null) {
-      return workersRedirect;
+    if (guardRedirect != null) {
+      return guardRedirect;
     }
 
     // Primera vez sin usuarios -> Register
