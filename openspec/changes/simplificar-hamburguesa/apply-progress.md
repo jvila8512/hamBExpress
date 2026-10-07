@@ -1,6 +1,6 @@
 # Apply Progress — simplificar-hamburguesa
 
-Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`) · Phase 3 (Row Actions 3.1–3.2, branch `pr/13-row-actions`) · Phase 4 (Deletions 4.1–4.3, branch `pr/14-deletions`) · Phase 5 (Roles/Guard/Menus 5.1–5.2, branch `pr/15-roles-guard`)
+Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`) · Phase 3 (Row Actions 3.1–3.2, branch `pr/13-row-actions`) · Phase 4 (Deletions 4.1–4.3, branch `pr/14-deletions`) · Phase 5 (Roles/Guard/Menus 5.1–5.2, branch `pr/15-roles-guard`) · Phase 5 follow-up (legacy-role residuals A–D, branch `pr/15-roles-guard`)
 Mode: strict TDD · Last updated: 2026-10-06
 
 ## Status
@@ -12,6 +12,7 @@ Mode: strict TDD · Last updated: 2026-10-06
 | 3. Row actions | 3.1–3.2 | ✅ Done (commits below) |
 | 4. Deletions | 4.1–4.3 | ✅ Done (commits below) |
 | 5. Roles, guard, menus | 5.1–5.2 | ✅ Done (commits on `pr/15-roles-guard`) |
+| 5b. Legacy-role residuals (A–D) | follow-up | ✅ Done (commits below) |
 | 6. Days + close | 6.1–6.3 | ⬜ Pending |
 | 7. Forms + catalog | 7.1–7.2 | ⬜ Pending |
 | 8. Final verification | 8.1 | ⬜ Pending (analyzers/targets below) |
@@ -371,10 +372,130 @@ Mode: strict TDD · Last updated: 2026-10-06
 
 
 
+## Phase 5 follow-up — residual legacy role references (2026-10-06)
+
+Fixes the four defect sites that survived Phase 5 (flagged in the Phase 5
+notes below), branch `pr/15-roles-guard` from `a5d49fe`, tree clean at start.
+
+- **A — `app_database.dart` `createDefaultAdmin()` (was lines 974–995)**: the
+  boot-time helper force-reset the admin row to `'super_admin'` on every
+  launch (splash flow + first-login retry), undoing the v16
+  `_remapRolesToTwoRoles` migration each boot. Every `'super_admin'` literal
+  in the function, its 3 log strings and the line-974 doc comment now say
+  `'admin'`. Also dropped `(super_admin)` from the `clearAllDataAdmin` doc
+  comment (was line 2866) — the `/// Borrar todo y reiniciar` prefix that the
+  license guard T7a pins survives. The v16 CASE (834–848) and the
+  legacy-name UPDATEs (821–827) were NOT touched (orchestrator-legit).
+- **B — `workers_screen.dart` (17 hits → 0)**: `_roleLabels` = {admin, vendedor}
+  (the `'vendedor': 'Redes'` alias dropped → label `'Vendedor'`),
+  `_assignableRoles` = `['admin', 'vendedor']`, `_roleVisual` = 2 cases +
+  default, edit-dialog fallback `'redes'` → `'vendedor'` (least privilege,
+  matches `createUser`'s default), user filtering no longer names
+  `super_admin` (admin sees all rows — the 2-role set has no hidden role;
+  non-admin → `[]` as defense-in-depth behind the router guard), all copy
+  rewritten (`Podés crear usuarios admin y vendedor`, `Elegí el rol del nuevo
+  usuario (Admin o Vendedor)`).
+  `_isSuperAdmin` → `_isAdmin` (`_currentRole == 'admin'`). Its **6 call
+  sites** checked one by one before replacing:
+  1. `_loadData` filter — both old branches were IDENTICAL → merged to
+     `_isAdmin ? allUsers : []`;
+  2. empty-state branch — merged the duplicate admin branches into one
+     (`_isAdmin`), legacy copy deleted;
+  3. `_buildFab` — duplicate admin branches merged into one `_isAdmin`;
+  4. add-dialog `selectableRoles` ternary — collapsed: `_assignableRoles` is
+     already the 2-role list, used directly;
+  5. add-dialog helper-text `if (_isSuperAdmin)` — made unconditional with
+     2-role copy;
+  6. edit-dialog role dropdown `if (_isSuperAdmin && !isCurrentUser)` →
+     `if (_isAdmin && !isCurrentUser)`. REQUIRED, not cosmetic: with
+     `super_admin` unreachable the dropdown would be dead code and NO admin
+     could ever change any user's role after creation — role-flows mandates
+     admin can create/edit `admin` and `vendedor`.
+- **C — `settings_screen.dart:422–423`**: `|| _userRole == 'super_admin'`
+  branch + comment → `if (_userRole == 'admin')`. **Pure string/constant
+  cleanup with no observable behavior** (the value is unreachable after the
+  v16 remap + login mapper) — no test fabricated, stated explicitly.
+- **D — `auth_provider.dart:175–178`**: dead getters
+  `isRedes/isCocina/isDomicilio/isMesero` removed. FIRST greped `lib/` and
+  `test/` for each name: **zero callers existed, zero callers touched**.
+  Also fixed the stale `/// (cocina→dark, resto→light)` theme doc comment →
+  `(admin y vendedor → light)`. **Pure dead-code removal** — no test
+  fabricated, analyzer is the proof.
+
+### Phase 5 follow-up — sweep verdicts (grep `super_admin|redes|cocina|mesero|domicilio|almacenero` over `lib/` + `test/`)
+
+**`lib/` — every remaining hit:**
+
+| File | Hits (line numbers) | Verdict |
+|---|---|---|
+| `features/workers/.../workers_screen.dart` | was 17 → **0** | **fixed** (`02d1d82`) |
+| `features/settings/.../settings_screen.dart` | was 2 → **0** | **fixed** (`82cc394`) |
+| `features/auth/.../auth_provider.dart` | was 5 → **0** | **fixed** (`9dbdb4a`: 4 getters + stale comment) |
+| `core/database/app_database.dart` | 821, 824, 827 (legacy-name UPDATEs), 837–843 (v16 CASE) = 9 remain; was +8 `createDefaultAdmin` + 1 comment (2866) → **fixed** (`ebefb9f`) | **legit** (orchestrator-listed migration) + **fixed** |
+| `features/auth/infrastructure/datasources/auth_datasource_impl.dart` | 17, 20–24 = 6 | **legit** — `mapLegacyRoleToAppRole` mapper |
+| `config/theme/app_colors.dart` | 8, 47 = 2 | **legit** — Spanish "cocina" in the color-naming convention, not a role |
+| `features/daily_close/.../daily_close_screen.dart` | 532 = 1 | **legit** — UI label "Tiempo medio en cocina" (noun); daily-close rework is Phase 6.3 |
+| `features/daily_close/.../daily_close_provider.dart` | 405, 406, 407, 417, 420 = 5 | **legit** — `enCocina` is a legacy ORDER STATE (not a role) inside the kitchen-time metric; Phase 6.3 removes that metric |
+| `features/orders/.../order_form_screen.dart` | 19, 22, 26, 298, 370, 386, 394, 866, 881 = 9 | **legit** — "Enviar a cocina" flow copy + "Redes" = social-network channel (not role tokens); screen rework is Phase 7.1 |
+| `features/orders/.../order_submit_helpers.dart` | 1, 8, 14 = 3 | **legit** — same submit-flow docs (Phase 7.1) |
+| `features/orders/domain/entities/order_state.dart` | 4, 8 = 2 | **legit** — Spanish nouns ("mesa/domicilio", "cocina") in state docs |
+
+**`test/` — every hit: all legit (Phase 5 guard/mapping inputs, never edited):**
+
+| File | Hits | Verdict |
+|---|---|---|
+| `features/auth/role_mapping_test.dart` | 10–16, 22–47, 61–67, 121 | **legit** — pins `mapLegacyRoleToAppRole` for the 8 legacy values + ELSE |
+| `features/workers/workers_route_guard_test.dart` | 17–80 (9) | **legit** — legacy roles as decision-table inputs asserting redirect `/` |
+| `config/router/route_guard_test.dart` | 121, 125 | **legit** — `super_admin` must NOT bypass the guard |
+| `core/database/schema_v14_additional_tables_test.dart` | 81–87 (7) | **legit** — pins the v16 CASE legacy list |
+| `features/theme/theme_preferences_test.dart` | 24–29, 99 | **legit** — legacy roles must default light |
+| `features/orders/domain/order_id_test.dart` | 56 | **legit** — `cocina` as an unknown-role input (`throwsArgumentError`) |
+| `features/orders/domain/entities/order_state_test.dart` | 64 | **legit** — negative assertion (`enCocina` NOT a state) |
+| `architecture/license_strip_guard_test.dart` | 229 | **legit** — comment describing the no-legacy-label assertion |
+| `core/database/default_admin_role_test.dart` (NEW) | 53 | **legit** — seeds legacy `'redes'` to prove the repair path |
+| `features/workers/workers_screen_roles_guard_test.dart` (NEW) | 46–56 | **legit** — the token list the guard forbids |
+
+### Phase 5 follow-up — evidence
+
+- **Safety net (pre-modification)**: `dart analyze lib test` = **0 errors, 36
+  warnings, 65 infos (101)** at `a5d49fe` (matches the recorded Phase 5 gate);
+  the target-file subset (license guard + database + role mapping + workers +
+  route guard) = **81/81 green**.
+- **RED (`16016a9`, both files compile, assertion failures)**:
+  `default_admin_role_test` ×3 — `Expected: 'admin' Actual: 'super_admin'` on
+  all three paths (keep-seeded / repair-legacy / create-empty), with the boot
+  logs `=== created new admin: super_admin ===` and
+  `=== updated admin to super_admin ===` captured; workers guard ×4 —
+  assignable list `['admin','redes','cocina','mesero','domicilio']`, label map
+  7 keys, 10 surviving legacy tokens, fallback `'redes'`. Total **7 failed**.
+- **GREEN**: A → `ebefb9f` (3/3 green; architecture+database subset 34/34);
+  B → `02d1d82` (workers dir **12/12**; post-fix grep of the screen for the 6
+  legacy tokens + `_isSuperAdmin` = **0 hits**; scoped analyze = 0 errors).
+- **Final gates (committed tree)**: `dart analyze lib test` = **0 errors, 36
+  warnings, 65 infos (101 issues)** — byte-identical to baseline
+  (caps: 0 ✅ / ≤47 ✅ (36) / ≤86 ✅ (65)). One warning introduced mid-flight
+  (`unused_local_variable` in the new DB test) was fixed in `a461192`
+  BEFORE measuring, so the final tree adds zero diagnostics.
+- **Full `flutter test` = 169 passed / 0 failed** (`+169: All tests
+  passed!`). Reconciliation vs the 162 baseline: 162 +
+  `default_admin_role_test` 3 + `workers_screen_roles_guard_test` 4 =
+  **169**.
+- **`.g.dart`**: `dart run build_runner build
+  --build-filter=lib/core/database/app_database.g.dart` executed AFTER the
+  `app_database.dart` edit (178s; drift_dev/source_gen, only the pre-existing
+  `salesRefs` duplicate-reference warning); `git status`/`git diff` on
+  `lib/core/database/app_database.g.dart` → **unchanged** (no table/column
+  touched) — left in place, never deleted.
+- `flutter build` NOT run (CDN geo-blocked). No branch created/pushed; the 3
+  stray root files (`5730bba1`/`6dc69496`/`9b973616`) never staged.
+
 ## TDD Cycle Evidence (strict TDD)
 
 | Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
 |------|-----------|-------|------------|-----|-------|-------------|----------|
+| 5b.A | `test/core/database/default_admin_role_test.dart` (new) | Unit (drift in-memory) | ✅ target subset 81/81 green at `a5d49fe` | ✅ `16016a9` — 3 assertion REDs (`Expected 'admin' / Actual 'super_admin'` ×3 paths) | ✅ `ebefb9f` — 3/3 executed | ✅ 3 paths (keep-seeded, legacy-role repair, empty-table create) + role-set totality `everyElement(admin\|vendedor)` | ✅ `a461192` — unused-local removed, still 3/3 |
+| 5b.B | `test/features/workers/workers_screen_roles_guard_test.dart` (new, source guard) | Source guard | ✅ same 81/81 | ✅ `16016a9` — 4 assertion REDs (assignable list 5 legacy values, label map 7 keys, 10 tokens, fallback `'redes'`) | ✅ `02d1d82` — workers dir 12/12 | ✅ 4 assertions (assignable list, label keys, token sweep, fallback) | ➖ None needed |
+| 5b.C/D | — (pure cleanup: dead branch + dead getters) | — | ✅ analyze 0/36/65 | ➖ None — no observable behavior: `super_admin` unreachable post-v16 remap; 4 getters greped to 0 callers | ✅ final analyze 0/36/65, suite 169/169 | ➖ Not applicable — **stated explicitly, no test fabricated** | ✅ `a461192` |
 | 5.1 | `role_mapping_test.dart`, `route_guard_test.dart` (new), `workers_route_guard_test.dart`, `theme_preferences_test.dart` + forced repin of `license_strip_guard_test.dart` T5 | Unit + source guard | ✅ the 4 pre-existing files 66/66 green at `def0633` | ✅ `7478531` — compile RED ×3 files (undefined `mapLegacyRoleToAppRole`/`routeGuardDecision`/`UserRole`+`isVendedor`) + assertion RED ×2 (theme 14/2 dark-default; license guard `Expected <5> Actual <2>`) | ✅ `7274b18` — the 5 files 90/90, full suite 162/162 | ✅ 10 mapping cases (8 values + ELSE + totality), 23 guard cases (5 admin paths × 3 actors + 6 shared + 3 public), 16 theme cases (2-entry matrix, legacy-no-dark, override) | ➖ None needed |
 | 5.2 | same 5 test files (GREEN of 5.1) | Unit + source guard | ✅ analyze before edits: 0 errors/37 warnings/74 infos, suite 138 | ✅ `7478531` (shared RED — source untouched at that commit) | ✅ `7274b18` — `dart analyze lib test` 0/36/65, full suite 162/162 | ✅ covered by the 5.1 matrix (guard decision table, mapping ELSE, badge hexes pinned by doc-comment + role-flows) | ➖ None needed (7 files, +107/−218) |
 | 4.1 | — (deletions; no test subject) | — | ✅ `dart analyze lib test` 0/47/86 + suite 191 baseline captured first | ➖ None — Phase 4 contract: the safety net IS the analyzer + full suite | ✅ `a3ba44e` — analyze 0/37/74, suite 138/138 | ✅ 33 lib deletions each greped to 0 references | ➖ None needed |
@@ -414,6 +535,10 @@ Mode: strict TDD · Last updated: 2026-10-06
   `domicilio`; default `'redes'`) and `settings_screen.dart:423` still checks
   `role == 'super_admin'`. Both contradict the 2-role allowed set and will
   surface in 8.1's dead-role grep; no task 5/6/7 covers them.
+  **RESOLVED 2026-10-06 by the Phase 5 follow-up above** (sites B and C, plus
+  A `createDefaultAdmin` and D dead getters in the same unit); the residual
+  sweep now reads 0 role-token hits in `workers_screen`/`settings_screen`/
+  `auth_provider`.
 - Phase 5 known transient: the vendedor `Días` entries (menu + dashboard)
   point at `/days`, whose route/screens land in task 6.3 — tapping them
   between this PR and the Phase 6 PR 404s. Accepted under the chain
@@ -465,3 +590,13 @@ Mode: strict TDD · Last updated: 2026-10-06
 - Docs commit: `tasks.md` `[x]` 5.1/5.2 + this `apply-progress.md` Phase 5 merge.
 - Code+test total for the slice: +576/−361 (negative delta; well under the 400-line review budget concern because 361 lines are deletions of dead role UI).
 - Both commits pushed nowhere — local branch only.
+
+### Phase 5 follow-up (branch `pr/15-roles-guard`, from `a5d49fe`)
+- `16016a9` — `test: pin default admin role and workers two-role options (red)` (RED; 2 new test files, +160).
+- `ebefb9f` — `fix(db): stop createDefaultAdmin resetting the admin role to super_admin` (site A GREEN; `app_database.dart` +11/−9).
+- `02d1d82` — `fix(workers): collapse screen roles, defaults and guard to admin and vendedor` (site B GREEN; `workers_screen.dart` +26/−76).
+- `82cc394` — `refactor(settings): drop dead super_admin branch from danger zone guard` (site C; +2/−2).
+- `9dbdb4a` — `refactor(auth): remove dead legacy role getters and stale theme comment` (site D; +1/−5).
+- `a461192` — `test: assert admin precondition without unused local` (refactor; +1/−1).
+- Docs commit: this `apply-progress.md` merge.
+- Code+test total: 6 files, +200/−92. Nothing pushed; the 3 stray root files never staged.
