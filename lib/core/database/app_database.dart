@@ -971,7 +971,9 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  /// Crear admin por defecto si no existe, o actualizar rol a super_admin
+  /// Crear admin por defecto si no existe, o actualizar rol a admin.
+  /// El rol nunca sale del set {admin, vendedor} (role-flows): escribir un
+  /// rol legacy aquí desharía el remap de la migración v16 en cada arranque.
   Future<void> createDefaultAdmin() async {
     try {
       final existing = await getUserByUsername('admin');
@@ -981,17 +983,17 @@ class AppDatabase extends _$AppDatabase {
           username: 'admin',
           fullName: 'Administrador',
           password: 'Nathy*070721',
-          role: 'super_admin',
+          role: 'admin',
         );
-        print('=== created new admin: super_admin ===');
-      } else if (existing.role != 'super_admin') {
-        // Actualizar rol a super_admin si existe pero no es super_admin
+        print('=== created default admin: admin ===');
+      } else if (existing.role != 'admin') {
+        // Actualizar rol a admin si existe pero no es admin
         await (update(users)..where((u) => u.id.equals(existing.id))).write(
-          UsersCompanion(role: const Value('super_admin')),
+          UsersCompanion(role: const Value('admin')),
         );
-        print('=== updated admin to super_admin ===');
+        print('=== updated default admin role to admin ===');
       } else {
-        print('=== admin already super_admin ===');
+        print('=== default admin role already admin ===');
       }
     } catch (e) {
       print('Error createDefaultAdmin: $e');
@@ -2861,7 +2863,7 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
-  /// Borrar todo y reiniciar (super_admin) — borra TODOS los datos de negocio
+  /// Borrar todo y reiniciar (solo admin) — borra TODOS los datos de negocio
   /// Preserva: users, clientes
   /// NO resetea auto-increment IDs
   Future<void> clearAllDataAdmin() async {
