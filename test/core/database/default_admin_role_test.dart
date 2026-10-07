@@ -48,7 +48,7 @@ void main() {
 
     test('repairs an admin row stuck on a legacy role back to admin',
         () async {
-      final seeded = (await db.getUserByUsername('admin'))!;
+      expect(await db.getUserByUsername('admin'), isNotNull);
       await db.customStatement(
         "UPDATE users SET role = 'redes' WHERE username = 'admin'",
       );
