@@ -9,43 +9,27 @@ import 'package:uuid/uuid.dart';
 
 const _secureStorage = FlutterSecureStorage();
 
-/// Roles del negocio y sus etiquetas visibles.
+/// Roles del negocio y sus etiquetas visibles (set de 2 roles, role-flows).
 const Map<String, String> _roleLabels = {
-  'super_admin': 'Super Admin',
   'admin': 'Admin',
-  'redes': 'Redes',
-  'cocina': 'Cocina',
-  'mesero': 'Mesero',
-  'domicilio': 'Domicilio',
-  'vendedor': 'Redes', // alias legacy
+  'vendedor': 'Vendedor',
 };
 
 String _roleLabel(String role) => _roleLabels[role] ?? role;
 
-/// Roles asignables al crear/editar un usuario (excluye super_admin).
+/// Roles asignables al crear/editar un usuario (admin, vendedor).
 const List<String> _assignableRoles = [
   'admin',
-  'redes',
-  'cocina',
-  'mesero',
-  'domicilio',
+  'vendedor',
 ];
 
 /// Icono y color por rol para las tarjetas.
 (IconData, Color) _roleVisual(String role) {
   switch (role) {
     case 'admin':
-    case 'super_admin':
       return (Icons.admin_panel_settings, AppColors.accent);
-    case 'redes':
     case 'vendedor':
       return (Icons.campaign, Colors.purple);
-    case 'cocina':
-      return (Icons.restaurant, Colors.deepOrange);
-    case 'mesero':
-      return (Icons.table_restaurant, Colors.teal);
-    case 'domicilio':
-      return (Icons.delivery_dining, Colors.indigo);
     default:
       return (Icons.person, AppColors.accent);
   }
@@ -64,7 +48,7 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
   bool _isLoading = true;
   String _currentRole = '';
   String _currentUserId = '';
-  bool get _isSuperAdmin => _currentRole == 'super_admin';
+  bool get _isAdmin => _currentRole == 'admin';
 
   @override
   void initState() {
@@ -85,13 +69,11 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
       final db = AppDatabase.instance;
       final allUsers = await db.getAllUsers();
 
-      // 3. Show all users including self, but filter by role visibility
-      // super_admin sees everyone except other super_admins (keeps self)
-      // admin sees all business roles (not super_admin except self)
-      if (_isSuperAdmin) {
-        _users = allUsers.where((u) => u.role != 'super_admin' || u.id == _currentUserId).toList();
-      } else if (role == 'admin') {
-        _users = allUsers.where((u) => u.role != 'super_admin' || u.id == _currentUserId).toList();
+      // 3. Show all users to admin: with the 2-role set there is no hidden
+      // role left to filter. Everyone else sees nothing (the router guard
+      // already redirects non-admins away from /workers).
+      if (_isAdmin) {
+        _users = allUsers;
       } else {
         _users = [];
       }
@@ -138,25 +120,9 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
             style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 8),
-          if (_isSuperAdmin) ...[
+          if (_isAdmin) ...[
             Text(
-              'Podés crear usuarios con cualquier rol del negocio',
-              style: TextStyle(color: Colors.grey.shade500),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => _showAddUserDialog(),
-              icon: const Icon(Icons.person_add),
-              label: const Text('Crear Usuario'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-            ),
-          ] else if (_currentRole == 'admin') ...[
-            Text(
-              'Podés crear usuarios de Redes, Cocina, Mesero y Domicilio',
+              'Podés crear usuarios admin y vendedor',
               style: TextStyle(color: Colors.grey.shade500),
             ),
             const SizedBox(height: 24),
@@ -315,19 +281,8 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
   }
 
   Widget? _buildFab() {
-    if (_isSuperAdmin) {
-      // Super_admin can always add users (at least admin type)
-      return FloatingActionButton.extended(
-        onPressed: () => _showAddUserDialog(),
-        icon: const Icon(Icons.person_add),
-        label: const Text('Nuevo'),
-        backgroundColor: AppColors.accent,
-        foregroundColor: Colors.white,
-      );
-    }
-
-    if (_currentRole == 'admin') {
-      // Admin can create business roles (redes/cocina/mesero/domicilio)
+    if (_isAdmin) {
+      // Solo admin puede crear usuarios (admin o vendedor)
       return FloatingActionButton.extended(
         onPressed: () => _showAddUserDialog(),
         icon: const Icon(Icons.person_add),
@@ -345,11 +300,8 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
     final userController = TextEditingController();
     final passController = TextEditingController();
 
-    // Super_admin can pick any role; admin picks business roles
-    final selectableRoles = _isSuperAdmin
-        ? _assignableRoles
-        : _assignableRoles.where((r) => r != 'admin').toList();
-    String selectedRole = selectableRoles.first;
+    // Admin crea usuarios con cualquiera de los 2 roles válidos
+    String selectedRole = _assignableRoles.first;
 
     showDialog(
       context: context,
@@ -361,12 +313,10 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_isSuperAdmin) ...[
-                  Text(
-                    'Elegí el rol del negocio (Admin, Redes, Cocina, Mesero, Domicilio).',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                  ),
-                ],
+                Text(
+                  'Elegí el rol del nuevo usuario (Admin o Vendedor).',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: nameController,
@@ -392,10 +342,10 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
                   ),
                   obscureText: true,
                 ),
-                // Role dropdown (super_admin: all, admin: business roles)
+                // Role dropdown (solo roles válidos: admin, vendedor)
                   DropdownButtonFormField<String>(
                     value: selectedRole,
-                    items: selectableRoles
+                    items: _assignableRoles
                         .map((r) => DropdownMenuItem(
                               value: r,
                               child: Text(_roleLabel(r)),
@@ -491,8 +441,8 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
   void _showEditUserDialog(User user) {
     final nameController = TextEditingController(text: user.fullName);
     final userController = TextEditingController(text: user.username);
-    // Normalizar roles legacy/root a uno asignable para evitar assert del dropdown
-    String selectedRole = _assignableRoles.contains(user.role) ? user.role : 'redes';
+    // Normalizar roles no asignables a uno válido para evitar assert del dropdown
+    String selectedRole = _assignableRoles.contains(user.role) ? user.role : 'vendedor';
     bool isCurrentUser = user.id == _currentUserId;
 
     showDialog(
@@ -519,8 +469,8 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
                     prefixIcon: Icon(Icons.alternate_email),
                   ),
                 ),
-                // Role dropdown: super_admin can edit any role (non-self); admin can set business roles
-                if (_isSuperAdmin && !isCurrentUser) ...[
+                // Role dropdown: admin puede cambiar el rol de otros usuarios
+                if (_isAdmin && !isCurrentUser) ...[
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: selectedRole,
