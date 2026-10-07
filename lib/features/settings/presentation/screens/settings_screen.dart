@@ -419,8 +419,8 @@ ListTile(
   onTap: () => _showChangePasswordDialog(),
   ),
 
-  // Borrar todo y reiniciar — admin y super_admin
-  if (_userRole == 'admin' || _userRole == 'super_admin') ...[
+  // Borrar todo y reiniciar — solo admin
+  if (_userRole == 'admin') ...[
     const Divider(height: 32),
     const Text('Zona Peligrosa', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)),
     const SizedBox(height: 8),
