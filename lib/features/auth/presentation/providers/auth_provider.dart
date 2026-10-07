@@ -134,7 +134,7 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(errorMessage: '');
   }
 
-  /// Aplica el tema por rol (cocina→dark, resto→light) tras autenticar.
+  /// Aplica el tema por rol (admin y vendedor → light) tras autenticar.
   /// Usa el primer rol de la lista como rol primario. Una preferencia
   /// explícita guardada por el usuario tiene prioridad (ThemePrefs.initialMode).
   void _applyThemeForUser(auth.User user) {
@@ -172,8 +172,4 @@ class AuthState {
 
   bool get isAuthenticated => authStatus == AuthStatus.authenticated;
   bool get isAdmin => user?.roles.contains('admin') ?? false;
-  bool get isRedes => user?.roles.contains('redes') ?? false;
-  bool get isCocina => user?.roles.contains('cocina') ?? false;
-  bool get isDomicilio => user?.roles.contains('domicilio') ?? false;
-  bool get isMesero => user?.roles.contains('mesero') ?? false;
 }
