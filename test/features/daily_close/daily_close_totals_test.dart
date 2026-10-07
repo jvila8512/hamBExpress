@@ -5,16 +5,24 @@ import 'package:etecsa/features/orders/domain/entities/restaurant_order.dart';
 
 RestaurantOrder _order({
   required OrderState estado,
+  String fecha = '2026-10-02',
   double monto = 100.0,
+  List<OrderItem> items = const [],
+  String? id,
 }) {
   return RestaurantOrder(
-    id: '${estado.name}-${monto.toStringAsFixed(0)}',
+    id: id ?? '${estado.name}-${monto.toStringAsFixed(0)}',
     clienteId: 'cli-1',
     estado: estado,
     montoTotal: monto,
     creadoPorUsuarioId: 'u-1',
+    fechaPedido: fecha,
+    items: items,
   );
 }
+
+OrderItem _item(String code, int qty, double price) =>
+    OrderItem(code: code, qty: qty, price: price);
 
 void main() {
   group('validSaleStates', () {
@@ -37,62 +45,68 @@ void main() {
     });
   });
 
-  group('summarizeSales — filtro por estado', () {
-    test('suma solo pedidos en estado válido', () {
+  group('saleOrdersOfDay — filtro por fecha y estado', () {
+    test('incluye solo confirmado y recogido de la fecha pedida', () {
       final orders = [
-        _order(estado: OrderState.confirmado, monto: 100),
-        _order(estado: OrderState.recogido, monto: 200),
-        _order(estado: OrderState.recogido, monto: 300),
+        _order(estado: OrderState.confirmado, fecha: '2026-10-02'),
+        _order(estado: OrderState.recogido, fecha: '2026-10-02'),
+        _order(estado: OrderState.pedido, fecha: '2026-10-02'),
+        _order(estado: OrderState.recogido, fecha: '2026-10-01'),
       ];
 
-      final result = summarizeSales(orders);
+      final result = saleOrdersOfDay(orders, '2026-10-02');
 
-      expect(result.totalSales, 600.0);
+      expect(result, hasLength(2));
     });
 
-    test('excluye pedido del total', () {
+    test('un día sin pedidos devuelve lista vacía', () {
       final orders = [
-        _order(estado: OrderState.recogido, monto: 100),
-        _order(estado: OrderState.pedido, monto: 500),
-        _order(estado: OrderState.pedido, monto: 500),
+        _order(estado: OrderState.recogido, fecha: '2026-10-03'),
       ];
 
-      final result = summarizeSales(orders);
-
-      expect(result.totalSales, 100.0);
+      expect(saleOrdersOfDay(orders, '2026-10-02'), isEmpty);
     });
   });
 
-  group('summarizeSales — desglose de pago (sin metodoPago)', () {
-    test('cashSales y transferSales quedan en 0; toda la venta va '
-        'a diferencia', () {
+  group('daySalesTotal — subtotales de línea', () {
+    test('suma cantidad × precio de los pedidos incluidos', () {
       final orders = [
-        _order(estado: OrderState.confirmado, monto: 100),
-        _order(estado: OrderState.recogido, monto: 200),
+        _order(
+          estado: OrderState.confirmado,
+          fecha: '2026-10-02',
+          items: [_item('pan', 2, 100), _item('carne', 1, 50)],
+        ),
+        _order(
+          estado: OrderState.recogido,
+          fecha: '2026-10-02',
+          items: [_item('refresco', 3, 100)],
+        ),
       ];
 
-      final result = summarizeSales(orders);
+      final total = daySalesTotal(orders, '2026-10-02');
 
-      expect(result.totalSales, 300.0);
-      expect(result.cashSales, 0.0);
-      expect(result.transferSales, 0.0);
-      expect(result.diferencia, 300.0);
-      // Todo sale válido queda sin conciliar: 100%.
-      expect(result.unconfirmedCount, 2);
-      expect(result.unconfirmedPct, closeTo(100.0, 0.001));
+      expect(total, 250.0 + 300.0);
     });
-  });
 
-  group('summarizeSales — lista vacía', () {
-    test('devuelve ceros sin dividir por cero', () {
-      final result = summarizeSales(const []);
+    test('un pedido en estado pedido no aporta ventas', () {
+      final orders = [
+        _order(
+          estado: OrderState.pedido,
+          fecha: '2026-10-02',
+          items: [_item('combo', 1, 999)],
+        ),
+      ];
 
-      expect(result.totalSales, 0.0);
-      expect(result.cashSales, 0.0);
-      expect(result.transferSales, 0.0);
-      expect(result.diferencia, 0.0);
-      expect(result.unconfirmedCount, 0);
-      expect(result.unconfirmedPct, 0.0);
+      expect(daySalesTotal(orders, '2026-10-02'), 0.0);
+    });
+
+    test('un día sin ventas devuelve 0 sin dividir por cero', () {
+      final orders = [
+        _order(estado: OrderState.recogido, fecha: '2026-10-01',
+            items: [_item('combo', 1, 500)]),
+      ];
+
+      expect(daySalesTotal(orders, '2026-10-02'), 0.0);
     });
   });
 }
