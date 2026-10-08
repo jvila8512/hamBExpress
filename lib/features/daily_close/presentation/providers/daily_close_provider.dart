@@ -1,19 +1,28 @@
-import 'dart:math';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart';
 
 import 'package:etecsa/core/database/app_database.dart' hide RestaurantOrder;
-import 'package:etecsa/core/database/database_provider.dart';
+import 'package:etecsa/features/clients/presentation/providers/client_provider.dart';
 import 'package:etecsa/features/daily_close/domain/daily_close_totals.dart';
+import 'package:etecsa/features/daily_close/domain/day_metrics.dart';
+import 'package:etecsa/features/daily_close/presentation/providers/daily_close_datasource_provider.dart';
 import 'package:etecsa/features/orders/domain/entities/restaurant_order.dart';
 import 'package:etecsa/features/orders/presentation/providers/order_provider.dart';
 
 // ---------------------------------------------------------------------------
-// Models
+// Daily Close — spec: daily-close (día arbitrario, sin tabs, 30/30/40,
+// Top de Clientes, cierre admin-only) + day-management (Day Close Metrics)
 // ---------------------------------------------------------------------------
 
-/// A product's aggregated sales data for the daily close.
+/// Hoy en `yyyy-MM-dd` (zona horaria local del dispositivo).
+String todayIso() {
+  final now = DateTime.now();
+  final month = now.month.toString().padLeft(2, '0');
+  final day = now.day.toString().padLeft(2, '0');
+  return '${now.year}-$month-$day';
+}
+
+/// Línea del desglose por producto del día: cantidad y monto agregados por
+/// código. Sin división por categoría (la spec la elimina).
 class ProductSalesEntry {
   final String productCode;
   final int quantity;
@@ -26,67 +35,17 @@ class ProductSalesEntry {
   });
 }
 
-// ---------------------------------------------------------------------------
-// v16 bridge models
-// ---------------------------------------------------------------------------
-//
-// Schema v16 dropped `daily_expenses`, `daily_purchases`, `daily_payroll` and
-// `order_state_history`: the manual blocks they backed are REMOVED by the
-// daily-close spec, and the migration deletes their rows and tables. These
-// local read-only shapes keep the current tabs compiling against empty data
-// until the blocks are reworked out of the screen.
+/// Fila del "Top de clientes" ya resuelta a nombre visible
+/// (`clienteId` → `RestaurantClients.nombre`, con fallback al id).
+class TopClienteRow {
+  final String clienteId;
+  final String nombre;
+  final double ventas;
 
-class DailyExpense {
-  final String id;
-  final String concepto;
-  final double monto;
-
-  const DailyExpense({
-    required this.id,
-    required this.concepto,
-    required this.monto,
-  });
-}
-
-class DailyPurchase {
-  final String id;
-  final String insumo;
-  final String? proveedor;
-  final double cantidad;
-  final double costo;
-
-  const DailyPurchase({
-    required this.id,
-    required this.insumo,
-    required this.proveedor,
-    required this.cantidad,
-    required this.costo,
-  });
-}
-
-class DailyPayrollData {
-  final String usuarioId;
-  final bool trabajo;
-  final String? jornada;
-  final double total;
-
-  const DailyPayrollData({
-    required this.usuarioId,
-    required this.trabajo,
-    required this.jornada,
-    required this.total,
-  });
-}
-
-class OrderStateHistoryData {
-  final String orderId;
-  final String estado;
-  final DateTime timestamp;
-
-  const OrderStateHistoryData({
-    required this.orderId,
-    required this.estado,
-    required this.timestamp,
+  const TopClienteRow({
+    required this.clienteId,
+    required this.nombre,
+    required this.ventas,
   });
 }
 
@@ -96,153 +55,73 @@ class OrderStateHistoryData {
 
 class DailyCloseState {
   final bool isLoading;
+
+  /// Error de carga (día no disponible hasta recargar).
   final String? error;
 
-  // Today's orders (raw)
+  /// Día en pantalla (`yyyy-MM-dd`); `null` antes de la primera carga.
+  final String? date;
+
+  /// Todos los pedidos del día (incluye `pedido`: alimenta los indicadores).
   final List<RestaurantOrder> orders;
 
-  // ── Tab 1: Summary ──────────────────────────────────────────────────
-  final double totalSales;
-  final double cashSales;
-  final double transferSales;
-  final double diferencia;
-  final double unconfirmedPct;
-  final double solidSales;
-  final double liquidSales;
+  /// Ventas/costo/ganancias y distribución 30/30/40 del día.
+  final DayMetrics metrics;
+
+  /// Desglose por producto de los pedidos `confirmado`/`recogido`.
   final List<ProductSalesEntry> topProducts;
-  final double productionCost;
 
-  // Totals from manual entries
-  final double totalPurchasesAmount;
-  final double totalExpensesAmount;
-  final double totalPayrollAmount;
+  /// Ranking de clientes del día (ya con nombre visible).
+  final List<TopClienteRow> topClientes;
 
-  // Derived profit & distribution
-  final double utilidadNeta;
-  final double distributionYurdenis;
-  final double distributionMildrey;
-  final double distributionNegocio;
+  /// El día ya tiene fila en `DailySummaries`.
+  final bool isClosed;
 
-  // ── Tab 2: Expenses (from DB) ──────────────────────────────────────
-  final List<DailyExpense> expenses;
+  /// Mensaje del último cierre exitoso (se limpia en la siguiente carga).
+  final String? closeMessage;
 
-  // ── Tab 3: Purchases (from DB) ─────────────────────────────────────
-  final List<DailyPurchase> purchases;
-
-  // ── Tab 4: Payroll (from DB) ───────────────────────────────────────
-  final List<DailyPayrollData> payrollEntries;
-  final List<User> workers;
-
-  // ── Operational indicators ──────────────────────────────────────────
-  final int totalOrders;
-  final int cancelledOrders;
-  final Map<String, int> cancellationReasons;
-  final int ordersWithUnconfirmedPayment;
-  final double avgKitchenTimeMinutes;
-  final double avgDeliveryTimeMinutes;
+  /// Rechazo del último cierre (p. ej. rol ≠ admin en la capa de datos).
+  final String? closeError;
 
   const DailyCloseState({
     this.isLoading = false,
     this.error,
+    this.date,
     this.orders = const [],
-    this.totalSales = 0,
-    this.cashSales = 0,
-    this.transferSales = 0,
-    this.diferencia = 0,
-    this.unconfirmedPct = 0,
-    this.solidSales = 0,
-    this.liquidSales = 0,
+    this.metrics = const DayMetrics(ventas: 0, costoProduccion: 0),
     this.topProducts = const [],
-    this.productionCost = 0,
-    this.totalPurchasesAmount = 0,
-    this.totalExpensesAmount = 0,
-    this.totalPayrollAmount = 0,
-    this.utilidadNeta = 0,
-    this.distributionYurdenis = 0,
-    this.distributionMildrey = 0,
-    this.distributionNegocio = 0,
-    this.expenses = const [],
-    this.purchases = const [],
-    this.payrollEntries = const [],
-    this.workers = const [],
-    this.totalOrders = 0,
-    this.cancelledOrders = 0,
-    this.cancellationReasons = const {},
-    this.ordersWithUnconfirmedPayment = 0,
-    this.avgKitchenTimeMinutes = 0,
-    this.avgDeliveryTimeMinutes = 0,
+    this.topClientes = const [],
+    this.isClosed = false,
+    this.closeMessage,
+    this.closeError,
   });
 
+  /// Los tres mensajes (`error`, `closeMessage`, `closeError`) SIEMPRE se
+  /// reemplazan por los argumentos (null = limpiar): son avisos de un solo
+  /// disparo. El resto de los campos conserva su valor si no se pasa.
   DailyCloseState copyWith({
     bool? isLoading,
-    String? error,
+    String? date,
     List<RestaurantOrder>? orders,
-    double? totalSales,
-    double? cashSales,
-    double? transferSales,
-    double? diferencia,
-    double? unconfirmedPct,
-    double? solidSales,
-    double? liquidSales,
+    DayMetrics? metrics,
     List<ProductSalesEntry>? topProducts,
-    double? productionCost,
-    double? totalPurchasesAmount,
-    double? totalExpensesAmount,
-    double? totalPayrollAmount,
-    double? utilidadNeta,
-    double? distributionYurdenis,
-    double? distributionMildrey,
-    double? distributionNegocio,
-    List<DailyExpense>? expenses,
-    List<DailyPurchase>? purchases,
-    List<DailyPayrollData>? payrollEntries,
-    List<User>? workers,
-    int? totalOrders,
-    int? cancelledOrders,
-    Map<String, int>? cancellationReasons,
-    int? ordersWithUnconfirmedPayment,
-    double? avgKitchenTimeMinutes,
-    double? avgDeliveryTimeMinutes,
+    List<TopClienteRow>? topClientes,
+    bool? isClosed,
+    String? error,
+    String? closeMessage,
+    String? closeError,
   }) {
     return DailyCloseState(
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      date: date ?? this.date,
       orders: orders ?? this.orders,
-      totalSales: totalSales ?? this.totalSales,
-      cashSales: cashSales ?? this.cashSales,
-      transferSales: transferSales ?? this.transferSales,
-      diferencia: diferencia ?? this.diferencia,
-      unconfirmedPct: unconfirmedPct ?? this.unconfirmedPct,
-      solidSales: solidSales ?? this.solidSales,
-      liquidSales: liquidSales ?? this.liquidSales,
+      metrics: metrics ?? this.metrics,
       topProducts: topProducts ?? this.topProducts,
-      productionCost: productionCost ?? this.productionCost,
-      totalPurchasesAmount:
-          totalPurchasesAmount ?? this.totalPurchasesAmount,
-      totalExpensesAmount:
-          totalExpensesAmount ?? this.totalExpensesAmount,
-      totalPayrollAmount: totalPayrollAmount ?? this.totalPayrollAmount,
-      utilidadNeta: utilidadNeta ?? this.utilidadNeta,
-      distributionYurdenis:
-          distributionYurdenis ?? this.distributionYurdenis,
-      distributionMildrey:
-          distributionMildrey ?? this.distributionMildrey,
-      distributionNegocio:
-          distributionNegocio ?? this.distributionNegocio,
-      expenses: expenses ?? this.expenses,
-      purchases: purchases ?? this.purchases,
-      payrollEntries: payrollEntries ?? this.payrollEntries,
-      workers: workers ?? this.workers,
-      totalOrders: totalOrders ?? this.totalOrders,
-      cancelledOrders: cancelledOrders ?? this.cancelledOrders,
-      cancellationReasons:
-          cancellationReasons ?? this.cancellationReasons,
-      ordersWithUnconfirmedPayment:
-          ordersWithUnconfirmedPayment ?? this.ordersWithUnconfirmedPayment,
-      avgKitchenTimeMinutes:
-          avgKitchenTimeMinutes ?? this.avgKitchenTimeMinutes,
-      avgDeliveryTimeMinutes:
-          avgDeliveryTimeMinutes ?? this.avgDeliveryTimeMinutes,
+      topClientes: topClientes ?? this.topClientes,
+      isClosed: isClosed ?? this.isClosed,
+      error: error,
+      closeMessage: closeMessage,
+      closeError: closeError,
     );
   }
 }
@@ -264,365 +143,121 @@ class DailyCloseNotifier extends Notifier<DailyCloseState> {
   AppDatabase get _db => AppDatabase.instance;
 
   @override
-  DailyCloseState build() {
-    return const DailyCloseState();
-  }
+  DailyCloseState build() => const DailyCloseState();
 
-  // ─── Full Data Load ────────────────────────────────────────────────
-
-  /// Load all data needed for the daily close screen.
-  Future<void> loadAll() async {
-    state = state.copyWith(isLoading: true, error: null);
-
+  /// Carga el día [dateIso] (`yyyy-MM-dd`); `null` → hoy.
+  Future<void> loadDay(String? dateIso) async {
+    state = const DailyCloseState(isLoading: true);
     try {
-      final todayOrders = await ref
-          .read(orderRepositoryProvider)
-          .getTodayOrders();
-      final allProducts = await _getAllProducts();
-      final todayExpenses = await _getTodayDailyExpenses();
-      final todayPurchases = await _getTodayDailyPurchases();
-      final todayPayroll = await _getTodayPayroll();
-      final workers = await _getWorkers();
-      final stateHistory = await _getTodayStateHistory(
-        todayOrders.map((o) => o.id).toList(),
-      );
+      final date = dateIso ?? todayIso();
+      final orders =
+          await ref.read(orderRepositoryProvider).getOrdersByDay(date);
 
-      // ── Build product lookup ────────────────────────────────────
-      final productByCode = <String, Product>{};
-      for (final p in allProducts) {
-        if (p.codigoCorto != null) {
-          productByCode[p.codigoCorto!] = p;
-        }
-      }
-
-      // ── Classify categories as liquid/solid by name (configurable) ──
-      final allCategories = await _db.getAllCategories();
-      final liquidCategoryIds = <String>{
-        for (final c in allCategories)
-          if (_isLiquidCategoryName(c.name)) c.id,
+      // Costos por código corto: la spec inyecta el costo de producción
+      // desde Products (computeDayMetrics es puro).
+      final products = await _getAllProducts();
+      final costByProduct = <String, double>{
+        for (final p in products)
+          if (p.codigoCorto != null) p.codigoCorto!: p.costPrice,
       };
 
-      // ── Aggregate order data ────────────────────────────────────
-      // Ventas del día: solo estados terminales de venta (PRD §13.1).
-      // Los cancelados se cuentan aparte sobre la lista completa.
-      final sales = summarizeSales(todayOrders);
-      final totalSales = sales.totalSales;
-      final cashSales = sales.cashSales;
-      final transferSales = sales.transferSales;
-      final diferencia = sales.diferencia;
-      final unconfirmedPct = sales.unconfirmedPct;
-      final ordersWithUnconfirmedPayment = sales.unconfirmedCount;
+      final metrics = computeDayMetrics(orders, date, costByProduct);
+      final summary =
+          await ref.read(dailyCloseDatasourceProvider).getSummary(date);
 
-      double solidSales = 0;
-      double liquidSales = 0;
-      double productionCost = 0;
-      final productQty = <String, int>{};
-      final productAmount = <String, double>{};
-      // El modelo de tres estados no tiene cancelados: el indicador queda
-      // en 0 / vacío hasta su eliminación en fase 4.
-      int cancelledOrders = 0;
-      final cancellationReasons = <String, int>{};
-
-      final salesOrders = todayOrders.where(
-        (o) => validSaleStates.contains(o.estado),
+      state = DailyCloseState(
+        date: date,
+        orders: orders,
+        metrics: metrics,
+        topProducts: _topProductsOf(orders, date),
+        topClientes: await _resolveTopClientes(metrics.topClientes),
+        isClosed: summary != null,
       );
-      for (final order in salesOrders) {
-        // Product-level aggregation
-        for (final item in order.items) {
-          final product = productByCode[item.code];
-          final categoryId = product?.categoryId ?? '';
+    } catch (e) {
+      state = DailyCloseState(error: 'Error al cargar el día: $e');
+    }
+  }
 
-          // Determine solid vs liquid (by category name, unknown → liquid)
-          if (!liquidCategoryIds.contains(categoryId)) {
-            solidSales += item.subtotal;
-          } else {
-            liquidSales += item.subtotal;
-          }
-
-          // Production cost
-          final costPrice = product?.costPrice ?? 0;
-          productionCost += item.qty * costPrice;
-
-          // Top products
-          productQty[item.code] =
-              (productQty[item.code] ?? 0) + item.qty;
-          productAmount[item.code] =
-              (productAmount[item.code] ?? 0) + item.subtotal;
-        }
-      }
-
-      // ── Top products sorted ────────────────────────────────────
-      final sortedCodes = productQty.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      final topProducts = sortedCodes
-          .map((e) => ProductSalesEntry(
-                productCode: e.key,
-                quantity: e.value,
-                amount: productAmount[e.key] ?? 0,
-              ))
-          .toList();
-
-      // ── Payroll totals ─────────────────────────────────────────
-      double totalPayrollAmount = 0;
-      for (final p in todayPayroll) {
-        totalPayrollAmount += p.total;
-      }
-
-      // ── Manual entry totals ────────────────────────────────────
-      double totalExpensesAmount = 0;
-      for (final e in todayExpenses) {
-        totalExpensesAmount += e.monto;
-      }
-      double totalPurchasesAmount = 0;
-      for (final p in todayPurchases) {
-        totalPurchasesAmount += p.costo;
-      }
-
-      // ── Derived calculations ───────────────────────────────────
-      final utilidadNeta = totalSales -
-          productionCost -
-          totalExpensesAmount -
-          totalPurchasesAmount -
-          totalPayrollAmount;
-
-      final distributionYurdenis = utilidadNeta * 0.30;
-      final distributionMildrey = utilidadNeta * 0.30;
-      final distributionNegocio = utilidadNeta * 0.40;
-
-      // ── Operational indicators ─────────────────────────────────
-      final kitchenTimes = <double>[];
-      final deliveryTimes = <double>[];
-
-      // Group state history by orderId
-      final historyByOrder = <String, List<OrderStateHistoryData>>{};
-      for (final h in stateHistory) {
-        historyByOrder.putIfAbsent(h.orderId, () => []);
-        historyByOrder[h.orderId]!.add(h);
-      }
-
-      for (final entry in historyByOrder.entries) {
-        final estados = entry.value;
-        // Kitchen time: enCocina → hecho
-        final enCocinaTimestamps = estados
-            .where((h) => h.estado == 'enCocina')
-            .map((h) => h.timestamp)
-            .toList()
-          ..sort();
-        final hechoTimestamps = estados
-            .where((h) => h.estado == 'hecho')
-            .map((h) => h.timestamp)
-            .toList()
-          ..sort();
-
-        if (enCocinaTimestamps.isNotEmpty &&
-            hechoTimestamps.isNotEmpty) {
-          final kitchenMinutes = hechoTimestamps.first
-              .difference(enCocinaTimestamps.first)
-              .inMinutes;
-          if (kitchenMinutes >= 0) {
-            kitchenTimes.add(kitchenMinutes.toDouble());
-          }
-        }
-
-        // Delivery time (DOMICILIO): enCamino → entregado
-        final enCaminoTimestamps = estados
-            .where((h) => h.estado == 'enCamino')
-            .map((h) => h.timestamp)
-            .toList()
-          ..sort();
-        final entregadoTimestamps = estados
-            .where((h) => h.estado == 'entregado')
-            .map((h) => h.timestamp)
-            .toList()
-          ..sort();
-
-        if (enCaminoTimestamps.isNotEmpty &&
-            entregadoTimestamps.isNotEmpty) {
-          final deliveryMinutes = entregadoTimestamps.first
-              .difference(enCaminoTimestamps.first)
-              .inMinutes;
-          if (deliveryMinutes >= 0) {
-            deliveryTimes.add(deliveryMinutes.toDouble());
-          }
-        }
-      }
-
-      final avgKitchen = kitchenTimes.isNotEmpty
-          ? kitchenTimes.reduce((a, b) => a + b) / kitchenTimes.length
-          : 0.0;
-      final avgDelivery = deliveryTimes.isNotEmpty
-          ? deliveryTimes.reduce((a, b) => a + b) / deliveryTimes.length
-          : 0.0;
-
+  /// Cierra el día cargado como [actorRole].
+  ///
+  /// La capa de datos rechaza cualquier rol que no sea `admin`
+  /// (`StateError` sin escribir): la UI ya oculta el botón a no-admin,
+  /// pero la defensa real vive en `closeDay`.
+  Future<void> cerrarDia({required String actorRole}) async {
+    final date = state.date;
+    if (date == null || state.isClosed) return;
+    try {
+      await ref.read(dailyCloseDatasourceProvider).closeDay(
+            dateIso: date,
+            actorRole: actorRole,
+            metrics: state.metrics,
+            topClientesJson: encodeTopClientes(state.metrics.topClientes),
+          );
       state = state.copyWith(
-        isLoading: false,
-        orders: todayOrders,
-        totalSales: totalSales,
-        cashSales: cashSales,
-        transferSales: transferSales,
-        diferencia: diferencia,
-        unconfirmedPct: unconfirmedPct,
-        solidSales: solidSales,
-        liquidSales: liquidSales,
-        topProducts: topProducts,
-        productionCost: productionCost,
-        totalPurchasesAmount: totalPurchasesAmount,
-        totalExpensesAmount: totalExpensesAmount,
-        totalPayrollAmount: totalPayrollAmount,
-        utilidadNeta: utilidadNeta,
-        distributionYurdenis: distributionYurdenis,
-        distributionMildrey: distributionMildrey,
-        distributionNegocio: distributionNegocio,
-        expenses: todayExpenses,
-        purchases: todayPurchases,
-        payrollEntries: todayPayroll,
-        workers: workers,
-        totalOrders: todayOrders.length,
-        cancelledOrders: cancelledOrders,
-        cancellationReasons: cancellationReasons,
-        ordersWithUnconfirmedPayment: ordersWithUnconfirmedPayment,
-        avgKitchenTimeMinutes: avgKitchen,
-        avgDeliveryTimeMinutes: avgDelivery,
+        isClosed: true,
+        closeMessage: 'Día $date cerrado correctamente',
       );
-    } catch (e, st) {
+    } catch (e) {
       state = state.copyWith(
-        isLoading: false,
-        error: 'Error al cargar datos: $e',
+        closeError: e is StateError
+            ? e.message
+            : 'No se pudo cerrar el día: $e',
       );
     }
   }
 
-  // ─── Expense CRUD ──────────────────────────────────────────────────
-
-  /// Add a daily expense.
-  ///
-  /// Schema v16 dropped `daily_expenses` (the Gastos block is removed by the
-  /// daily-close spec), so the write is a reload-only no-op until the tab is
-  /// reworked out of the screen.
-  Future<void> addExpense({
-    required String concepto,
-    required double monto,
-  }) async {
-    await loadAll();
-  }
-
-  /// Delete a daily expense.
-  ///
-  /// See [addExpense]: the backing table no longer exists in schema v16.
-  Future<void> deleteExpense(String id) async {
-    await loadAll();
-  }
-
-  // ─── Purchase CRUD ─────────────────────────────────────────────────
-
-  /// Add a daily purchase (insumo).
-  ///
-  /// Schema v16 dropped `daily_purchases` (the Compras block is removed by
-  /// the daily-close spec), so the write is a reload-only no-op until the
-  /// tab is reworked out of the screen.
-  Future<void> addPurchase({
-    required String insumo,
-    String? proveedor,
-    required double cantidad,
-    required double costo,
-  }) async {
-    await loadAll();
-  }
-
-  /// Delete a daily purchase.
-  ///
-  /// See [addPurchase]: the backing table no longer exists in schema v16.
-  Future<void> deletePurchase(String id) async {
-    await loadAll();
-  }
-
-  // ─── Payroll CRUD ─────────────────────────────────────────────────
-
-  /// Upsert a payroll entry for a worker on today's date.
-  ///
-  /// Schema v16 dropped `daily_payroll` (the Nómina block is removed by the
-  /// daily-close spec), so the write is a reload-only no-op until the tab is
-  /// reworked out of the screen.
-  Future<void> upsertPayroll({
-    required String usuarioId,
-    required bool trabajo,
-    String? jornada,
-    required double salarioBase,
-    double estimulo = 0,
-  }) async {
-    await loadAll();
-  }
-
-
-  // ─── Helpers ──────────────────────────────────────────────────────
-
-  /// Calculate the stimulus per worker based on total sales.
-  ///
-  /// Rule: $100 CUP per $5000 CUP sold above $25000 CUP total.
-  double calculateStimulus() {
-    final totalSales = state.totalSales;
-    if (totalSales <= 25000) return 0;
-    final excess = totalSales - 25000;
-    final increments = (excess / 5000).floor();
-    return increments * 100;
-  }
-
-  List<Product> _allProducts = [];
-
-  // ─── Category helpers ──────────────────────────────────────────────
-
-  static const _liquidKeywords = [
-    'LÍQUID', 'LIQUID', 'BEBIDA', 'JUGO', 'REFRESCO', 'AGUA', 'GASEOSA',
-    'LICUADO', 'BATIDO', 'MALTEADA', 'COCTEL', 'BATIDO', 'JUGOS',
-  ];
-
-  static const _solidKeywords = [
-    'SÓLID', 'SOLID', 'COMIDA', 'HAMB', 'SANDWICH', 'BOCADITO', 'ENTRADA',
-    'PLATO', 'ARROZ', 'PASTA', 'CARNE', 'POLLO', 'PATACON', 'POSTRE',
-    'PICADERA', 'PIZZA', 'FULL',
-  ];
-
-  /// Determines whether a category name represents a liquid product.
-  bool _isLiquidCategoryName(String name) {
-    final n = name.toUpperCase();
-    final liquid = _liquidKeywords.any(n.contains);
-    final solid = _solidKeywords.any(n.contains);
-    if (liquid && !solid) return true;
-    if (solid && !liquid) return false;
-    // Ambiguous or unrecognized → assume solid (food is the norm)
-    return false;
-  }
-
-  Future<List<Product>> _getAllProducts() async {
-    _allProducts = await (_db.select(_db.products)
+  Future<List<Product>> _getAllProducts() {
+    return (_db.select(_db.products)
           ..where((p) => p.isDeleted.equals(false)))
         .get();
-    return _allProducts;
   }
 
-  /// Schema v16 dropped `daily_expenses`; no rows can exist, so the tab
-  /// resolves to its empty state until the block is reworked out.
-  Future<List<DailyExpense>> _getTodayDailyExpenses() async => const [];
-
-  /// Schema v16 dropped `daily_purchases`; no rows can exist, so the tab
-  /// resolves to its empty state until the block is reworked out.
-  Future<List<DailyPurchase>> _getTodayDailyPurchases() async => const [];
-
-  /// Schema v16 dropped `daily_payroll`; no rows can exist, so the tab
-  /// resolves to its empty state until the block is reworked out.
-  Future<List<DailyPayrollData>> _getTodayPayroll() async => const [];
-
-  Future<List<User>> _getWorkers() async {
-    return (_db.select(_db.users)
-          ..where((u) => u.active.equals(true))
-          ..orderBy([(u) => OrderingTerm.asc(u.fullName)]))
-        .get();
+  /// Desglose por producto (cantidad y monto) de los pedidos de venta del
+  /// día, ordenado por cantidad descendente. Sin split por categoría.
+  List<ProductSalesEntry> _topProductsOf(
+    List<RestaurantOrder> orders,
+    String date,
+  ) {
+    final quantity = <String, int>{};
+    final amount = <String, double>{};
+    for (final order in saleOrdersOfDay(orders, date)) {
+      for (final item in order.items) {
+        quantity[item.code] = (quantity[item.code] ?? 0) + item.qty;
+        amount[item.code] = (amount[item.code] ?? 0) + item.subtotal;
+      }
+    }
+    final sorted = quantity.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return [
+      for (final entry in sorted)
+        ProductSalesEntry(
+          productCode: entry.key,
+          quantity: entry.value,
+          amount: amount[entry.key] ?? 0,
+        ),
+    ];
   }
 
-  /// Schema v16 dropped `order_state_history`; with no audit rows the
-  /// kitchen/delivery indicators resolve to zero.
-  Future<List<OrderStateHistoryData>> _getTodayStateHistory(
-    List<String> orderIds,
-  ) async =>
-      const [];
+  /// Resuelve los `clienteId` del ranking a nombre visible. Best-effort:
+  /// sin clientes (o con ids huérfanos) se muestra el propio id.
+  Future<List<TopClienteRow>> _resolveTopClientes(
+    List<TopClienteEntry> entries,
+  ) async {
+    if (entries.isEmpty) return const [];
+    Map<String, String> names;
+    try {
+      final clients = await ref.read(clientRepositoryProvider).getAllClients();
+      names = {for (final c in clients) c.id: c.nombre};
+    } catch (_) {
+      names = const {};
+    }
+    return [
+      for (final entry in entries)
+        TopClienteRow(
+          clienteId: entry.clienteId,
+          nombre: names[entry.clienteId] ?? entry.clienteId,
+          ventas: entry.ventas,
+        ),
+    ];
+  }
 }
