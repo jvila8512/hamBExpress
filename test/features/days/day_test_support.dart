@@ -1,6 +1,9 @@
 import 'package:drift/native.dart';
 
-import 'package:etecsa/core/database/app_database.dart';
+// `app_database.dart` también declara las data classes de drift con los
+// mismos nombres (RestaurantOrder/OrderItem/RestaurantClient): solo se
+// necesita `AppDatabase`, el resto causaría import ambiguos.
+import 'package:etecsa/core/database/app_database.dart' show AppDatabase;
 import 'package:etecsa/features/clients/domain/entities/restaurant_client.dart';
 import 'package:etecsa/features/clients/domain/repositories/client_repository.dart';
 import 'package:etecsa/features/daily_close/domain/day_metrics.dart';
