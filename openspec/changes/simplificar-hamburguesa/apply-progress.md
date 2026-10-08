@@ -1,7 +1,7 @@
 # Apply Progress — simplificar-hamburguesa
 
-Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`) · Phase 3 (Row Actions 3.1–3.2, branch `pr/13-row-actions`) · Phase 4 (Deletions 4.1–4.3, branch `pr/14-deletions`) · Phase 5 (Roles/Guard/Menus 5.1–5.2, branch `pr/15-roles-guard`) · Phase 5 follow-up (legacy-role residuals A–D, branch `pr/15-roles-guard`)
-Mode: strict TDD · Last updated: 2026-10-06
+Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`) · Phase 3 (Row Actions 3.1–3.2, branch `pr/13-row-actions`) · Phase 4 (Deletions 4.1–4.3, branch `pr/14-deletions`) · Phase 5 (Roles/Guard/Menus 5.1–5.2, branch `pr/15-roles-guard`) · Phase 5 follow-up (legacy-role residuals A–D, branch `pr/15-roles-guard`) · Phase 6 (Days + close 6.1–6.3, branch `pr/16-days-close`)
+Mode: strict TDD · Last updated: 2026-10-08
 
 ## Status
 
@@ -13,7 +13,7 @@ Mode: strict TDD · Last updated: 2026-10-06
 | 4. Deletions | 4.1–4.3 | ✅ Done (commits below) |
 | 5. Roles, guard, menus | 5.1–5.2 | ✅ Done (commits on `pr/15-roles-guard`) |
 | 5b. Legacy-role residuals (A–D) | follow-up | ✅ Done (commits below) |
-| 6. Days + close | 6.1–6.3 | ⬜ Pending |
+| 6. Days + close | 6.1–6.3 | ✅ Done (commits below, branch `pr/16-days-close`) |
 | 7. Forms + catalog | 7.1–7.2 | ⬜ Pending |
 | 8. Final verification | 8.1 | ⬜ Pending (analyzers/targets below) |
 
@@ -489,10 +489,171 @@ notes below), branch `pr/15-roles-guard` from `a5d49fe`, tree clean at start.
 - `flutter build` NOT run (CDN geo-blocked). No branch created/pushed; the 3
   stray root files (`5730bba1`/`6dc69496`/`9b973616`) never staged.
 
+## Phase 6 — completed work (6.1–6.3)
+
+Branch `pr/16-days-close` (from `6d3e19b`).
+
+- **6.1 RED — commit `b55c4ea`** (`test(daily-close): red phase 6.1 day metrics y
+  cierre de día`), 3 files:
+  - `test/features/daily_close/day_metrics_test.dart` (NEW, 9 tests): `computeDayMetrics`
+    ventas filter (confirmado+recogido only, line subtotals not header monto),
+    ganancias = ventas − costo, 30/30/40 shares, top clientes ranking/aggregation,
+    day-with-no-sales zeros (pedido-only + empty list, no division by zero).
+  - `test/features/daily_close/close_day_test.dart` (NEW, 7 tests): `closeDay`
+    data-layer role guard (vendedor/super_admin/empty role → `StateError`, zero rows
+    written), admin persists exactly one row (ventas/costo/ganancias/3×distribución/
+    topClientesJson round-trip), re-close upserts (1 row, updated values),
+    `getSummary` null for an open day, `getAllSummaries` feeds the day list.
+  - `test/features/daily_close/daily_close_totals_test.dart` rewritten: pins
+    `validSaleStates == {confirmado, recogido}`, `saleOrdersOfDay` day+state filter
+    and `daySalesTotal` line subtotals — `summarizeSales`/payment-split coverage
+    dropped with `metodoPago` (three-state model has no payment method).
+- **6.2 GREEN — commit `a854fa7`** (`feat(daily-close): pure day metrics y
+  datasource de cierre con guard admin`):
+  - `domain/day_metrics.dart`: pure `computeDayMetrics(orders, dateIso, costByProduct)`
+    (costs injected from Products; ties broken by `clienteId` asc) + `DayMetrics`
+    derived getters (ganancias, yurdenis/mildrey/reinversion 30/30/40).
+  - `infrastructure/daily_close_datasource.dart`: `closeDay` throws `StateError`
+    before any write unless `actorRole == 'admin'`, then `insertOrReplace` on
+    `DailySummaries` (PK `fecha` → idempotent per date); `getSummary`,
+    `getAllSummaries`.
+- **6.3 RED — commit `841fc41`** (`test(days): pin day routes, day entries and day
+  list screen (red)`), 4 files, +492:
+  - `test/config/router/days_routes_test.dart` (7 widget tests): `/days` → `DayListScreen`;
+    `/days/:date` delivers `date` (2 dates, no cross-bleed); `/orders/edit/:id` →
+    `orderId`; `/daily-close?date=` query plumbing + `null` when absent; `/dias` typo
+    must not match.
+  - `test/features/days/day_entries_test.dart` (6): `buildDayEntries` counts per day,
+    newest-first ordering, cerrado flags from persisted closes, closed-without-orders
+    day appears with `0 pedidos`, no fabricated days, empty list.
+  - `test/features/days/day_list_screen_test.dart` (3 widget): rows show date/count/
+    Cerrado|Abierto and descend; closed day with 0 orders; empty state with no rows.
+  - `test/features/days/day_test_support.dart`: shared hand-rolled fakes
+    (`seedOrder`/`seedClient`, `FakeOrderRepository`/`FakeClientRepository`,
+    `InMemoryCloseDatasource`, `createTestDb`).
+- **6.3 GREEN part 1 — commit `6c89cf9`** (`feat(days): add day list, day detail and
+  order edit screens`, 8 files, +1077):
+  - `days/presentation/providers/day_list_provider.dart`: `DayEntry` + pure
+    `buildDayEntries(orders, fechasCerradas)` (activity-only days, descending) and the
+    `dayListProvider` FutureProvider.autoDispose (orders ∪ `DailySummaries`).
+  - `days/presentation/screens/day_list_screen.dart` (rows, status tags, empty/error
+    states, drawer), `day_detail_screen.dart` (day's orders with client name/state/
+    total + row actions, persisted close block, admin-only "Cerrar día" →
+    `/daily-close?date=`), `order_edit_screen.dart` (date picker; saves ONLY
+    `fechaPedido` via `copyWith` — state/lines/client/totals and `fechaCreacion`
+    untouched).
+  - `app_router.dart`: top-level `/days`, `/days/:date`, `/orders/edit/:id` GoRoutes +
+    `/daily-close` now reads `state.uri.queryParameters['date']`.
+  - `day_metrics.dart`: `encodeTopClientes`/`decodeTopClientes` JSON codec for
+    `DailySummaries.topClientesJson` (`[{"clienteId":"...","ventas":100.0}]`).
+  - `daily_close_screen.dart`: public `date` field (contract of the routes test;
+    close-day behavior lands in part 2).
+- **6.3 GREEN part 2 — commit `31562c1`** (`feat(daily-close): day-param close without
+  tabs, 30/30/40 and top clients`, 3 files, +455/−1748):
+  - Provider rewritten: `loadDay(dateIso)` (default today) → `computeDayMetrics` +
+    per-product breakdown (no category split) + top clientes resolved to visible
+    names; `cerrarDia(actorRole)` delegates the admin-only guard to `closeDay` and
+    surfaces `closeMessage`/`closeError`; state carries `date`, `metrics`, `isClosed`.
+  - Screen rewritten: single view (no TabController/tabs), AppBar day picker
+    (query param or today), VENTAS TOTALES + productos del día, COSTO DE PRODUCCIÓN,
+    GANANCIAS + DISTRIBUCIÓN 30/30/40, TOP DE CLIENTES (empty state), "Cerrar día"
+    only for `admin` / "Día cerrado" chip. Gastos/Compras/Nómina tabs, EF-TR
+    breakdown, sólidos/líquidos split, kitchen/delivery metrics, bridge DTOs
+    (`DailyExpense`, `DailyPurchase`, `DailyPayrollData`, `OrderStateHistoryData`)
+    and the CRUD/stimulus helpers all deleted.
+  - `daily_close_totals.dart`: removed `SalesBreakdown` + `summarizeSales` (dead API:
+    `cashSales`/`transferSales` hard-coded 0, `metodoPago` gone, EF-TR block removed;
+    greped to zero external references). `validSaleStates`/`isValidSale`/
+    `saleOrdersOfDay`/`daySalesTotal` stay.
+
+### Phase 6 — deviations (all declared, none silent)
+
+1. **`test/features/days/day_list_screen_test.dart` was corrupt on arrival** — the RED
+   commit's file was 4353 NUL bytes with no recoverable copy (git object, reflog,
+   stash and TEMP all checked). Reconstructed from the work-unit contract ("a
+   DayListScreen widget test") + `specs/day-management/spec.md`: the 3 cases now in
+   the file (counts/closed/open/descending, closed-day-with-0-orders, empty state).
+2. **`day_test_support.dart` had an authoring defect** — `app_database.dart` also
+   declares drift data classes named `RestaurantOrder`/`OrderItem`/`RestaurantClient`,
+   so the unqualified import was ambiguous (compile RED of its own: `'OrderItem' is
+   imported from both ...`). Fixed in `4752783` with `show AppDatabase`.
+3. **`days_routes_test.dart` had a missing `await`** on `tester.pumpWidget` in the
+   `/dias` case — flutter_test's guarded API rejected the following `expect`
+   ("Guarded function conflict") before the assertion could run. Added the `await`
+   in `6c89cf9` (assertion unchanged).
+4. **`SalesBreakdown`/`summarizeSales` removed from the domain** (not just unused) —
+   dead API by construction: nothing outside the rewritten provider referenced it and
+   no test covered it (grep to zero external references before deletion).
+
+### Phase 6 — untestable-behavior ledger (no tests fabricated)
+
+The RED contract fixed the test set at 4 files; the following 6.3 behaviors ship
+without dedicated tests, each with the reason:
+
+- `DailyCloseScreen` rendering/close-click flow: pumping it requires
+  `AppDatabase.instance` (provider `_db`) + platform channels (secure storage for
+  `user_role`); the data-layer guard it delegates to IS covered by `close_day_test`.
+- `DayDetailScreen` / `OrderEditScreen` flows: need the full router + auth state
+  (push/redirect); their save logic is the `copyWith(fechaPedido:)` call and the
+  day-write semantics are pinned by `order_datasource_test`.
+- Date-picker dialogs (`showDatePicker`): platform date-widget interaction, not
+  headless-testable without heavy shimming.
+
+## Phase 6 — evidence
+
+- **Safety net (pre-unit)**: at `a854fa7` (end of 6.1/6.2, start of 6.3):
+  `dart analyze lib test` = **0 errors, 36 warnings, 65 infos (101 issues)**; full
+  `flutter test` = **186 passed / 0 failed**.
+- **6.1/6.2 test reconciliation**: 169 (Phase 5 follow-up) + 9 day_metrics (new) +
+  7 close_day (new) + totals 7→8 (payment-split cases replaced by day-filter/subtotal
+  cases) = **186**.
+- **RED (`841fc41`, verbatim — re-captured in a scratch worktree checked out at that
+  commit, full output saved outside the repo)**: exit 1,
+  `00:00 +0 -3: Some tests failed.`, all 3 files failing to compile:
+  - `days_routes_test.dart:7:8: Error: Error when reading 'lib/features/days/presentation/screens/day_detail_screen.dart': El sistema no puede encontrar la ruta especificada`
+    (+8:8 `day_list_screen.dart`, +9:8 `order_edit_screen.dart`)
+  - `days_routes_test.dart:53:24: Error: 'DayListScreen' isn't a type.`
+    (+60/61/68 `'DayDetailScreen'`, +75/76 `'OrderEditScreen'`)
+  - `days_routes_test.dart:87:41: Error: The getter 'date' isn't defined for the type 'DailyCloseScreen'.` (+95 same)
+  - `day_entries_test.dart:3:8: Error: Error when reading 'lib/features/days/presentation/providers/day_list_provider.dart': El sistema no puede encontrar la ruta especificada`
+  - `day_list_screen_test.dart:8:8: Error: Error when reading 'lib/features/days/presentation/screens/day_list_screen.dart': El sistema no puede encontrar la ruta especificada`
+  - support defect: `day_test_support.dart:9:1: Error: 'OrderItem' is imported from both` (+ `'RestaurantOrder'` 9:1, `'RestaurantClient'` 4:1, uses at 25:34/27:10/41:10) and 10 cascades `The getter 'id'/'estado'/'fechaPedido'/'nombre'/'telefono' isn't defined for the type 'Object?'`
+  - `Failing tests:` = the 3 files (loading failures).
+- **GREEN**: `4752783` (support import fix) → `6c89cf9` (routes+days 16/16 green,
+  `+16: All tests passed!`); `31562c1` → routes+days+daily_close subset **40/40 green**.
+- **Final gates (committed tree at `31562c1`)**: `dart analyze lib test` = **0 errors,
+  32 warnings, 65 infos (97 issues)** — caps: 0 errors ✅ / ≤47 warnings ✅ (32, −4
+  vs baseline: 3 dead provider warnings + 1 dead screen import removed by the rework;
+  1 unused `drift` import introduced and removed before measuring) / ≤86 infos ✅
+  (65, unchanged).
+- **Full `flutter test` = 202 passed / 0 failed** (`+202: All tests passed!`).
+  Reconciliation vs the 186 safety net: 186 + routes 7 + day_entries 6 +
+  day_list_screen 3 = **202**. No pre-existing test modified by this phase.
+- **Route registration**: `/days`, `/days/:date`, `/orders/edit/:id` are top-level
+  `GoRoute`s in `app_router.dart`; callers: `home_screen.dart:297`
+  (`context.go('/days')`), `side_menu.dart:49` (`route: '/days'`), row edit →
+  `context.push('/orders/edit/$id')`, DayDetail "Cerrar día" → `/daily-close?date=`.
+  `/days` is NOT in `_isAdminOnlyPath` (both roles, per spec).
+- **`cashSales`/`transferSales`/`enCocina` disposition**: `SalesBreakdown` deleted;
+  `cashSales`/`transferSales`/`cashCount`/`transferCount`/`efTrafico` no longer exist
+  (0 grep hits in `lib/` + `test/`); kitchen metric `enCocina` removed from the
+  screen — its only remaining test appearance is the deliberate negative assertion
+  `order_state_test.dart:64: expect(names.contains('enCocina'), isFalse)`.
+- **`.g.dart`**: `lib/core/database/app_database.dart` untouched →
+  `lib/core/database/app_database.g.dart` exists, tracked, unchanged (no build_runner
+  run, never deleted).
+- Scratch worktree for the RED re-capture was created at `841fc41` and removed
+  (`git worktree remove --force`); it needed a local copy of the gitignored `.env`
+  asset to build the bundle. No branch created/pushed; `5730bba1`/`6dc69496`/
+  `9b973616` never staged; `flutter build` NOT run (CDN geo-blocked).
+
 ## TDD Cycle Evidence (strict TDD)
 
 | Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
 |------|-----------|-------|------------|-----|-------|-------------|----------|
+| 6.3 | `days_routes_test.dart`, `day_entries_test.dart`, `day_list_screen_test.dart` + shared `day_test_support.dart` | Widget (routes/screens) + Unit (pure `buildDayEntries`) | ✅ full suite 186/186 + analyze 0/36/65 at `a854fa7` | ✅ `841fc41` — compile RED ×3 files (`Error when reading` screens/provider, `'DayListScreen'/'DayDetailScreen'/'OrderEditScreen' isn't a type`, `getter 'date'` on `DailyCloseScreen`, support ambiguity `'OrderItem' is imported from both`), `+0 -3: Some tests failed.` exit 1 | ✅ `4752783` (support) + `6c89cf9` (16/16) + `31562c1` (subset 40/40; full suite 202) | ✅ 16 cases (7 route plumbings incl. `/dias` typo non-match, 6 grouping rules, 3 widget render rules) | ✅ await fix declared in `6c89cf9` (assertions unchanged) |
+| 6.2 | same as 6.1 (GREEN of 6.1) | Unit (drift in-memory) | ✅ prior suite (Phase 5 follow-up 169/169) | ✅ `b55c4ea` (shared RED) | ✅ `a854fa7` — `test/features/daily_close` 24/24 | ✅ covered by the 6.1 matrix (7 closeDay + 9 metrics) | ➖ None needed |
+| 6.1 | `day_metrics_test.dart` (new), `close_day_test.dart` (new), `daily_close_totals_test.dart` (update) | Unit (pure fn + drift in-memory) | ✅ full suite 169/169 + analyze 0/36/65 recorded at unit start | ✅ `b55c4ea` | ✅ `a854fa7` — daily_close 24/24, suite 186/186 | ✅ 9 metrics cases (filter, subtotals, ganancias, 30/30/40, ranking, zeros×2) + 7 close cases (3 role rejections, persist, upsert, null, list) + totals 8 (states, day filter, line subtotals) | ➖ None needed |
 | 5b.A | `test/core/database/default_admin_role_test.dart` (new) | Unit (drift in-memory) | ✅ target subset 81/81 green at `a5d49fe` | ✅ `16016a9` — 3 assertion REDs (`Expected 'admin' / Actual 'super_admin'` ×3 paths) | ✅ `ebefb9f` — 3/3 executed | ✅ 3 paths (keep-seeded, legacy-role repair, empty-table create) + role-set totality `everyElement(admin\|vendedor)` | ✅ `a461192` — unused-local removed, still 3/3 |
 | 5b.B | `test/features/workers/workers_screen_roles_guard_test.dart` (new, source guard) | Source guard | ✅ same 81/81 | ✅ `16016a9` — 4 assertion REDs (assignable list 5 legacy values, label map 7 keys, 10 tokens, fallback `'redes'`) | ✅ `02d1d82` — workers dir 12/12 | ✅ 4 assertions (assignable list, label keys, token sweep, fallback) | ➖ None needed |
 | 5b.C/D | — (pure cleanup: dead branch + dead getters) | — | ✅ analyze 0/36/65 | ➖ None — no observable behavior: `super_admin` unreachable post-v16 remap; 4 getters greped to 0 callers | ✅ final analyze 0/36/65, suite 169/169 | ➖ Not applicable — **stated explicitly, no test fabricated** | ✅ `a461192` |
@@ -528,7 +689,7 @@ notes below), branch `pr/15-roles-guard` from `a5d49fe`, tree clean at start.
   `restaurant_order_sms_test` never existed in this repo (stale task text).
 - Phase 4 touched `side_menu.dart`? **No** — it needed no edit (it only ever
   listed `/workers` and `/settings`).
-- Remaining: Phases 6–8.
+- Remaining: Phases 7–8.
 - Phase 5 spec-gap (NOT tasked anywhere — flag for the orchestrator):
   `workers_screen.dart` still offers the deleted roles in its picker
   (`_assignableRoles`/labels: `super_admin`, `redes`, `cocina`, `mesero`,
@@ -543,6 +704,9 @@ notes below), branch `pr/15-roles-guard` from `a5d49fe`, tree clean at start.
   point at `/days`, whose route/screens land in task 6.3 — tapping them
   between this PR and the Phase 6 PR 404s. Accepted under the chain
   (`feature-branch-chain`, PR5 follows immediately).
+  **RESOLVED 2026-10-08 by Phase 6**: `/days`, `/days/:date` and
+  `/orders/edit/:id` are registered top-level routes on `pr/16-days-close`
+  (`app_router.dart:113–127`), so the menu/dashboard entries no longer 404.
 - Phase 5 guard semantics: `routeGuardDecision` guards ONLY the admin-only
   path set (unauthenticated → `/login` on those); unauthenticated access to
   shared paths is left to the router exactly as before this phase (pre-existing
@@ -600,3 +764,16 @@ notes below), branch `pr/15-roles-guard` from `a5d49fe`, tree clean at start.
 - `a461192` — `test: assert admin precondition without unused local` (refactor; +1/−1).
 - Docs commit: this `apply-progress.md` merge.
 - Code+test total: 6 files, +200/−92. Nothing pushed; the 3 stray root files never staged.
+
+### Phase 6 (branch `pr/16-days-close`, from `6d3e19b`)
+- `b55c4ea` — `test(daily-close): red phase 6.1 day metrics y cierre de día` (6.1 RED; 3 files: 2 new + 1 rewritten totals test).
+- `a854fa7` — `feat(daily-close): pure day metrics y datasource de cierre con guard admin` (6.2 GREEN + turns 6.1 green).
+- `841fc41` — `test(days): pin day routes, day entries and day list screen (red)` (6.3 RED; 4 files, +492).
+- `4752783` — `fix(test): unambiguous app_database import in day test support` (RED authoring fix, declared as deviation 2).
+- `6c89cf9` — `feat(days): add day list, day detail and order edit screens` (6.3 GREEN part 1; 8 files, +1077).
+- `31562c1` — `feat(daily-close): day-param close without tabs, 30/30/40 and top clients` (6.3 GREEN part 2; 3 files, +455/−1748).
+- Docs commit: `tasks.md` `[x]` 6.1/6.2/6.3 + this `apply-progress.md` Phase 6 merge.
+- Code+test total for the branch (`git diff --shortstat 6d3e19b..HEAD`): **18 files
+  changed, 2695 insertions(+), 1783 deletions(−)** (net +912; the bulk of deletions
+  is the daily-close tab/bridge/DTO removal in `31562c1`). Nothing pushed; the 3
+  stray root files never staged.

@@ -43,9 +43,9 @@ Work units → PRs: U1 schema→PR1; U2 orders core+row actions→PR2; U3 deleti
 
 ## Phase 6: Days + Close
 
-- [ ] 6.1 RED: new `day_metrics_test.dart` (ventas excludes pedido, ganancias, top clientes, zeros) + vendedor close-rejected test; update `daily_close_totals_test.dart` (day-management·Metrics/Persisting; daily-close·Admin-Only).
-- [ ] 6.2 GREEN: pure `computeDayMetrics`, `closeDay` data-layer admin guard, `DailySummaries` upsert.
-- [ ] 6.3 GREEN UI: create `lib/features/days/presentation/**` (+ routes /days, /days/:date, /orders/edit/:id); rework `daily_close/**` day-param, no tabs/EF-TR, 30/30/40, Top de Clientes.
+- [x] 6.1 RED: new `day_metrics_test.dart` (ventas excludes pedido, ganancias, top clientes, zeros) + vendedor close-rejected test; update `daily_close_totals_test.dart` (day-management·Metrics/Persisting; daily-close·Admin-Only).
+- [x] 6.2 GREEN: pure `computeDayMetrics`, `closeDay` data-layer admin guard, `DailySummaries` upsert.
+- [x] 6.3 GREEN UI: create `lib/features/days/presentation/**` (+ routes /days, /days/:date, /orders/edit/:id); rework `daily_close/**` day-param, no tabs/EF-TR, 30/30/40, Top de Clientes.
 
 ## Phase 7: Forms + Catalog
 
