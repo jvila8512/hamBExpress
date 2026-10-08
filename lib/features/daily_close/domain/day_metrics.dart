@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:etecsa/features/daily_close/domain/daily_close_totals.dart';
 import 'package:etecsa/features/orders/domain/entities/restaurant_order.dart';
 
@@ -79,4 +81,34 @@ DayMetrics computeDayMetrics(
     costoProduccion: costo,
     topClientes: topClientes,
   );
+}
+
+/// Serializa el ranking de [entries] para `DailySummaries.topClientesJson`.
+///
+/// Formato: `[{"clienteId":"cli-1","ventas":100.0}]`.
+String encodeTopClientes(List<TopClienteEntry> entries) {
+  return jsonEncode([
+    for (final entry in entries)
+      {'clienteId': entry.clienteId, 'ventas': entry.ventas},
+  ]);
+}
+
+/// Lee `DailySummaries.topClientesJson`. Vacío o JSON inválido → lista vacía
+/// (el cierre debe seguir siendo visible aunque el ranking esté corrupto).
+List<TopClienteEntry> decodeTopClientes(String? json) {
+  if (json == null || json.isEmpty) return const [];
+  try {
+    final decoded = jsonDecode(json);
+    if (decoded is! List) return const [];
+    return [
+      for (final raw in decoded)
+        if (raw is Map)
+          TopClienteEntry(
+            clienteId: raw['clienteId']?.toString() ?? '',
+            ventas: (raw['ventas'] as num?)?.toDouble() ?? 0,
+          ),
+    ];
+  } catch (_) {
+    return const [];
+  }
 }

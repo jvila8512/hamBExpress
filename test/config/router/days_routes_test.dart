@@ -97,7 +97,7 @@ void main() {
 
   testWidgets('una ruta que no existe no hace match (typo /dias)',
       (tester) async {
-    tester.pumpWidget(
+    await tester.pumpWidget(
       const MaterialApp(home: SizedBox.shrink()),
     );
 

@@ -13,6 +13,9 @@ import 'package:etecsa/features/orders/presentation/screens/order_form_screen.da
 import 'package:etecsa/features/orders/presentation/screens/order_history_screen.dart';
 import 'package:etecsa/features/clients/presentation/screens/client_management_screen.dart';
 import 'package:etecsa/features/daily_close/presentation/screens/daily_close_screen.dart';
+import 'package:etecsa/features/days/presentation/screens/day_detail_screen.dart';
+import 'package:etecsa/features/days/presentation/screens/day_list_screen.dart';
+import 'package:etecsa/features/days/presentation/screens/order_edit_screen.dart';
 import 'package:etecsa/features/workers/presentation/screens/workers_screen.dart';
 import 'package:etecsa/core/database/app_database.dart';
 
@@ -106,6 +109,22 @@ final appRouter = GoRouter(
       path: '/orders/history',
       builder: (context, state) => const OrderHistoryScreen(),
     ),
+    GoRoute(
+      path: '/orders/edit/:id',
+      builder: (context, state) =>
+          OrderEditScreen(orderId: state.pathParameters['id']!),
+    ),
+
+    // ── Days ─────────────────────────────────────────────────────
+    GoRoute(
+      path: '/days',
+      builder: (context, state) => const DayListScreen(),
+    ),
+    GoRoute(
+      path: '/days/:date',
+      builder: (context, state) =>
+          DayDetailScreen(date: state.pathParameters['date']!),
+    ),
 
     // ── Workers (admin) ────────────────────────────────────────
     GoRoute(
@@ -122,7 +141,8 @@ final appRouter = GoRouter(
     // ── Daily Close ──────────────────────────────────────────────
     GoRoute(
       path: '/daily-close',
-      builder: (context, state) => const DailyCloseScreen(),
+      builder: (context, state) =>
+          DailyCloseScreen(date: state.uri.queryParameters['date']),
     ),
 
     // ── Settings ─────────────────────────────────────────────────

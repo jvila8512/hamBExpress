@@ -20,7 +20,11 @@ import 'package:etecsa/features/shared/widgets/side_menu.dart';
 /// 4. Nómina — trabajadores, toggle trabajo, jornada, estímulo
 
 class DailyCloseScreen extends ConsumerStatefulWidget {
-  const DailyCloseScreen({super.key});
+  const DailyCloseScreen({super.key, this.date});
+
+  /// Día a cerrar (`yyyy-MM-dd`), query param `date` de `/daily-close`.
+  /// `null` → hoy.
+  final String? date;
 
   @override
   ConsumerState<DailyCloseScreen> createState() => _DailyCloseScreenState();
