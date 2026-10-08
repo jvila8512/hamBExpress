@@ -18,6 +18,20 @@ import 'package:etecsa/features/shared/widgets/side_menu.dart';
 // ---------------------------------------------------------------------------
 // Redes Order Form Screen
 // ---------------------------------------------------------------------------
+
+/// Hoy como calendario ISO local (`yyyy-MM-dd`).
+String _todayIso() {
+  final now = DateTime.now();
+  return '${now.year.toString().padLeft(4, '0')}-'
+      '${now.month.toString().padLeft(2, '0')}-'
+      '${now.day.toString().padLeft(2, '0')}';
+}
+
+/// Calendario ISO local (`yyyy-MM-dd`) del día [date].
+String _toIso(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-'
+    '${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';
 ///
 /// Crea un pedido desde Redes (atención al cliente / redes sociales).
 /// Flujo:
@@ -54,6 +68,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   bool _isSubmitting = false;
   bool _orderSent = false;
   String? _createdOrderId;
+
+  // ── Día del pedido ───────────────────────────────────────────────────
+  /// Día de negocio del pedido (`yyyy-MM-dd`), default hoy, editable
+  /// desde el date picker (spec: Order Day Field).
+  String _fechaPedido = _todayIso();
 
   @override
   void initState() {
@@ -181,6 +200,33 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   }
 
   // ─────────────────────────────────────────────────────────────────────
+  // DÍA DEL PEDIDO
+  // ─────────────────────────────────────────────────────────────────────
+
+  /// Abre el date picker y fija el día de negocio del pedido.
+  Future<void> _pickDay() async {
+    // Parseo local: `DateTime.parse` daría medianoche UTC y en UTC-5
+    // abriría el picker un día antes.
+    final parts = _fechaPedido.split('-');
+    final actual = parts.length == 3
+        ? DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          )
+        : DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: actual,
+      firstDate: DateTime(2024),
+      lastDate: DateTime(2100),
+      helpText: 'Día del pedido',
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _fechaPedido = _toIso(picked));
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
   // LÓGICA DE PRODUCTOS
   // ─────────────────────────────────────────────────────────────────────
 
@@ -272,6 +318,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       estado: OrderState.pedido,
       montoTotal: _total,
       creadoPorUsuarioId: ref.read(authProvider).user?.id ?? '',
+      fechaPedido: _fechaPedido,
       fechaCreacion: now,
       items: items,
     );
@@ -436,6 +483,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // ── DÍA DEL PEDIDO (default hoy, editable) ────
+                _buildDaySection(colors, theme),
+
+                const SizedBox(height: 8),
+
                 // ── BLOQUE CLIENTE (siempre visible) ─────────
                 _buildClientSection(colors, theme, clientsAsync),
 
@@ -485,6 +537,45 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             style: theme.textTheme.titleLarge?.copyWith(
               color: colors.accent,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── SECCIÓN DÍA DEL PEDIDO ─────────────────────────────────────────
+
+  Widget _buildDaySection(AppColorsTheme colors, ThemeData theme) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colors.accent.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.event, size: 20, color: colors.accent),
+          const SizedBox(width: 8),
+          Text('Día del pedido', style: theme.textTheme.bodyMedium),
+          const Spacer(),
+          Text(
+            _fechaPedido,
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: colors.accent,
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: _pickDay,
+            icon: const Icon(Icons.calendar_month, size: 18),
+            label: const Text('Cambiar'),
           ),
         ],
       ),

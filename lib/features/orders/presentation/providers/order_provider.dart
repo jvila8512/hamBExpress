@@ -96,4 +96,18 @@ class OrderNotifier extends Notifier<OrderState> {
       _isLoading = false;
     }
   }
+
+  /// Load the orders assigned to business day [fechaIso] (`yyyy-MM-dd`).
+  Future<void> loadOrdersByDay(String fechaIso) async {
+    _isLoading = true;
+    _error = null;
+
+    try {
+      _orders = await _repository.getOrdersByDay(fechaIso);
+    } catch (e) {
+      _error = 'Error loading orders: $e';
+    } finally {
+      _isLoading = false;
+    }
+  }
 }

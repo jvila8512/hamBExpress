@@ -6,7 +6,6 @@ import 'package:uuid/uuid.dart';
 import 'package:etecsa/config/theme/app_colors.dart';
 import 'package:etecsa/features/clients/domain/entities/restaurant_client.dart';
 import 'package:etecsa/features/clients/presentation/providers/client_provider.dart';
-import 'package:etecsa/features/orders/presentation/providers/order_provider.dart';
 import 'package:etecsa/features/shared/widgets/side_menu.dart';
 
 // ---------------------------------------------------------------------------

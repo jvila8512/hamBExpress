@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:etecsa/config/theme/app_colors.dart';
 import 'package:etecsa/config/theme/widgets/status_badge.dart';
 import 'package:etecsa/config/theme/widgets/ticket_card.dart';
+import 'package:etecsa/features/clients/domain/entities/restaurant_client.dart';
 import 'package:etecsa/features/clients/presentation/providers/client_provider.dart';
 import 'package:etecsa/features/orders/domain/entities/restaurant_order.dart';
 import 'package:etecsa/features/orders/domain/entities/order_state.dart';
@@ -40,6 +41,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   final _searchController = TextEditingController();
   List<RestaurantOrder> _allOrders = [];
 
+  /// `clienteId` → nombre (`RestaurantClients.nombre`), resuelto en cada
+  /// carga para mostrar el cliente en vez del UUID crudo.
+  Map<String, String> _nameByClientId = const {};
+
   /// `clienteId` → teléfono (`RestaurantClients.telefono`), resuelto en cada
   /// carga para las acciones SMS/llamada de la fila.
   Map<String, String> _cellByClientId = const {};
@@ -71,11 +76,16 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     try {
       final repo = ref.read(orderRepositoryProvider);
       final orders = await repo.getAllOrders();
-      final cells = await _loadClientCells();
+      final clients = await _loadClients();
       if (mounted) {
         setState(() {
           _allOrders = orders;
-          _cellByClientId = cells;
+          _nameByClientId = {
+            for (final client in clients) client.id: client.nombre,
+          };
+          _cellByClientId = {
+            for (final client in clients) client.id: client.telefono,
+          };
           _isLoading = false;
         });
       }
@@ -89,18 +99,20 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     }
   }
 
-  /// `clienteId` → teléfono para las acciones de fila. Best-effort: si la
-  /// lectura falla las acciones quedan deshabilitadas (celda vacía) sin
-  /// romper la carga del historial.
-  Future<Map<String, String>> _loadClientCells() async {
+  /// Clientes para resolver nombre y teléfono de cada `clienteId`.
+  /// Best-effort: si la lectura falla la fila usa el UUID y las acciones
+  /// quedan deshabilitadas (celda vacía) sin romper la carga del historial.
+  Future<List<RestaurantClient>> _loadClients() async {
     try {
-      final clients =
-          await ref.read(clientRepositoryProvider).getAllClients();
-      return {for (final client in clients) client.id: client.telefono};
+      return await ref.read(clientRepositoryProvider).getAllClients();
     } catch (_) {
-      return const {};
+      return const [];
     }
   }
+
+  /// Nombre visible de la fila: el del cliente si existe, si no el UUID.
+  String _nameOf(String clienteId) =>
+      _nameByClientId[clienteId] ?? clienteId;
 
   /// Avanza el estado del pedido (`pedido` → `confirmado` → `recogido`) y
   /// recarga el historial. Una transición rechazada no toca lo almacenado.
@@ -468,6 +480,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     AppColorsTheme colors,
     ThemeData theme,
   ) {
+    final cell = _cellByClientId[order.clienteId] ?? '';
     return TicketCard(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(14),
@@ -491,20 +504,36 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
           ),
           const SizedBox(height: 6),
 
-          // Client info
+          // Client info: nombre y teléfono resueltos desde `clienteId`.
           Row(
             children: [
               Icon(Icons.person_outline,
                   size: 14, color: colors.textSecondary),
               const SizedBox(width: 4),
-              Text(
-                'Cliente: ${order.clienteId}',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: colors.textSecondary),
-                overflow: TextOverflow.ellipsis,
+              Expanded(
+                child: Text(
+                  'Cliente: ${_nameOf(order.clienteId)}',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: colors.textSecondary),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
+          if (cell.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(Icons.phone_outlined,
+                    size: 14, color: colors.textSecondary),
+                const SizedBox(width: 4),
+                Text(
+                  cell,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: colors.textSecondary),
+                ),
+              ],
+            ),
+          ],
 
           // Date
           if (order.fechaCreacion != null) ...[
