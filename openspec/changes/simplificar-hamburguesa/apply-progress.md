@@ -678,6 +678,36 @@ without dedicated tests, each with the reason:
 - `categoryId` grep over `lib/features/products/` → 0 hits (only a doc comment
   stating they are no longer parameters).
 
+## Phase 9 - single flat menu (course correction, 2026-10-08)
+
+The user rejected the two-role split menu and asked for ONE flat menu for
+every role: **Productos · Clientes · Días** (`Días` is the pedidos-por-días
+screen). Implemented inline (the delegation endpoint was down).
+
+- **Specs first**: `role-flows/spec.md` — rewrote "Admin Navigation — Usuarios
+  and Configuración" into "Single Navigation — Productos, Clientes and Días"
+  (exactly three entries, no per-role variants, products reachable by both
+  authenticated roles) and updated "Vendedor Navigation". Neutralized the
+  products-spec scenario actor (`the Admin` → `the user`).
+- **9.2 RED → GREEN**: `route_guard_test.dart` — the three "vendedor is
+  redirected from /products*" tests became "vendedor reaches /products*"
+  expecting `isNull` (real RED: `Expected: null, Actual: '/'` ×3).
+  `license_strip_guard_test.dart` T5 — repinned from the two-role split
+  (count 5) to the single three-entry menu (real RED:
+  `Expected: <3>, Actual: <5>`).
+- **9.3 GREEN**:
+  - `side_menu.dart` — `_adminMenuItems` / `_vendedorMenuItems` replaced by one
+    flat `_menuItems` (Productos, Clientes, Días).
+  - `app_router.dart` — `/products*` removed from `_isAdminOnlyPath`; new
+    `_isAuthenticatedOnlyPath` makes products require a session but allows both
+    roles. `/workers` and `/settings` stay admin-only.
+  - `home_screen.dart` — `Productos` quick link added to the vendedor dashboard
+    ACCESOS (the admin dashboard already had it).
+- Gates after: `dart analyze lib test` = **0 errors, 30 warnings, 64 infos**;
+  full `flutter test` = **213 passed / 0 failed** (213 preserved — two
+  redundant products tests were replaced by four covering admin + vendedor).
+- `.g.dart` untouched — `app_database.dart` not modified.
+
 ## TDD Cycle Evidence (strict TDD)
 
 | Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
@@ -820,3 +850,13 @@ without dedicated tests, each with the reason:
 - Code+test total for the branch (`git diff --shortstat 55a8fab..HEAD`): **10
   files changed, 713 insertions(+), 97 deletions(−)**. Nothing pushed; the 3
   stray root files never staged.
+
+### Phase 9 (branch `pr/18-simple-menu`, from `86688ac`)
+- `118b4ea` — `specs: single flat menu for every role` (`role-flows`, `products`).
+- `607a56e` — `test: pin the single three-entry MVP menu (red)` (RED; real failures
+  `Expected: null, Actual: '/'` ×3 in `route_guard_test`, `Expected: <3>,
+  Actual: <5>` in `license_strip_guard` T5).
+- `e3951f8` — `feat: one flat menu, products open to both roles` (3 files, +21/−19).
+- Docs commit: `tasks.md` `[x]` 9.1–9.3 + this `apply-progress.md` Phase 9 merge.
+- Gates: `dart analyze lib test` **0 / 30 / 64**; full `flutter test` **213 / 0**.
+  Nothing pushed; the 3 stray root files never staged.

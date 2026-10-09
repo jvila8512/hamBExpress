@@ -55,3 +55,9 @@ Work units → PRs: U1 schema→PR1; U2 orders core+row actions→PR2; U3 deleti
 ## Phase 8: Final Verification
 
 - [x] 8.1 Run `flutter test` ONCE + `dart analyze lib test`: **213 pass / 0 fail** (baseline 215 at `daniel`, −53 tests deleted with their Phase-4 subjects, +51 added across Phases 1–7); `dart analyze lib test` = **0 errors, 30 warnings, 64 infos**; grep-scans clean: dead roles (outside the mapper and the v16 migration `CASE`), JSON SMS parser, dead routes, `telephony_sdt`, SMS manifest permissions, and the `cashSales`/`transferSales`/`summarizeSales`/`SalesBreakdown` dead API.
+
+## Phase 9: Single Flat Menu (course correction, 2026-10-08)
+
+- [x] 9.1 Specs: rewrite `role-flows` to one flat menu (Productos, Clientes, Días) and `/products*` as authenticated-any-role; neutralize the products-spec actor.
+- [x] 9.2 Tests: `route_guard_test` — vendedor reaches `/products*` (no redirect); `license_strip_guard` T5 — single 3-entry menu. RED → GREEN.
+- [x] 9.3 Code: `side_menu.dart` flat `_menuItems`; `app_router.dart` products moved out of `_isAdminOnlyPath` into `_isAuthenticatedOnlyPath`; `home_screen.dart` Productos quick link on the vendedor dashboard.
