@@ -647,10 +647,43 @@ without dedicated tests, each with the reason:
   asset to build the bundle. No branch created/pushed; `5730bba1`/`6dc69496`/
   `9b973616` never staged; `flutter build` NOT run (CDN geo-blocked).
 
+## Phase 7 - completed work (7.1-7.2)
+
+- **7.1 Orders forms/queries** (`197bece` RED → `f19c291` GREEN):
+  - `order_form_screen.dart`: editable day picker (writes `fechaPedido`).
+  - Client name and cell resolved via `clienteId` JOIN to `RestaurantClients`
+    — resolved at render time, NOT copied onto the order (per
+    client-management).
+  - `order_history_screen.dart`: 3-state filters (`pedido`/`confirmado`/`recogido`).
+  - `order_provider.dart`: day loaders.
+- **7.2 Catalog** (`4879594` RED → `13e23d9` GREEN):
+  - `product_form_screen.dart` reduced to **name + price** (−75 lines: code,
+    category and import plumbing removed).
+  - `products_provider.dart` (−15 lines). `categoryId`/`_selectedCategoryId`
+    no longer written anywhere in `lib/features/products/`.
+  - `client_management_screen.dart:9` pre-existing warning fixed (Phase 7's).
+- Branch total (`git diff --shortstat 55a8fab..HEAD`): **10 files, +713/−97**.
+- `.g.dart` untouched — `app_database.dart` not modified this phase.
+
+### Phase 7 - evidence
+
+- `dart analyze lib test` → **0 errors, 30 warnings, 64 infos** (caps
+  0/≤47/≤86 all met; −2 warnings vs the 32/65 baseline from dead-code removal).
+- Full `flutter test` → **213 passed / 0 failed** (`+213: All tests passed!`),
+  reconciled as 202 + 11 new across the 4 test files below.
+- New/updated tests: `test/features/orders/presentation/providers/order_notifier_day_loaders_test.dart`,
+  `test/features/orders/presentation/screens/order_form_screen_test.dart`,
+  `test/features/orders/presentation/screens/order_history_screen_test.dart`,
+  `test/features/products/presentation/screens/products_catalog_test.dart`.
+- `categoryId` grep over `lib/features/products/` → 0 hits (only a doc comment
+  stating they are no longer parameters).
+
 ## TDD Cycle Evidence (strict TDD)
 
 | Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
 |------|-----------|-------|------------|-----|-------|-------------|----------|
+| 7.1 | `order_notifier_day_loaders_test.dart`, `order_form_screen_test.dart`, `order_history_screen_test.dart` | Unit + Widget | ✅ full suite 202/202 + analyze 0/32/65 at `55a8fab` | ✅ `197bece` | ✅ `f19c291` | ✅ day picker/edit, `clienteId` JOIN, 3-state filters, day loaders | ➖ None needed |
+| 7.2 | `products_catalog_test.dart` | Widget + source guard | ✅ 7.1 green | ✅ `4879594` | ✅ `13e23d9` — name+price only, `categoryId` grep 0 | ✅ form reduced to name+price | ➖ None needed |
 | 6.3 | `days_routes_test.dart`, `day_entries_test.dart`, `day_list_screen_test.dart` + shared `day_test_support.dart` | Widget (routes/screens) + Unit (pure `buildDayEntries`) | ✅ full suite 186/186 + analyze 0/36/65 at `a854fa7` | ✅ `841fc41` — compile RED ×3 files (`Error when reading` screens/provider, `'DayListScreen'/'DayDetailScreen'/'OrderEditScreen' isn't a type`, `getter 'date'` on `DailyCloseScreen`, support ambiguity `'OrderItem' is imported from both`), `+0 -3: Some tests failed.` exit 1 | ✅ `4752783` (support) + `6c89cf9` (16/16) + `31562c1` (subset 40/40; full suite 202) | ✅ 16 cases (7 route plumbings incl. `/dias` typo non-match, 6 grouping rules, 3 widget render rules) | ✅ await fix declared in `6c89cf9` (assertions unchanged) |
 | 6.2 | same as 6.1 (GREEN of 6.1) | Unit (drift in-memory) | ✅ prior suite (Phase 5 follow-up 169/169) | ✅ `b55c4ea` (shared RED) | ✅ `a854fa7` — `test/features/daily_close` 24/24 | ✅ covered by the 6.1 matrix (7 closeDay + 9 metrics) | ➖ None needed |
 | 6.1 | `day_metrics_test.dart` (new), `close_day_test.dart` (new), `daily_close_totals_test.dart` (update) | Unit (pure fn + drift in-memory) | ✅ full suite 169/169 + analyze 0/36/65 recorded at unit start | ✅ `b55c4ea` | ✅ `a854fa7` — daily_close 24/24, suite 186/186 | ✅ 9 metrics cases (filter, subtotals, ganancias, 30/30/40, ranking, zeros×2) + 7 close cases (3 role rejections, persist, upsert, null, list) + totals 8 (states, day filter, line subtotals) | ➖ None needed |
@@ -776,4 +809,14 @@ without dedicated tests, each with the reason:
 - Code+test total for the branch (`git diff --shortstat 6d3e19b..HEAD`): **18 files
   changed, 2695 insertions(+), 1783 deletions(−)** (net +912; the bulk of deletions
   is the daily-close tab/bridge/DTO removal in `31562c1`). Nothing pushed; the 3
+  stray root files never staged.
+
+### Phase 7 (branch `pr/17-forms-catalog`, from `pr/16-days-close` @ `55a8fab`)
+- `197bece` — `test(orders): RED - day loader, historial y formulario para 7.1` (7.1 RED).
+- `f19c291` — `feat(orders): dia editable en el formulario y cliente resuelto en el historial (7.1)` (7.1 GREEN).
+- `4879594` — `test(products): RED - formulario sin codigo ni categoria para 7.2` (7.2 RED).
+- `13e23d9` — `feat(catalog): reduce product form to name and price` (7.2 GREEN; 2 files, +10/−80).
+- Docs commit: `tasks.md` `[x]` 7.1/7.2 + this `apply-progress.md` Phase 7 merge.
+- Code+test total for the branch (`git diff --shortstat 55a8fab..HEAD`): **10
+  files changed, 713 insertions(+), 97 deletions(−)**. Nothing pushed; the 3
   stray root files never staged.

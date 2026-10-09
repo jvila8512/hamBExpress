@@ -49,8 +49,8 @@ Work units → PRs: U1 schema→PR1; U2 orders core+row actions→PR2; U3 deleti
 
 ## Phase 7: Forms + Catalog
 
-- [ ] 7.1 `order_form_screen.dart` day picker/edit + client name/cell via `clienteId` JOIN; `order_history_screen.dart` 3-state filters; `order_provider.dart` day loaders (client-management; order·Day Field).
-- [ ] 7.2 `products_screen.dart`/`product_form_screen.dart`: name+price only, no code/category/import (products·Generic Product, Identification).
+- [x] 7.1 `order_form_screen.dart` day picker/edit + client name/cell via `clienteId` JOIN; `order_history_screen.dart` 3-state filters; `order_provider.dart` day loaders (client-management; order·Day Field).
+- [x] 7.2 `products_screen.dart`/`product_form_screen.dart`: name+price only, no code/category/import (products·Generic Product, Identification).
 
 ## Phase 8: Final Verification
 
