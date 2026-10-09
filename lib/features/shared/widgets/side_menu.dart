@@ -36,22 +36,14 @@ class _SideMenuState extends State<SideMenu> {
   String _appVersion = '';
   int _selectedIndex = 0;
 
-  // ── Admin: Usuarios + Configuración (role-flows, 2 entries) ──
-  final List<AppMenuItem> _adminMenuItems = [
-    const AppMenuItem(icon: Icons.people_alt, label: 'Usuarios', route: '/workers'),
-    const AppMenuItem(icon: Icons.settings_outlined, label: 'Configuración', route: '/settings'),
-  ];
-
-  // ── Vendedor: Pedidos + Clientes + Días (role-flows) ─────────
-  final List<AppMenuItem> _vendedorMenuItems = [
-    const AppMenuItem(icon: Icons.receipt_long, label: 'Pedidos', route: '/orders/history'),
+  // ── Menú único para todos los roles (MVP: Productos, Clientes, Días) ──
+  final List<AppMenuItem> _menuItems = [
+    const AppMenuItem(icon: Icons.inventory_2, label: 'Productos', route: '/products'),
     const AppMenuItem(icon: Icons.people, label: 'Clientes', route: '/clients'),
     const AppMenuItem(icon: Icons.calendar_month, label: 'Días', route: '/days'),
   ];
 
-  // Rol desconocido → menú de vendedor (menor privilegio).
-  List<AppMenuItem> get _currentMenuItems =>
-      _userRole == 'admin' ? _adminMenuItems : _vendedorMenuItems;
+  List<AppMenuItem> get _currentMenuItems => _menuItems;
 
   @override
   void initState() {

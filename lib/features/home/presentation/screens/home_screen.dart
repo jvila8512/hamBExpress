@@ -293,6 +293,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          _buildQuickLink('Productos', Icons.inventory_2, () => context.go('/products')),
           _buildQuickLink('Clientes', Icons.people, () => context.go('/clients')),
           _buildQuickLink('Días', Icons.calendar_month, () => context.go('/days')),
         ],

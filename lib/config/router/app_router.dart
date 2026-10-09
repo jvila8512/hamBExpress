@@ -29,24 +29,33 @@ Future<bool> _isLoggedIn() async {
 /// Rutas exclusivas de `admin` (auth → Admin-Only Route Guard).
 bool _isAdminOnlyPath(String currentPath) =>
     currentPath == '/workers' ||
-    currentPath == '/settings' ||
+    currentPath == '/settings';
+
+/// Rutas que exigen sesión pero son de ambos roles (menú único MVP).
+bool _isAuthenticatedOnlyPath(String currentPath) =>
     currentPath == '/products' ||
     currentPath.startsWith('/products/');
 
 /// Guard de ruta (navegación directa): puro y testeable.
 /// Devuelve el redirect a aplicar o null si se permite navegar.
 ///
-/// Admin-only: `/workers`, `/settings`, `/products*`.
+/// Admin-only: `/workers`, `/settings`.
+/// Sesión requerida, ambos roles: `/products*`.
 /// Abiertas a ambos roles: `/orders`, `/clients`, `/days` (design.md).
-/// Sin sesión en una ruta admin → login; rol ≠ `admin` → home (`/`).
+/// Sin sesión en una ruta protegida → login; rol ≠ `admin` en admin-only → home (`/`).
 String? routeGuardDecision({
   required String currentPath,
   required String role,
   required bool authenticated,
 }) {
-  if (!_isAdminOnlyPath(currentPath)) return null;
-  if (!authenticated) return '/login';
-  return role == 'admin' ? null : '/';
+  if (_isAdminOnlyPath(currentPath)) {
+    if (!authenticated) return '/login';
+    return role == 'admin' ? null : '/';
+  }
+  if (_isAuthenticatedOnlyPath(currentPath) && !authenticated) {
+    return '/login';
+  }
+  return null;
 }
 
 Future<bool> _isFirstTime() async {
@@ -167,7 +176,7 @@ final appRouter = GoRouter(
     final isFirst = await _isFirstTime();
     final loggedIn = await _isLoggedIn();
 
-    // Guard de rutas admin (/workers, /settings, /products*)
+    // Guard de rutas admin (/workers, /settings) y de sesión (/products*)
     final role = await _secureStorage.read(key: 'user_role') ?? '';
     final guardRedirect = routeGuardDecision(
       currentPath: currentPath,
