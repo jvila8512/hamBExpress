@@ -45,26 +45,23 @@ class ProductsNotifier extends Notifier<ProductsState> {
     }
   }
 
+  /// Crea un producto genérico: solo nombre + precio de venta
+  /// (spec: Generic Product with Unit Price). `code`/`codigoCorto`/
+  /// `categoryId` ya no son parámetros: ninguna pantalla los exige.
   Future<void> addProduct({
     required String name,
-    required String code,
     required double unitPrice,
     String? idOverride,
     double costPrice = 0,
     String? description,
-    String? categoryId,
-    String? codigoCorto,
   }) async {
     state = state.copyWith(isLoading: true);
     try {
       await _database.into(_database.products).insert(
         ProductsCompanion.insert(
           id: idOverride ?? const Uuid().v4(),
-          code: Value(code.isEmpty ? null : code),
-          codigoCorto: Value(codigoCorto?.isEmpty ?? true ? null : codigoCorto),
           name: name,
           description: Value(description?.isEmpty ?? true ? null : description),
-          categoryId: Value(categoryId),
           unitPrice: unitPrice,
           costPrice: Value(costPrice),
         ),
@@ -80,22 +77,16 @@ class ProductsNotifier extends Notifier<ProductsState> {
   Future<void> updateProduct({
     required String id,
     required String name,
-    required String code,
     required double unitPrice,
     double costPrice = 0,
     String? description,
-    String? categoryId,
-    String? codigoCorto,
   }) async {
     state = state.copyWith(isLoading: true);
     try {
       await (_database.update(_database.products)..where((p) => p.id.equals(id))).write(
         ProductsCompanion(
           name: Value(name),
-          code: Value(code.isEmpty ? null : code),
-          codigoCorto: Value(codigoCorto?.isEmpty ?? true ? null : codigoCorto),
           description: Value(description?.isEmpty ?? true ? null : description),
-          categoryId: Value(categoryId),
           unitPrice: Value(unitPrice),
           costPrice: Value(costPrice),
         ),

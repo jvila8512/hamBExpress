@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:etecsa/features/products/presentation/providers/products_provider.dart';
 import 'package:etecsa/config/theme/app_colors.dart';
 import 'package:etecsa/core/database/app_database.dart';
+import 'package:etecsa/core/database/database_provider.dart';
 
 class ProductFormScreen extends ConsumerStatefulWidget {
   final String? productId;
@@ -19,13 +20,10 @@ class ProductFormScreen extends ConsumerStatefulWidget {
 class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _codeController = TextEditingController();
-  final _codigoCortoController = TextEditingController();
   final _priceController = TextEditingController();
   final _costController = TextEditingController();
   final _descController = TextEditingController();
   final _imagePicker = ImagePicker();
-  String? _selectedCategoryId;
   String? _currentImageUrl;
   XFile? _newImageFile;
   bool _isLoading = false;
@@ -34,25 +32,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   bool get isEditing => widget.productId != null;
   final List<Map<String, dynamic>> _wholesaleRules = [];
-
-  /// Auto-generate codigoCorto from product name:
-  /// First 3 uppercase consonants/letters of the name.
-  String _generateCodigoCorto(String name) {
-    if (name.trim().isEmpty) return '';
-    final cleaned = name.trim().toUpperCase().replaceAll(RegExp(r'[^A-Z]'), '');
-    if (cleaned.isEmpty) return '';
-    // Take first 3 characters
-    return cleaned.length >= 3 ? cleaned.substring(0, 3) : cleaned;
-  }
-
-  void _onNameChanged(String value) {
-    // Only auto-generate if the user hasn't manually edited codigoCorto
-    if (_codigoCortoController.text.isEmpty ||
-        _codigoCortoController.text == _generateCodigoCorto(_nameController.text)) {
-      _codigoCortoController.text = _generateCodigoCorto(value);
-    }
-    setState(() {});
-  }
 
   /// Check if cost > sale price (warning, not blocking)
   bool get _costExceedsPrice {
@@ -68,7 +47,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   Future<void> _loadProduct() async {
-    final db = AppDatabase.instance;
+    final db = ref.read(databaseProvider);
     final product = await db.getProductById(widget.productId!);
     if (product != null && mounted) {
       // Obtener imageUrl del campo description (formato: IMG:ruta)
@@ -84,12 +63,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       setState(() {
         _product = product;
         _nameController.text = product.name;
-        _codeController.text = product.code ?? '';
-        _codigoCortoController.text = product.codigoCorto ?? '';
         _priceController.text = product.unitPrice.toString();
         _costController.text = product.costPrice.toString();
         _descController.text = product.description ?? '';
-        _selectedCategoryId = product.categoryId;
         _currentImageUrl = imgUrl;
         _isInitialized = true;
       });
@@ -128,8 +104,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _codeController.dispose();
-    _codigoCortoController.dispose();
     _priceController.dispose();
     _costController.dispose();
     _descController.dispose();
@@ -208,11 +182,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     setState(() => _isLoading = true);
 
     final name = _nameController.text.trim();
-    final code = _codeController.text.trim();
-    final codigoCorto = _codigoCortoController.text.trim().toUpperCase();
     final price = double.tryParse(_priceController.text) ?? 0;
     final cost = double.tryParse(_costController.text) ?? 0;
-    final desc = _descController.text.trim();
 
     try {
       String? imageUrl;
@@ -248,12 +219,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             .updateProduct(
               id: widget.productId!,
               name: name,
-              code: code,
-              codigoCorto: codigoCorto,
               unitPrice: price,
               costPrice: cost,
               description: descParaGuardar,
-              categoryId: _selectedCategoryId,
             );
       } else {
         final productId =
@@ -267,12 +235,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             .addProduct(
               idOverride: productId,
               name: name,
-              code: code,
-              codigoCorto: codigoCorto,
               unitPrice: price,
               costPrice: cost,
               description: descParaGuardar,
-              categoryId: _selectedCategoryId,
             );
 
         // Verificar si el provider reportó error de límite
@@ -297,7 +262,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       // Guardar reglas de precio por mayor
       final productId =
           widget.productId ?? DateTime.now().millisecondsSinceEpoch.toString();
-      final db = AppDatabase.instance;
+      final db = ref.read(databaseProvider);
       await db.saveWholesaleRulesForProduct(productId, _wholesaleRules);
 
       // Mostrar mensaje de éxito (+ warning si costo > precio)
@@ -408,49 +373,23 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 prefixIcon: Icon(Icons.inventory_2),
                 border: OutlineInputBorder(),
               ),
-              onChanged: _onNameChanged,
               validator: (v) => v == null || v.trim().isEmpty
                   ? 'El nombre es requerido'
                   : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
-              controller: _codeController,
-              decoration: const InputDecoration(
-                labelText: 'Código',
-                prefixIcon: Icon(Icons.qr_code),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _codigoCortoController,
-              decoration: InputDecoration(
-                labelText: 'Código Corto (SMS)',
-                hintText: 'Ej: CLE, SCQ, LTE',
-                prefixIcon: const Icon(Icons.short_text),
-                border: const OutlineInputBorder(),
-                helperText: 'Se genera automáticamente. Podés editarlo.',
-                helperStyle: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade500,
-                ),
-              ),
-              textCapitalization: TextCapitalization.characters,
-              maxLength: 5,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
               controller: _costController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'Precio de costo *',
+                labelText: 'Precio de costo',
                 prefixIcon: Icon(Icons.price_check),
                 border: OutlineInputBorder(),
               ),
+              // Opcional: el producto se crea con solo nombre + precio
+              // (spec: Generic Product with Unit Price).
               validator: (v) {
-                if (v == null || v.isEmpty)
-                  return 'El precio de costo es requerido';
+                if (v == null || v.isEmpty) return null;
                 final c = double.tryParse(v);
                 if (c == null || c < 0) return 'Costo inválido';
                 return null;
