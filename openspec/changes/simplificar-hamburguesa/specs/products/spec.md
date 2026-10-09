@@ -8,8 +8,8 @@ The system MUST manage generic products identified by name with a single unit sa
 
 #### Scenario: Create a product with name and price only
 
-- GIVEN the Admin opens the product form
-- WHEN the Admin enters name "Hamburguesa Sencilla" and unit price `450` with no code and no category
+- GIVEN the user opens the product form
+- WHEN the user enters name "Hamburguesa Sencilla" and unit price `450` with no code and no category
 - THEN the product is saved
 - AND it appears in the order catalog priced at `450`
 

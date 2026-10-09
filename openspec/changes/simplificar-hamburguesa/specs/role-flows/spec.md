@@ -50,22 +50,28 @@ The system MUST provide these reusable widgets:
 - THEN the card SHALL have a dotted top border with circle perforations (visual ticket style)
 - AND the StatusBadge SHALL show the current state in the correct color
 
-### Requirement: Admin Navigation — Usuarios and Configuración
+### Requirement: Single Navigation — Productos, Clientes and Días
 
-The admin side menu MUST contain exactly two entries: `Usuarios` (→ `/workers`) and `Configuración` (→ `/settings`). `super_admin` MUST NOT exist as a menu variant. The admin dashboard MUST expose a `Nuevo Pedido` action shortcut to `/orders/new`. The worker screen SHALL keep its existing capabilities (list users, create/edit admin/vendedor, reset password, activate/deactivate).
+The side menu MUST contain exactly three entries, identical for every role: `Productos` (→ `/products`), `Clientes` (→ `/clients`) and `Días` (→ `/days`). Per-role menu variants MUST NOT exist. `Productos` MUST be reachable by both `admin` and `vendedor` (authenticated). The dashboard MUST expose a `Nuevo Pedido` action shortcut to `/orders/new`. The worker screen SHALL keep its existing capabilities (list users, create/edit admin/vendedor, reset password, activate/deactivate).
 
-(Previously: two menu variants existed — `_adminMenuItems` and `_superAdminMenuItems` — for roles `admin` and `super_admin`.)
+(Previously: two per-role menu variants existed — `_adminMenuItems` [Usuarios, Configuración] for `admin` and `_vendedorMenuItems` [Pedidos, Clientes, Días] for `vendedor`.)
 
-#### Scenario: Admin menu shows Usuarios and Configuración
+#### Scenario: Side menu shows the three MVP entries
 
-- GIVEN role `admin` with the updated menu
+- GIVEN any authenticated role
 - WHEN the user opens the side menu
-- THEN `Usuarios` and `Configuración` items are listed and navigate correctly
-- AND no `super_admin` menu variant is rendered
+- THEN `Productos`, `Clientes` and `Días` items are listed and navigate correctly
+- AND no per-role menu variant is rendered
+
+#### Scenario: Vendedor reaches products
+
+- GIVEN a `vendedor` authenticated
+- WHEN navigating to `/products`
+- THEN the ProductsScreen renders
 
 #### Scenario: Nuevo Pedido shortcut
 
-- GIVEN an authenticated `admin` on the dashboard
+- GIVEN an authenticated user on the dashboard
 - WHEN the user taps `Nuevo Pedido`
 - THEN the order form opens at `/orders/new`
 
@@ -94,13 +100,13 @@ The router MUST register the `/workers` route and MUST allow it only for `admin`
 
 ### Requirement: Vendedor Navigation
 
-The `vendedor` side menu MUST contain order, client, and day entries (Pedidos, Clientes, Días) and MUST NOT contain `Usuarios` or `Configuración`. The vendedor dashboard MUST expose the same order row actions as admin on the orders they can open.
+The `vendedor` side menu MUST be identical to the admin side menu (`Productos`, `Clientes`, `Días`). The vendedor dashboard MUST expose the same order row actions as admin on the orders they can open. `Usuarios` and `Configuración` are NOT side-menu entries for any role; they remain admin-only routes reachable from the admin dashboard.
 
 #### Scenario: Vendedor menu contents
 
 - GIVEN role `vendedor`
 - WHEN the user opens the side menu
-- THEN Pedidos, Clientes, and Días entries are listed
+- THEN Productos, Clientes, and Días entries are listed
 - AND neither `Usuarios` nor `Configuración` is listed
 
 #### Scenario: Vendedor deep link to admin entry is blocked
