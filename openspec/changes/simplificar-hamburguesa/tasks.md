@@ -54,4 +54,4 @@ Work units → PRs: U1 schema→PR1; U2 orders core+row actions→PR2; U3 deleti
 
 ## Phase 8: Final Verification
 
-- [ ] 8.1 Run `flutter test` ONCE + `dart analyze lib test`: reconcile vs 210/7 baseline (target ≥217 pass / 0 fail; 0 errors, ≤48 warnings, ≤86 infos); Grep-scan zero refs to deleted roles, JSON SMS parser, dead routes.
+- [x] 8.1 Run `flutter test` ONCE + `dart analyze lib test`: **213 pass / 0 fail** (baseline 215 at `daniel`, −53 tests deleted with their Phase-4 subjects, +51 added across Phases 1–7); `dart analyze lib test` = **0 errors, 30 warnings, 64 infos**; grep-scans clean: dead roles (outside the mapper and the v16 migration `CASE`), JSON SMS parser, dead routes, `telephony_sdt`, SMS manifest permissions, and the `cashSales`/`transferSales`/`summarizeSales`/`SalesBreakdown` dead API.

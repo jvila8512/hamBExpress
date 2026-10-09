@@ -1,6 +1,6 @@
 # Apply Progress — simplificar-hamburguesa
 
-Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`) · Phase 3 (Row Actions 3.1–3.2, branch `pr/13-row-actions`) · Phase 4 (Deletions 4.1–4.3, branch `pr/14-deletions`) · Phase 5 (Roles/Guard/Menus 5.1–5.2, branch `pr/15-roles-guard`) · Phase 5 follow-up (legacy-role residuals A–D, branch `pr/15-roles-guard`) · Phase 6 (Days + close 6.1–6.3, branch `pr/16-days-close`)
+Units: Phase 1 (Schema v16, branch `pr/11-schema-v16`) · Phase 2 (Orders Core 2.1–2.5, branch `pr/12-orders-core`) · Phase 3 (Row Actions 3.1–3.2, branch `pr/13-row-actions`) · Phase 4 (Deletions 4.1–4.3, branch `pr/14-deletions`) · Phase 5 (Roles/Guard/Menus 5.1–5.2, branch `pr/15-roles-guard`) · Phase 5 follow-up (legacy-role residuals A–D, branch `pr/15-roles-guard`) · Phase 6 (Days + close 6.1–6.3, branch `pr/16-days-close`) · Phase 7 (Forms + catalog 7.1–7.2, branch `pr/17-forms-catalog`) · Phase 8 (Final verification 8.1, branch `pr/17-forms-catalog`)
 Mode: strict TDD · Last updated: 2026-10-08
 
 ## Status
@@ -14,8 +14,8 @@ Mode: strict TDD · Last updated: 2026-10-08
 | 5. Roles, guard, menus | 5.1–5.2 | ✅ Done (commits on `pr/15-roles-guard`) |
 | 5b. Legacy-role residuals (A–D) | follow-up | ✅ Done (commits below) |
 | 6. Days + close | 6.1–6.3 | ✅ Done (commits below, branch `pr/16-days-close`) |
-| 7. Forms + catalog | 7.1–7.2 | ⬜ Pending |
-| 8. Final verification | 8.1 | ⬜ Pending (analyzers/targets below) |
+| 7. Forms + catalog | 7.1–7.2 | ✅ Done (commits below, branch `pr/17-forms-catalog`) |
+| 8. Final verification | 8.1 | ✅ Done (branch `pr/17-forms-catalog`) |
 
 ## Phase 1 — completed work
 
