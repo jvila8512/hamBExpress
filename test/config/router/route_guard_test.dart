@@ -1,9 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:etecsa/config/router/app_router.dart';
 
-/// Decision table for the Admin-Only Route Guard (auth delta) and the design
-/// decision "one fn": admin-only `/workers`, `/settings`, `/products*`;
-/// `/orders`, `/clients`, `/days` open to both roles.
+/// Decision table for the Admin-Only Route Guard (auth delta) and the
+/// design decision "one fn": admin-only `/workers`, `/settings`;
+/// authenticated-any-role `/products*`; `/orders`, `/clients`, `/days`
+/// open to both roles.
 void main() {
   group('routeGuardDecision — admin-only paths allow admin', () {
     test('admin reaches /workers', () {
@@ -21,39 +22,6 @@ void main() {
       expect(
         routeGuardDecision(
           currentPath: '/settings',
-          role: 'admin',
-          authenticated: true,
-        ),
-        isNull,
-      );
-    });
-
-    test('admin reaches /products', () {
-      expect(
-        routeGuardDecision(
-          currentPath: '/products',
-          role: 'admin',
-          authenticated: true,
-        ),
-        isNull,
-      );
-    });
-
-    test('admin reaches /products/new', () {
-      expect(
-        routeGuardDecision(
-          currentPath: '/products/new',
-          role: 'admin',
-          authenticated: true,
-        ),
-        isNull,
-      );
-    });
-
-    test('admin reaches /products/edit/:id', () {
-      expect(
-        routeGuardDecision(
-          currentPath: '/products/edit/abc-123',
           role: 'admin',
           authenticated: true,
         ),
@@ -78,39 +46,6 @@ void main() {
       expect(
         routeGuardDecision(
           currentPath: '/settings',
-          role: 'vendedor',
-          authenticated: true,
-        ),
-        '/',
-      );
-    });
-
-    test('vendedor is redirected from /products to /', () {
-      expect(
-        routeGuardDecision(
-          currentPath: '/products',
-          role: 'vendedor',
-          authenticated: true,
-        ),
-        '/',
-      );
-    });
-
-    test('vendedor is redirected from /products/new to /', () {
-      expect(
-        routeGuardDecision(
-          currentPath: '/products/new',
-          role: 'vendedor',
-          authenticated: true,
-        ),
-        '/',
-      );
-    });
-
-    test('vendedor is redirected from /products/edit/:id to /', () {
-      expect(
-        routeGuardDecision(
-          currentPath: '/products/edit/abc-123',
           role: 'vendedor',
           authenticated: true,
         ),
@@ -226,6 +161,73 @@ void main() {
         routeGuardDecision(
           currentPath: '/days',
           role: 'admin',
+          authenticated: true,
+        ),
+        isNull,
+      );
+    });
+
+    // ── Productos: abierto a ambos roles (menú único MVP) ──
+    test('admin reaches /products', () {
+      expect(
+        routeGuardDecision(
+          currentPath: '/products',
+          role: 'admin',
+          authenticated: true,
+        ),
+        isNull,
+      );
+    });
+
+    test('admin reaches /products/new', () {
+      expect(
+        routeGuardDecision(
+          currentPath: '/products/new',
+          role: 'admin',
+          authenticated: true,
+        ),
+        isNull,
+      );
+    });
+
+    test('admin reaches /products/edit/:id', () {
+      expect(
+        routeGuardDecision(
+          currentPath: '/products/edit/abc-123',
+          role: 'admin',
+          authenticated: true,
+        ),
+        isNull,
+      );
+    });
+
+    test('vendedor reaches /products', () {
+      expect(
+        routeGuardDecision(
+          currentPath: '/products',
+          role: 'vendedor',
+          authenticated: true,
+        ),
+        isNull,
+      );
+    });
+
+    test('vendedor reaches /products/new', () {
+      expect(
+        routeGuardDecision(
+          currentPath: '/products/new',
+          role: 'vendedor',
+          authenticated: true,
+        ),
+        isNull,
+      );
+    });
+
+    test('vendedor reaches /products/edit/:id', () {
+      expect(
+        routeGuardDecision(
+          currentPath: '/products/edit/abc-123',
+          role: 'vendedor',
           authenticated: true,
         ),
         isNull,

@@ -190,27 +190,14 @@ void main() {
       );
     });
 
-    test('side menu lists the two-role entries: admin 2, vendedor 3', () {
-      expect(count(menuSrc, 'AppMenuItem(icon:'), 5,
-          reason: 'role-flows: admin [Usuarios, Configuración] + '
-              'vendedor [Pedidos, Clientes, Días]');
-      // Admin menu: exactly two entries.
+    test('side menu lists the single three-entry MVP menu', () {
+      expect(count(menuSrc, 'AppMenuItem(icon:'), 3,
+          reason: 'role-flows: one flat menu for every role - '
+              '[Productos, Clientes, Días]');
+      // Single flat menu: products, clients and days.
       expect(
         menuSrc.contains(
-          "AppMenuItem(icon: Icons.people_alt, label: 'Usuarios', route: '/workers')",
-        ),
-        isTrue,
-      );
-      expect(
-        menuSrc.contains(
-          "AppMenuItem(icon: Icons.settings_outlined, label: 'Configuración', route: '/settings')",
-        ),
-        isTrue,
-      );
-      // Vendedor menu: order, client and day entries.
-      expect(
-        menuSrc.contains(
-          "AppMenuItem(icon: Icons.receipt_long, label: 'Pedidos', route: '/orders/history')",
+          "AppMenuItem(icon: Icons.inventory_2, label: 'Productos', route: '/products')",
         ),
         isTrue,
       );
@@ -226,6 +213,11 @@ void main() {
         ),
         isTrue,
       );
+      // No per-role menu variants survive.
+      expect(menuSrc.contains('_adminMenuItems'), isFalse,
+          reason: 'role-flows: per-role menu variant removed');
+      expect(menuSrc.contains('_vendedorMenuItems'), isFalse,
+          reason: 'role-flows: per-role menu variant removed');
       // No super_admin menu variant and no deleted-role labels survive.
       for (final legacyLabel in [
         'SUPER ADMIN',
